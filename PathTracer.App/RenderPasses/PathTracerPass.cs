@@ -28,6 +28,7 @@ public class PathTracerPass(
         public uint SphereCount;
         public uint Seed;
         public uint SamplesPerPixel;
+        public uint MaxBounces;
     }
 
     protected override string ShaderModule => "PathTracer";
@@ -68,7 +69,7 @@ public class PathTracerPass(
 
         BufferDescription paramsBufferDesc = new()
         {
-            SizeInBytes = 16,
+            SizeInBytes = 32,
             Usage = BufferUsage.UniformBuffer
         };
         _paramsBuffer = device.ResourceFactory.CreateBuffer(paramsBufferDesc);
@@ -118,7 +119,8 @@ public class PathTracerPass(
             PlaneCount = (uint)_planes.PathTracerPass,
             SphereCount = (uint)_spheres.PathTracerPass,
             Seed = _seed++,
-            SamplesPerPixel = options.Value.SamplesPerPixel
+            SamplesPerPixel = options.Value.SamplesPerPixel,
+            MaxBounces = options.Value.MaxBounces
         };
         ctx.Cmd.UpdateBuffer(_paramsBuffer, 0, @params);
 

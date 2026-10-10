@@ -1,17 +1,18 @@
 ﻿using System.Numerics;
 using System.Runtime.InteropServices;
-using PathTracerCore.Renderer;
 using PathTracerCore.Bvh;
+using PathTracerCore.Renderer;
 using PathTracerCore.SceneGraph;
 
 namespace PathTracerApp.Components;
 
-[StructLayout(LayoutKind.Sequential)]
+[StructLayout(LayoutKind.Explicit, Size = 48)]
 public record struct SpherePrimitive : IBvhReady
 {
-    public Vector3 Center;
-    public float Radius;
-    public Color Color;
+    [FieldOffset(00)] public Vector3 Center;
+    [FieldOffset(12)] public float Radius;
+    [FieldOffset(16)] public Color Albedo;
+    [FieldOffset(32)] public Color Emission;
     
     public uint BvhType => 1;
     

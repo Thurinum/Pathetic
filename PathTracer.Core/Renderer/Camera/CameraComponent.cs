@@ -7,7 +7,7 @@ namespace PathTracerCore.Renderer.Camera;
 public class CameraComponent(CameraState view, IOptions<EngineOptions> options) : Component
 {
     private Transform _transform = null!;
-    public float FovDegrees { get; } = 67.0f;
+    public float FovDegrees { get; } = 80.0f;
     public float FocusDistance = 5.0f;
     public float ApertureRadius = 0.15f;
 

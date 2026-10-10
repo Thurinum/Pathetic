@@ -20,7 +20,8 @@ ServiceProvider ConfigureServices()
         options.WindowHeight = 1080;
         options.X = 100;
         options.Y = 100;
-        options.SamplesPerPixel = 8;
+        options.SamplesPerPixel = 64;
+        options.MaxBounces = 8;
     }, passes =>
     {
         passes.AddPass<CirclesPass>();

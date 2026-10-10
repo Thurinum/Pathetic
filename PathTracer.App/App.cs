@@ -17,8 +17,11 @@ public class App(SceneLoop loop, SceneManager sceneManager)
         sceneManager
             .CreateObject(scene, "fpsCounter")
             .AddComponent<FPSCounter>();
-            
-        AddSphere(scene, new Vector3(2.0f, 0.0f, 0.0f), 1f, Color.Red);
+
+        AddSphere(scene, new Vector3(2.0f, -100.5f, 0.0f), 100.0f, new Color(0.6f, 0.6f, 0.6f));
+        AddSphere(scene, new Vector3(2.0f, 0.2f, 0.0f), 0.7f, new Color(0.9f, 0.6f, 0.2f));
+        AddSphere(scene, new Vector3(1.3f, -0.3f, 0.9f), 0.2f, new Color(0.2f, 0.6f, 0.9f));
+        AddSphere(scene, new Vector3(-0.2f, 1.0f, 0.0f), 0.7f, new Color(0.0f, 0.0f, 0.0f), new Color(15, 12, 9));
         
         var camera = sceneManager.CreateObject(scene, "camera");
         camera.AddComponent<CameraComponent>();
@@ -56,7 +59,7 @@ public class App(SceneLoop loop, SceneManager sceneManager)
         // obj.AddComponent<RandomMover>();
     }
 
-    private void AddSphere(Scene scene, Vector3 position, float radius, Color color)
+    private void AddSphere(Scene scene, Vector3 position, float radius, Color albedo, Color emission = default)
     {
         var obj = sceneManager.CreateObject(scene, "sphere");
 
@@ -64,7 +67,8 @@ public class App(SceneLoop loop, SceneManager sceneManager)
 
         var sphere = obj.AddComponent<SphereComponent>();
         sphere.Radius = radius;
-        sphere.Color = color;
+        sphere.Albedo = albedo;
+        sphere.Emission = emission;
     }
     
     private void AddCircle(Scene scene, float r, float x, float y)

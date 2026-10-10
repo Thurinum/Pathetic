@@ -12,4 +12,5 @@ public sealed class EngineOptions
     public string ShadersDir = "Shaders";
     
     public uint SamplesPerPixel = 4;
+    public uint MaxBounces = 8;
 }

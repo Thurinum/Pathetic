@@ -4,7 +4,8 @@ public struct Sphere
 {
     public float3 Center;
     public float Radius;
-    public float3 Color;
+    public float3 Albedo;
+    public float3 Emission;
 }
 
 public struct Plane 
@@ -18,7 +19,9 @@ public struct HitResult
 {
     public float T;
     public float3 Normal;
+    public float3 NormalExt;
     public float2 UV;
+    public uint Index;
     
     public bool IsHit() { return T > 0; }
     
@@ -27,7 +30,9 @@ public struct HitResult
         HitResult h;
         h.T = -1;
         h.Normal = 0;
+        h.NormalExt = 0;
         h.UV = 0;
+        h.Index = 0;
         return h;
     }
 }
@@ -57,10 +62,11 @@ public HitResult IntersectSphere(float3 origin, float3 dir, float3 center, float
         0.5 - n.y * 0.5                    // linear latitude, no asin
     );
     
+    float3 nExt = n;
     if (dot(n, dir) > 0)
-        n = -n; // gere le cas ou la camera est derriere la surface (render backfaces)
+        n = -n;
         
-    HitResult result = { t, n, uv };
+    HitResult result = { t, n, nExt, uv, 0 };
     return result; 
 }
 
@@ -83,6 +89,6 @@ public HitResult IntersectPlane(float3 origin, float3 dir, Plane p, float tMin, 
 
     float2 uv = float2(a, b) * 0.5 + 0.5; // [-1, 1] to [0, 1]
 
-    HitResult hit = { t, n, uv };
+    HitResult hit = { t, n, n, uv, 0 };
     return hit;
 }

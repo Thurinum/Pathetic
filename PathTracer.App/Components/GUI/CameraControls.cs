@@ -14,7 +14,7 @@ public class CameraControls : Component
     public float Distance { get; set; } = 5.0f;
     public float AzimuthDegrees { get; set; } = 0.0f;
     public float ElevationDegrees { get; set; }
-    public float Speed { get; set; } = 1;
+    public float Speed { get; set; } = 0;
 
     public override void Awake()
     {
