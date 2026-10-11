@@ -6,14 +6,12 @@ using Pathetic.Renderer.Resources;
 
 namespace Pathetic.App.RenderPasses;
 
-public sealed class CirclesPass(PrimitiveRegistry primitives) : RenderPass
+public sealed class CirclesPass(PrimitiveBuffer<CirclePrimitive> circles) : RenderPass
 {
     private struct Params
     {
         public uint Count;
     }
-
-    private readonly PrimitiveBuffer<CirclePrimitive> _circles = primitives.Get<CirclePrimitive>();
 
     public override string ShaderModule => "Circles";
 
@@ -30,7 +28,7 @@ public sealed class CirclesPass(PrimitiveRegistry primitives) : RenderPass
 
     protected override void Upload(RenderContext ctx)
     {
-        Params @params = new() { Count = (uint)_circles.Count };
+        Params @params = new() { Count = (uint)circles.Count };
         ctx.Cmd.UpdateBuffer(ctx.Resources.GetBuffer(Resources.Params, this), 0, @params);
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using System.Runtime.InteropServices;
+using Pathetic.Renderer.Primitives;
 using Pathetic.SceneGraph;
 
 namespace Pathetic.App.Components;
@@ -12,7 +13,7 @@ public record struct PlanePrimitive
     [FieldOffset(32)] public Vector3 ExtentY;
 }   
 
-public class PlaneComponent : RendererBase<PlanePrimitive>
+public class PlaneComponent(PrimitiveBuffer<PlanePrimitive> primitives) : RendererBase<PlanePrimitive>(primitives)
 {
     private Transform _transform = null!;
 

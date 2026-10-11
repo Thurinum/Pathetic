@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using System.Runtime.InteropServices;
 using NeoVeldrid;
+using Pathetic.Renderer.Primitives;
 using Pathetic.SceneGraph;
 
 namespace Pathetic.App.Components;
@@ -14,7 +15,7 @@ public record struct SpherePrimitive
     [FieldOffset(20)] public RgbaByte Emission;
 }
 
-public class SphereComponent : RendererBase<SpherePrimitive>
+public class SphereComponent(PrimitiveBuffer<SpherePrimitive> primitives) : RendererBase<SpherePrimitive>(primitives)
 {
     public float Radius { get; set; } = 1.0f;
     public RgbaByte Albedo { get; set; } = new(128, 128, 128, 255);

@@ -3,7 +3,7 @@ using NeoVeldrid;
 
 namespace Pathetic.Renderer.Primitives;
 
-public class PrimitiveBuffer<T> : IPrimitiveBuffer where T : unmanaged
+public class PrimitiveBuffer<T>(string name) : IPrimitiveBuffer where T : unmanaged
 {
     private const int InitialSize = 256;
     
@@ -14,6 +14,7 @@ public class PrimitiveBuffer<T> : IPrimitiveBuffer where T : unmanaged
     private int[] _denseIdxToHandleIdx = new int[InitialSize];
     private readonly Stack<int> _freeHandles = new();
 
+    public string Name { get; } = name;
     public Type PrimitiveType => typeof(T);
     public ReadOnlySpan<T> Data => _primitives.AsSpan(0, Count);
     public int Capacity => _primitives.Length;

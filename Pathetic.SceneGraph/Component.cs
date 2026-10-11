@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Pathetic.Renderer.Primitives;
 
 namespace Pathetic.SceneGraph;
 
@@ -10,9 +9,6 @@ public abstract class Component : IDestroyable
     protected Scene Root => Parent.Owner;
     public bool IsPendingDestroy { get; internal set; }
     public bool IsDestroyed { get; private set; }
-    
-    // set by the factory so child renderers don't need to inject by constructor
-    internal PrimitiveRegistry Primitives = null!;
     
     public virtual void Awake() {}
     public virtual void Start() {}

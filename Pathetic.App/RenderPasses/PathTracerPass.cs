@@ -8,7 +8,10 @@ using Pathetic.Renderer.Resources;
 
 namespace Pathetic.App.RenderPasses;
 
-public sealed class PathTracerPass(IOptions<EngineOptions> options, PrimitiveRegistry primitives) : RenderPass
+public sealed class PathTracerPass(
+    IOptions<EngineOptions> options,
+    PrimitiveBuffer<PlanePrimitive> planes,
+    PrimitiveBuffer<SpherePrimitive> spheres) : RenderPass
 {
     private struct Params
     {
@@ -18,9 +21,6 @@ public sealed class PathTracerPass(IOptions<EngineOptions> options, PrimitiveReg
         public uint SamplesPerPixel;
         public uint MaxBounces;
     }
-
-    private readonly PrimitiveBuffer<PlanePrimitive> _planes = primitives.Get<PlanePrimitive>();
-    private readonly PrimitiveBuffer<SpherePrimitive> _spheres = primitives.Get<SpherePrimitive>();
 
     public override string ShaderModule => "PathTracer";
 
@@ -47,8 +47,8 @@ public sealed class PathTracerPass(IOptions<EngineOptions> options, PrimitiveReg
     {
         Params @params = new()
         {
-            PlaneCount = (uint)_planes.Count,
-            SphereCount = (uint)_spheres.Count,
+            PlaneCount = (uint)planes.Count,
+            SphereCount = (uint)spheres.Count,
             Seed = ctx.FrameIndex,
             SamplesPerPixel = options.Value.SamplesPerPixel,
             MaxBounces = options.Value.MaxBounces,

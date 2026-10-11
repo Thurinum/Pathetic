@@ -2,22 +2,20 @@
 
 namespace Pathetic.SceneGraph;
 
-public abstract class RendererBase<T> : Component where T : unmanaged
+public abstract class RendererBase<T>(PrimitiveBuffer<T> primitives) : Component where T : unmanaged
 {
-    private PrimitiveBuffer<T> _primitives = null!;
     private PrimitiveHandle _handle = PrimitiveHandle.Invalid;
 
     public override void Awake()
     {
-        _primitives = Primitives.Get<T>();
-        _handle = _primitives.Add(BuildPrimitive());
+        _handle = primitives.Add(BuildPrimitive());
     }
 
     public override void LateUpdate(float deltaTime)
     {
         if (_handle.IsValid)
         {
-            _primitives.Update(_handle, BuildPrimitive());
+            primitives.Update(_handle, BuildPrimitive());
         }
     }
 
@@ -25,7 +23,7 @@ public abstract class RendererBase<T> : Component where T : unmanaged
     {
         if (_handle.IsValid)
         {
-            _primitives.Remove(ref _handle);
+            primitives.Remove(ref _handle);
         }
     }
 

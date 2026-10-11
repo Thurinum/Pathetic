@@ -19,7 +19,7 @@ public static class ServiceCollectionExtensions
         public IServiceCollection AddRenderer(
             Action<EngineOptions> configureOptions,
             Action<RenderGraphBuilder> configurePasses,
-            Action<PrimitiveRegistry>? configurePrimitives = null)
+            Action<PrimitiveBuilder>? configurePrimitives = null)
         {
             services.Configure(configureOptions);
             
@@ -30,10 +30,10 @@ public static class ServiceCollectionExtensions
             if (passSelector.PassTypes.Count == 0)
                 throw new InvalidOperationException("No render pass selected");
 
-            var primitives = new PrimitiveRegistry();
+            var primitives = new PrimitiveBuilder(services);
             configurePrimitives?.Invoke(primitives);
-            services.AddSingleton(primitives);
-            services.AddSingleton<IResourceProvider>(primitives);
+            services.AddSingleton<PrimitiveResourceProvider>();
+            services.AddSingleton<IResourceProvider>(sp => sp.GetRequiredService<PrimitiveResourceProvider>());
             
             services.AddSingleton<SlangCompiler>();
             services.AddSingleton<RenderPassFactory>();
