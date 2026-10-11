@@ -17,16 +17,14 @@ public sealed class TemporalAccumulationPass(TemporalAccumulationSettings settin
 
     public override IReadOnlyList<IResourceSpec> Outputs { get; } =
     [
-        new TextureSpec("color", PixelFormat.B8_G8_R8_A8_UNorm,
-            TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
-        new TextureSpec("accumImage", PixelFormat.R32_G32_B32_A32_Float,
-            TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
-        UniformBufferSpec.Of<Params>("params"),
+        new TextureSpec(Resources.Color, PixelFormat.B8_G8_R8_A8_UNorm, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
+        new TextureSpec(Resources.AccumImage, PixelFormat.R32_G32_B32_A32_Float, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
+        UniformBufferSpec.Of<Params>(Resources.Params),
     ];
 
     public override IReadOnlyList<ResourceRef> Inputs { get; } =
     [
-        new("pathTracerColor", ResourceKind.TextureReadOnly),
+        new(Resources.PathTracerColor, ResourceKind.TextureReadOnly),
     ];
 
     protected override void Upload(RenderContext ctx)
@@ -35,6 +33,6 @@ public sealed class TemporalAccumulationPass(TemporalAccumulationSettings settin
         _lastRevision = ctx.SceneRevision;
 
         Params @params = new() { Reset = reset ? 1u : 0u };
-        ctx.Cmd.UpdateBuffer(ctx.Resources.GetBuffer("params", this), 0, @params);
+        ctx.Cmd.UpdateBuffer(ctx.Resources.GetBuffer(Resources.Params, this), 0, @params);
     }
 }

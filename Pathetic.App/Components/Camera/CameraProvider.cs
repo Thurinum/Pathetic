@@ -22,11 +22,11 @@ public class CameraProvider(SceneRevision revision) : IResourceProvider
 
     public IEnumerable<IResourceSpec> Resources { get; } =
     [
-        UniformBufferSpec.Of<CameraData>("camera")    
+        UniformBufferSpec.Of<CameraData>(Pathetic.App.Resources.Camera)    
     ];
     
     public void Update(RenderContext ctx)
     {
-        ctx.Cmd.UpdateBuffer(ctx.Resources.GetBuffer("camera"), 0, _data);
+        ctx.Cmd.UpdateBuffer(ctx.Resources.GetBuffer(Pathetic.App.Resources.Camera), 0, _data);
     }
 }

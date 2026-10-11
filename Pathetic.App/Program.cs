@@ -30,12 +30,12 @@ ServiceProvider ConfigureServices()
         passes.AddPass<CirclesPass>();
         passes.AddPass<PathTracerPass>();
         passes.AddPass<TemporalAccumulationPass>();
-        passes.Present("color");
+        passes.Present(Resources.Color);
     }, primitives =>
     {
-        primitives.Register<SpherePrimitive>("spheres");
-        primitives.Register<PlanePrimitive>("planes");
-        primitives.Register<CirclePrimitive>("circlePrimitives");
+        primitives.Register<SpherePrimitive>(Resources.Spheres);
+        primitives.Register<PlanePrimitive>(Resources.Planes);
+        primitives.Register<CirclePrimitive>(Resources.CirclePrimitives);
     });
     
     services.AddSingleton<TemporalAccumulationSettings>();
