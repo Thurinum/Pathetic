@@ -3,7 +3,7 @@ using Pathetic.Renderer.Resources;
 
 namespace Pathetic.Renderer.Graph;
 
-public sealed class RenderContext
+public readonly record struct RenderContext
 {
     public required CommandList Cmd { get; init; }
     public required Texture Target { get; init; }
