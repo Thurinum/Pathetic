@@ -94,8 +94,8 @@ public class PrimitiveBuffer<T> : IPrimitiveBuffer where T : unmanaged
 
     public bool IsDirty(int idx)
     {
-        if (idx < 0 || idx >= Count)
-            throw new ArgumentOutOfRangeException(nameof(idx));
+        ArgumentOutOfRangeException.ThrowIfNegative(idx);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(idx, Count);
         
         return _dirtiness[idx];
     }
