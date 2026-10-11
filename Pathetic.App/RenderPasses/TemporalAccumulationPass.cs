@@ -4,7 +4,7 @@ using Pathetic.Renderer.Resources;
 
 namespace Pathetic.App.RenderPasses;
 
-public sealed class TemporalAccumulationPass : RenderPass
+public sealed class TemporalAccumulationPass(TemporalAccumulationSettings settings) : RenderPass
 {
     private struct Params
     {
@@ -12,9 +12,7 @@ public sealed class TemporalAccumulationPass : RenderPass
     }
 
     private uint _lastRevision = uint.MaxValue;
-
-    public bool Accumulate { get; set; } = true;
-
+    
     public override string ShaderModule => "TemporalAccumulation";
 
     public override IReadOnlyList<IResourceSpec> Outputs { get; } =
@@ -33,7 +31,7 @@ public sealed class TemporalAccumulationPass : RenderPass
 
     protected override void Upload(RenderContext ctx)
     {
-        bool reset = !Accumulate || ctx.SceneRevision != _lastRevision;
+        bool reset = !settings.IsEnabled || ctx.SceneRevision != _lastRevision;
         _lastRevision = ctx.SceneRevision;
 
         Params @params = new() { Reset = reset ? 1u : 0u };

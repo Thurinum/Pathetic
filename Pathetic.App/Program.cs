@@ -37,6 +37,8 @@ ServiceProvider ConfigureServices()
         primitives.Register<PlanePrimitive>("planes");
         primitives.Register<CirclePrimitive>("circlePrimitives");
     });
+    
+    services.AddSingleton<TemporalAccumulationSettings>();
     services.AddRenderResourceProvider<CameraProvider>();
     services.AddSceneGraph();
     services.AddSingleton<App>(); 
