@@ -29,9 +29,10 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Update="Shaders/**/*">
+        <None Remove="Shaders/**/*" />
+        <Content Include="Shaders/**/*">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
+        </Content>
     </ItemGroup>
 
 </Project>
