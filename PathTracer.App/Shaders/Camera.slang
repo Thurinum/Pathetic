@@ -1,6 +1,7 @@
 module Camera;
 
 import Random;
+import Environment;
 
 static const float Pi = 3.14159265358979323846;
 
@@ -16,12 +17,6 @@ public struct Camera
     float ApertureRadius;
 };
        
-public struct Ray
-{
-    public float3 Origin;
-    public float3 Direction;
-}
-
 public Ray BuildPrimaryRay(Camera camera, inout Rng rng, uint2 pixel, uint2 frameSize, float2 jitter)
 {
     float2 screenUV  = (float2(pixel) + jitter) / float2(frameSize);

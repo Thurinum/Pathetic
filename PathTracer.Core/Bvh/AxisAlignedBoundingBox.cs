@@ -28,18 +28,4 @@ public readonly record struct AxisAlignedBoundingBox(Vector3 Min, Vector3 Max)
         }
     }
 
-    public bool Intersect(Vector3 origin, Vector3 direction, float travelMin, float travelMax)
-    {
-        var inverseDirection = Vector3.One / direction;
-        var travel0 = (Min - origin) * inverseDirection;
-        var travel1 = (Max - origin) * inverseDirection;
-
-        var near = Vector3.Min(travel0, travel1);
-        var far = Vector3.Max(travel0, travel1);
-
-        travelMin = MathF.Max(travelMin, MathF.Max(near.X, MathF.Max(near.Y, near.Z)));
-        travelMax = MathF.Min(travelMax, MathF.Min(far.X, MathF.Min(far.Y, far.Z)));
-
-        return travelMax >= travelMin;
-    }
 }

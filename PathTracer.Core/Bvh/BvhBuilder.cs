@@ -45,12 +45,31 @@ public sealed class BvhBuilder
 
         var middle = primitives.Count / 2;
 
-        return new BvhNode
+        if (NumberOfLevelsBelow(primitives.Count) > 3)
         {
-            Bounds = bounds,
-            Left = BuildRecursive(primitives.GetRange(0, middle)),
-            Right = BuildRecursive(primitives.GetRange(middle, primitives.Count - middle))
-        };
+            BvhNode leftNode = null;
+            BvhNode rightNode = null;
+
+            Parallel.Invoke(
+                () => leftNode = BuildRecursive(primitives.GetRange(0, middle)),
+                () => rightNode = BuildRecursive(primitives.GetRange(middle, primitives.Count - middle))
+            );
+
+            return new BvhNode
+            {
+                Bounds = bounds,
+                Left = leftNode,
+                Right = rightNode
+            };
+        } else
+        {
+            return new BvhNode
+            {
+                Bounds = bounds,
+                Left = BuildRecursive(primitives.GetRange(0, middle)),
+                Right = BuildRecursive(primitives.GetRange(middle, primitives.Count - middle)),
+            };
+        }
     }
 
     private static int LargestAxis(Vector3 extent)
@@ -59,5 +78,10 @@ public sealed class BvhBuilder
             return 0;
 
         return extent.Y >= extent.Z ? 1 : 2;
+    }
+
+    private static int NumberOfLevelsBelow(int numPrimitives)
+    {
+        return (int)Math.Floor(Math.Log2((float)numPrimitives / MaxLeafSize));
     }
 }
