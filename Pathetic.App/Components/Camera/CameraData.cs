@@ -7,7 +7,7 @@ namespace Pathetic.App.Components.Camera;
 public record struct CameraData
 {
     public Vector3 Origin;
-    public float AspectRatio;
+    public float _Pad;
     
     public Vector3 Up;
     public float TanHalfFOV;

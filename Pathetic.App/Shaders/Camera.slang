@@ -7,7 +7,7 @@ static const float Pi = 3.14159265358979323846;
 public struct Camera
 {
     public float3 Origin;    
-    public float Aspect;
+    public float _Pad;
     public float3 Up;        
     public float TanHalfFov;
     public float3 Right;     
@@ -24,8 +24,9 @@ public struct Ray
 
 public Ray BuildPrimaryRay(Camera camera, inout Rng rng, uint2 pixel, uint2 frameSize, float2 jitter)
 {
+    float aspect = frameSize.x / (float)frameSize.y;
     float2 screenUV  = (float2(pixel) + jitter) / float2(frameSize);
-    float viewPlaneX = (2.0 * screenUV.x - 1.0) * camera.Aspect * camera.TanHalfFov;
+    float viewPlaneX = (2.0 * screenUV.x - 1.0) * aspect * camera.TanHalfFov;
     float viewPlaneY = (1.0 - 2.0 * screenUV.y) * camera.TanHalfFov;
     
     // camera space -> world space (lineair combination, orthonormal basis)

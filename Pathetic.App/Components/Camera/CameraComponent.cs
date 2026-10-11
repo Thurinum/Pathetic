@@ -1,11 +1,9 @@
 ﻿using System.Numerics;
-using Microsoft.Extensions.Options;
-using Pathetic.Renderer;
 using Pathetic.SceneGraph;
 
 namespace Pathetic.App.Components.Camera;
 
-public class CameraComponent(CameraProvider provider, IOptions<EngineOptions> options) : Component
+public class CameraComponent(CameraProvider provider) : Component
 {
     private Transform _transform = null!;
     public float FovDegrees { get; } = 80.0f;
@@ -19,14 +17,12 @@ public class CameraComponent(CameraProvider provider, IOptions<EngineOptions> op
 
     public override void LateUpdate(float deltaTime)
     {
-        float aspectRatio = (float)options.Value.WindowWidth / options.Value.WindowHeight;
         float fovRadians = MathF.PI / 180.0f * FovDegrees;
         float tanHalfFovRad = MathF.Tan(fovRadians * 0.5f);
         
         CameraData cameraData = new()
         {
             Origin = _transform.Position,
-            AspectRatio = aspectRatio,
             TanHalfFOV = tanHalfFovRad,
             ApertureRadius = ApertureRadius,
             FocusDistance = FocusDistance,
