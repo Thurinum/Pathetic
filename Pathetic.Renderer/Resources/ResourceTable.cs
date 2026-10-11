@@ -120,9 +120,6 @@ internal sealed class ResourceTable : IResourceAccessor, IDisposable
         return Get(name, owner) as T ?? throw new NullReferenceException($"{name} is not a {typeof(T)}");
     } 
     
-    public Texture GetTexture(string name, RenderPass? owner = null) => Get<Texture>(name, owner);
-    public DeviceBuffer GetBuffer(string name, RenderPass? owner = null) => Get<DeviceBuffer>(name, owner);
-
     public bool Has(string name, RenderPass? owner = null)
     {
         return Has<BindableResource>(name, owner);

@@ -65,7 +65,7 @@ public sealed class RenderGraph(
             }
         }
 
-        var presentTexture = _resources.GetTexture(graphBuilder.PresentTextureName!);
+        var presentTexture = _resources.Get<Texture>(graphBuilder.PresentTextureName!);
         ctx.Cmd.CopyTexture(presentTexture, ctx.Target);
 
         _frameIndex++;
@@ -132,7 +132,7 @@ public sealed class RenderGraph(
         if (!_resources.Has<Texture>(graphBuilder.PresentTextureName))
             throw new InvalidOperationException($"Present texture {graphBuilder.PresentTextureName} isn't a valid resource.");
         
-        if (_resources.GetTexture(graphBuilder.PresentTextureName).Format != framebuffer.ColorTargets[0].Target.Format)
+        if (_resources.Get<Texture>(graphBuilder.PresentTextureName).Format != framebuffer.ColorTargets[0].Target.Format)
             throw new InvalidOperationException($"Present tex {graphBuilder.PresentTextureName} must have same format as the swapchain.");
     }
 
