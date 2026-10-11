@@ -11,7 +11,7 @@ struct Params
 
 RWTexture2D<float4> circles;
 StructuredBuffer<Circle> circlePrimitives;
-ConstantBuffer<Params> circlesParams;
+ConstantBuffer<Params> params;
 
 [shader("compute")]
 [numthreads(8, 8, 1)]
@@ -28,7 +28,7 @@ void main(uint3 dispatchThreadId : SV_DispatchThreadID)
     float3 color = float3(uv.x, uv.y, 0.5);
     
     float3 additive = 0.0;
-    for (uint i = 0; i < circlesParams.Count; ++i)
+    for (uint i = 0; i < params.Count; ++i)
     {
         Circle circle = circlePrimitives[i];
         float2 center = circle.Position01 * frameSize;

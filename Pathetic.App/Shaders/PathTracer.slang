@@ -21,19 +21,19 @@ SamplerState circlesSampler;
 ConstantBuffer<Camera> camera;
 StructuredBuffer<Plane> planes;
 StructuredBuffer<Sphere> spheres;
-ConstantBuffer<Params> pathTracerParams;
+ConstantBuffer<Params> params;
 
 float3 Trace(Ray ray, inout Rng rng)
 {
     float3 light = 0.0;
     float3 weight = 1.0;
 
-    for (uint bounce = 0; bounce <= pathTracerParams.MaxBounces; ++bounce)
+    for (uint bounce = 0; bounce <= params.MaxBounces; ++bounce)
     {
         float bestT = 1e30;
         HitResult bestHit = HitResult.Miss();
 
-        for (uint i = 0; i < pathTracerParams.SphereCount; ++i)
+        for (uint i = 0; i < params.SphereCount; ++i)
         {
             HitResult h = IntersectSphere(ray.Origin, ray.Direction, spheres[i].Center, spheres[i].Radius, 1e-4, bestT);
             if (h.IsHit()) { bestT = h.T; bestHit = h; bestHit.Index = i; }
@@ -50,7 +50,7 @@ float3 Trace(Ray ray, inout Rng rng)
         if (dot(bestHit.NormalExt, -ray.Direction) > 0.0)
             light += weight * UnpackRgb(spheres[bestHit.Index].Emission);
 
-        if (bounce == pathTracerParams.MaxBounces || all(albedo == 0.0))
+        if (bounce == params.MaxBounces || all(albedo == 0.0))
             break;
 
         float3 newDirection = RandomBounceDirection(bestHit.Normal, rng);
@@ -72,10 +72,10 @@ void main(uint3 dispatchThreadId : SV_DispatchThreadID)
     if (any(pixel >= frameSize))
         return;
     
-    Rng rng = Rng(pixel, pathTracerParams.Seed);
+    Rng rng = Rng(pixel, params.Seed);
     Accumulator accum = Accumulator();
 
-    for (uint k = 0; k < pathTracerParams.SamplesPerPixel; ++k)
+    for (uint k = 0; k < params.SamplesPerPixel; ++k)
     {
         float2 jitter = float2(rng.Next(), rng.Next());
         float3 C = Trace(BuildPrimaryRay(camera, rng, pixel, frameSize, jitter), rng);

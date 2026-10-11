@@ -21,7 +21,7 @@ public sealed class TemporalAccumulationPass(TemporalAccumulationSettings settin
             TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
         new TextureSpec("accumImage", PixelFormat.R32_G32_B32_A32_Float,
             TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
-        UniformBufferSpec.Of<Params>("accumParams"),
+        UniformBufferSpec.Of<Params>("params"),
     ];
 
     public override IReadOnlyList<ResourceRef> Inputs { get; } =
@@ -35,6 +35,6 @@ public sealed class TemporalAccumulationPass(TemporalAccumulationSettings settin
         _lastRevision = ctx.SceneRevision;
 
         Params @params = new() { Reset = reset ? 1u : 0u };
-        ctx.Cmd.UpdateBuffer(ctx.Resources.GetBuffer("accumParams", this), 0, @params);
+        ctx.Cmd.UpdateBuffer(ctx.Resources.GetBuffer("params", this), 0, @params);
     }
 }

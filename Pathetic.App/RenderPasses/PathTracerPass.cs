@@ -27,7 +27,7 @@ public sealed class PathTracerPass(IOptions<EngineOptions> options, PrimitiveReg
     public override IReadOnlyList<IResourceSpec> Outputs { get; } =
     [
         new TextureSpec("pathTracerColor", PixelFormat.R32_G32_B32_A32_Float, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
-        UniformBufferSpec.Of<Params>("pathTracerParams"),
+        UniformBufferSpec.Of<Params>("params"),
     ];
 
     public override IReadOnlyList<ResourceRef> Inputs { get; } =
@@ -53,6 +53,6 @@ public sealed class PathTracerPass(IOptions<EngineOptions> options, PrimitiveReg
             SamplesPerPixel = options.Value.SamplesPerPixel,
             MaxBounces = options.Value.MaxBounces,
         };
-        ctx.Cmd.UpdateBuffer(ctx.Resources.GetBuffer("pathTracerParams", this), 0, @params);
+        ctx.Cmd.UpdateBuffer(ctx.Resources.GetBuffer("params", this), 0, @params);
     }
 }
