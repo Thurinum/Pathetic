@@ -30,14 +30,14 @@ public class RenderGraphPipelineFactory(SlangCompiler compiler)
             Bindings = bindings,
             Pipeline = pso
         };
-        UpdateResourceSet(state, device, table);
+        UpdateResourceSet(state, pass, device, table);
         return state;
     }
 
-    public void UpdateResourceSet(PassRenderState state, GraphicsDevice device, IResourceAccessor table)
+    public void UpdateResourceSet(PassRenderState state, RenderPass owner, GraphicsDevice device, IResourceAccessor table)
     {
         state.Set?.Dispose();
-        BindableResource[] resources = state.Bindings.Select(b => table.Get(b.Name)).ToArray();
+        BindableResource[] resources = state.Bindings.Select(b => table.Get(b.Name, owner)).ToArray();
         ResourceSetDescription setDesc = new(state.Layout, resources);
         state.Set = device.ResourceFactory.CreateResourceSet(setDesc);
     }

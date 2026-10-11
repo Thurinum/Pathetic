@@ -11,12 +11,10 @@ public sealed class RenderGraphResource
         get;
         set
         {
-            Owner?.Dispose();
+            (field as IDisposable)?.Dispose();
             field = value;
-            Owner = value as IDisposable;
         }
     }
 
-    public IDisposable? Owner { get; private set; }
     public uint ElementCapacity;
 }

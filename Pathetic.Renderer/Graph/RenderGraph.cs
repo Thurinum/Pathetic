@@ -49,7 +49,7 @@ public sealed class RenderGraph(
         var reallocatedBindingNames = _resources.Reallocate(device, ctx.Cmd);
         foreach (var entry in GetPassesWithBindings(reallocatedBindingNames))
         {
-            stateFactory.UpdateResourceSet(entry.State!, device, _resources);
+            stateFactory.UpdateResourceSet(entry.State!, entry.Pass, device, _resources);
         }
         
         foreach (var provider in resourceProviders)
@@ -78,7 +78,7 @@ public sealed class RenderGraph(
         
         foreach (var entry in GetPassesWithBindings(resizedTextureNames))
         {
-            stateFactory.UpdateResourceSet(entry.State!, device, _resources);
+            stateFactory.UpdateResourceSet(entry.State!, entry.Pass, device, _resources);
         }
     }
 
@@ -112,7 +112,8 @@ public sealed class RenderGraph(
         {
             foreach (var output in entry.Pass.Outputs)
             {
-                _resources.Declare(output);
+                var resource = output is UniformBufferSpec ? entry.Pass : null;
+                _resources.Declare(output, resource);
             }
             foreach (var sampler in entry.Pass.Samplers)
             {

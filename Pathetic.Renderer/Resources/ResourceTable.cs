@@ -1,26 +1,29 @@
 ﻿using System.Diagnostics;
 using NeoVeldrid;
+using Pathetic.Renderer.Graph;
 using Pathetic.Renderer.Utils;
 
 namespace Pathetic.Renderer.Resources;
 
+internal readonly record struct ResourceKey(string Name, RenderPass? Owner);
+
 internal sealed class ResourceTable : IResourceAccessor, IDisposable
 {
-    private readonly Dictionary<string, RenderGraphResource> _resources = [];
+    private readonly Dictionary<ResourceKey, RenderGraphResource> _resources = [];
     private const int DynamicBufferDefaultElementCount = 256;
     private readonly HashSet<string> _reallocated = [];
     private readonly HashSet<string> _resized = [];
     private uint _lastWidth;
     private uint _lastHeight;
 
-    public void Declare(IResourceSpec spec)
+    public void Declare(IResourceSpec spec, RenderPass? owner = null)
     {
         var resource = new RenderGraphResource
         {
             Spec = spec
         };
 
-        if (!_resources.TryAdd(spec.Name, resource))
+        if (!_resources.TryAdd(new ResourceKey(spec.Name, owner), resource))
         {
             throw new ArgumentException($"Resource {spec.Name} already declared.");
         }
@@ -101,37 +104,43 @@ internal sealed class ResourceTable : IResourceAccessor, IDisposable
         return _resized;
     }
     
-    public BindableResource Get(string name)
+    public BindableResource Get(string name, RenderPass? owner = null)
     {
-        if (!_resources.TryGetValue(name, out RenderGraphResource? value))
+        if (owner is not null && _resources.TryGetValue(new ResourceKey(name, owner), out RenderGraphResource? owned))
+            return owned.Resource ?? throw new NullReferenceException($"Accessed resource at {name} but it is null.");
+
+        if (!_resources.TryGetValue(new ResourceKey(name, null), out RenderGraphResource? value))
             throw new ArgumentException($"No resource named {name} registered.");
         
         return value.Resource ?? throw new NullReferenceException($"Accessed resource at {name} but it is null.");
     }
 
-    public T Get<T>(string name) where T : class, BindableResource
+    public T Get<T>(string name, RenderPass? owner = null) where T : class, BindableResource
     {
-        return Get(name) as T ?? throw new NullReferenceException($"{name} is not a {typeof(T)}");
+        return Get(name, owner) as T ?? throw new NullReferenceException($"{name} is not a {typeof(T)}");
     } 
     
-    public Texture GetTexture(string name) => Get<Texture>(name);
-    public DeviceBuffer GetBuffer(string name) => Get<DeviceBuffer>(name);
+    public Texture GetTexture(string name, RenderPass? owner = null) => Get<Texture>(name, owner);
+    public DeviceBuffer GetBuffer(string name, RenderPass? owner = null) => Get<DeviceBuffer>(name, owner);
 
-    public bool Has(string name)
+    public bool Has(string name, RenderPass? owner = null)
     {
-        return Has<BindableResource>(name);
+        return Has<BindableResource>(name, owner);
     }
     
-    public bool Has<T>(string name) where T : BindableResource
+    public bool Has<T>(string name, RenderPass? owner = null) where T : BindableResource
     {
-        return _resources.TryGetValue(name, out var resource) && resource.Resource is T;
+        if (owner is not null && _resources.TryGetValue(new ResourceKey(name, owner), out var owned))
+            return owned.Resource is T;
+
+        return _resources.TryGetValue(new ResourceKey(name, null), out var shared) && shared.Resource is T;
     }
     
     public void Dispose()
     {
         foreach (var resource in _resources.Values)
         {
-            resource.Owner?.Dispose();
+            (resource.Resource as IDisposable)?.Dispose();
         }
     }
 

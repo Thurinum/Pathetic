@@ -53,6 +53,6 @@ public sealed class PathTracerPass(IOptions<EngineOptions> options, PrimitiveReg
             SamplesPerPixel = options.Value.SamplesPerPixel,
             MaxBounces = options.Value.MaxBounces,
         };
-        ctx.Cmd.UpdateBuffer(ctx.Resources.GetBuffer("pathTracerParams"), 0, @params);
+        ctx.Cmd.UpdateBuffer(ctx.Resources.GetBuffer("pathTracerParams", this), 0, @params);
     }
 }

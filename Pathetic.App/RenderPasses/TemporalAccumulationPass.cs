@@ -35,6 +35,6 @@ public sealed class TemporalAccumulationPass(TemporalAccumulationSettings settin
         _lastRevision = ctx.SceneRevision;
 
         Params @params = new() { Reset = reset ? 1u : 0u };
-        ctx.Cmd.UpdateBuffer(ctx.Resources.GetBuffer("accumParams"), 0, @params);
+        ctx.Cmd.UpdateBuffer(ctx.Resources.GetBuffer("accumParams", this), 0, @params);
     }
 }

@@ -31,6 +31,6 @@ public sealed class CirclesPass(PrimitiveRegistry primitives) : RenderPass
     protected override void Upload(RenderContext ctx)
     {
         Params @params = new() { Count = (uint)_circles.Count };
-        ctx.Cmd.UpdateBuffer(ctx.Resources.GetBuffer("circlesParams"), 0, @params);
+        ctx.Cmd.UpdateBuffer(ctx.Resources.GetBuffer("circlesParams", this), 0, @params);
     }
 }
