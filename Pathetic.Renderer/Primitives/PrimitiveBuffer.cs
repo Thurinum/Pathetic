@@ -111,12 +111,12 @@ public class PrimitiveBuffer<T>(string name) : IPrimitiveBuffer where T : unmana
         Array.Clear(_dirtiness, 0, Count);
     }
 
-    private void EnsureCapacity(int cunt)
+    private void EnsureCapacity(int count)
     {
-        if (cunt <= Capacity) 
+        if (count <= Capacity) 
             return;
         
-        int newSize = Math.Max(cunt, Capacity * 2);
+        int newSize = Math.Max(count, Capacity * 2);
         Array.Resize(ref _primitives, newSize);
         Array.Resize(ref _dirtiness, newSize);
         Array.Resize(ref _versions, newSize);
