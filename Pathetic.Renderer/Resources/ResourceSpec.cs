@@ -3,9 +3,6 @@ using NeoVeldrid;
 
 namespace Pathetic.Renderer.Resources;
 
-// inputs
-public sealed record ResourceRef(string Name, ResourceKind Kind);
-
 // outputs
 public interface IResourceSpec { string Name { get; } }
 public sealed record TextureSpec(string Name, PixelFormat Format, TextureUsage Usage, TextureSizePolicy SizePolicy) : IResourceSpec;

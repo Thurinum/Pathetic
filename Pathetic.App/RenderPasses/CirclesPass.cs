@@ -21,9 +21,9 @@ public sealed class CirclesPass(PrimitiveBuffer<CirclePrimitive> circles) : Rend
         UniformBufferSpec.Of<Params>(Resources.Params),
     ];
 
-    public override IReadOnlyList<ResourceRef> Inputs { get; } =
+    public override IReadOnlyList<string> Inputs { get; } =
     [
-        new(Resources.CirclePrimitives, ResourceKind.StructuredBufferReadOnly),
+        Resources.CirclePrimitives,
     ];
 
     protected override void Upload(RenderContext ctx)

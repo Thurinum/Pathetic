@@ -30,12 +30,12 @@ public sealed class PathTracerPass(
         UniformBufferSpec.Of<Params>(Resources.Params),
     ];
 
-    public override IReadOnlyList<ResourceRef> Inputs { get; } =
+    public override IReadOnlyList<string> Inputs { get; } =
     [
-        new(Resources.Circles, ResourceKind.TextureReadOnly),
-        new(Resources.Camera, ResourceKind.UniformBuffer),
-        new(Resources.Planes, ResourceKind.StructuredBufferReadOnly),
-        new(Resources.Spheres, ResourceKind.StructuredBufferReadOnly),
+        Resources.Circles,
+        Resources.Camera,
+        Resources.Planes,
+        Resources.Spheres,
     ];
 
     public override IReadOnlyList<SamplerSpec> Samplers { get; } =

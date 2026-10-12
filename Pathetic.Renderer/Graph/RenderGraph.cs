@@ -27,8 +27,9 @@ public sealed class RenderGraph(
         CreatePasses();
         CreateResources(device, device.SwapchainFramebuffer);
         ValidatePresentTexture(device.SwapchainFramebuffer);
-        ValidatePassInputs();
         BuildPassPipelines(device);
+        ValidatePassBindings();
+        BindPassResources(device);
     }
 
     public void Render(GraphicsDevice device, CommandList cmd, float deltaTime)
@@ -136,15 +137,51 @@ public sealed class RenderGraph(
             throw new InvalidOperationException($"Present tex {graphBuilder.PresentTextureName} must have same format as the swapchain.");
     }
 
-    private void ValidatePassInputs()
+    private void ValidatePassBindings()
     {
         foreach (var entry in _passes)
         {
+            string passName = entry.Pass.GetType().Name;
+            string shader = entry.Pass.ShaderModule;
+            var bindings = entry.State!.Bindings;
+
             foreach (var input in entry.Pass.Inputs)
             {
-                if (!_resources.Has(input.Name))
+                if (!_resources.Has(input))
                 {
-                    throw new InvalidOperationException($"Pass {entry.Pass.GetType().Name} has invalid input {input.Name}");
+                    throw new InvalidOperationException($"Pass {passName} has invalid input {input}.");
+                }
+
+                if (bindings.All(b => b.Name != input))
+                {
+                    throw new InvalidOperationException($"Pass {passName} declares input '{input}' that shader '{shader}' does not consume.");
+                }
+            }
+
+            foreach (var sampler in entry.Pass.Samplers)
+            {
+                if (bindings.All(b => b.Name != sampler.Name))
+                {
+                    throw new InvalidOperationException($"Pass {passName} declares sampler '{sampler.Name}' that shader '{shader}' does not consume.");
+                }
+
+                ResourceKind reflectedKind = bindings.First(b => b.Name == sampler.Name).Kind;
+                if (reflectedKind != ResourceKind.Sampler)
+                {
+                    throw new InvalidOperationException($"Pass {passName} sampler '{sampler.Name}': shader '{shader}' declares {reflectedKind}, expected {ResourceKind.Sampler}.");
+                }
+            }
+            
+            var declared = entry.Pass.Inputs
+                .Concat(entry.Pass.Outputs.Select(o => o.Name))
+                .Concat(entry.Pass.Samplers.Select(s => s.Name))
+                .ToHashSet(StringComparer.Ordinal);
+
+            foreach (var binding in bindings)
+            {
+                if (!declared.Contains(binding.Name))
+                {
+                    throw new InvalidOperationException($"Pass {passName} shader '{shader}' binds '{binding.Name}', which the pass does not declare as an Input, Output, or Sampler.");
                 }
             }
         }
@@ -154,7 +191,15 @@ public sealed class RenderGraph(
     {
         foreach (var entry in _passes)
         {
-            entry.State = stateFactory.Build(device, entry.Pass, _resources);
+            entry.State = stateFactory.Build(device, entry.Pass);
+        }
+    }
+
+    private void BindPassResources(GraphicsDevice device)
+    {
+        foreach (var entry in _passes)
+        {
+            RenderGraphPipelineFactory.UpdateResourceSet(entry.State!, entry.Pass, device, _resources);
         }
     }
 

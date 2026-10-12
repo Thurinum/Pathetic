@@ -4,9 +4,9 @@ using Pathetic.Renderer.Shaders;
 
 namespace Pathetic.Renderer.Graph;
 
-public class RenderGraphPipelineFactory(SlangCompiler compiler)
+public sealed class RenderGraphPipelineFactory(SlangCompiler compiler)
 {
-    public PassRenderState Build(GraphicsDevice device, RenderPass pass, IResourceAccessor table)
+    public PassRenderState Build(GraphicsDevice device, RenderPass pass)
     {
         ShaderCompilationResult compiled = compiler.CompileComputeShader(pass.ShaderModule);
         ShaderDescription shaderDesc = new(ShaderStages.Compute, compiled.Code, SlangCompiler.EntryPointName);
@@ -30,7 +30,6 @@ public class RenderGraphPipelineFactory(SlangCompiler compiler)
             Bindings = bindings,
             Pipeline = pso
         };
-        UpdateResourceSet(state, pass, device, table);
         return state;
     }
 

@@ -23,9 +23,9 @@ public sealed class TemporalAccumulationPass(IOptions<TemporalAccumulationOption
         UniformBufferSpec.Of<Params>(Resources.Params),
     ];
 
-    public override IReadOnlyList<ResourceRef> Inputs { get; } =
+    public override IReadOnlyList<string> Inputs { get; } =
     [
-        new(Resources.PathTracerColor, ResourceKind.TextureReadOnly),
+        Resources.PathTracerColor,
     ];
 
     protected override void Upload(RenderContext ctx)

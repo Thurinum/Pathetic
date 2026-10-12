@@ -9,7 +9,7 @@ public abstract class RenderPass
     public abstract string ShaderModule { get; }
 
     public virtual IReadOnlyList<IResourceSpec> Outputs => [];
-    public virtual IReadOnlyList<ResourceRef> Inputs => [];
+    public virtual IReadOnlyList<string> Inputs => [];
     public virtual IReadOnlyList<SamplerSpec> Samplers => [];
 
     protected virtual void Upload(RenderContext ctx) {}
