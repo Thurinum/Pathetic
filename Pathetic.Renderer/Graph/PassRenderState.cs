@@ -9,7 +9,7 @@ public sealed class PassRenderState : IDisposable
     public required ResourceLayoutElementDescription[] Bindings { get; init; }
     public ResourceSet? Set { get; set; }
     public required Pipeline Pipeline { get; init; }
-    public required uint3 ThreadGroupSize { get; init; }
+    public required UIntVector3 ThreadGroupSize { get; init; }
 
     public void Dispose()
     {

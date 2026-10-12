@@ -4,16 +4,14 @@ namespace Pathetic.Renderer.Utils;
 
 public static class QuaternionExtensions
 {
-    extension(Quaternion quat)
+    extension(Quaternion)
     {
         public static Quaternion FromEuler(Vector3 degrees)
         {
-            return Quaternion.CreateFromYawPitchRoll(ToRad(degrees.Y), ToRad(degrees.X), ToRad(degrees.Z));
-
-            float ToRad(float deg)
-            {
-                return MathF.PI / 180.0f * deg;
-            }
+            return Quaternion.CreateFromYawPitchRoll(
+                float.DegreesToRadians(degrees.Y),
+                float.DegreesToRadians(degrees.X),
+                float.DegreesToRadians(degrees.Z));
         }
     }
 }

@@ -26,8 +26,8 @@ public class CameraControls : Component
     {
         AzimuthDegrees += Speed * deltaTime;
         
-        float a = MathF.PI / 180.0f * AzimuthDegrees;
-        float e = MathF.PI / 180.0f * ElevationDegrees;
+        float a = float.DegreesToRadians(AzimuthDegrees);
+        float e = float.DegreesToRadians(ElevationDegrees);
         
         // unit circle
         Vector3 dir = new(

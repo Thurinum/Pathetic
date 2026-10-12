@@ -25,10 +25,10 @@ public abstract class RenderPass
         ctx.Cmd.Dispatch(x, y, z);
     }
     
-    private static uint3 ComputeThreadGroupCount(uint3 groupSize, uint width, uint height)
+    private static UIntVector3 ComputeThreadGroupCount(UIntVector3 groupSize, uint width, uint height)
     {
-        uint x = (width + groupSize.x - 1) / groupSize.x;
-        uint y = (height + groupSize.y - 1) / groupSize.y;
+        uint x = (width + groupSize.X - 1) / groupSize.X;
+        uint y = (height + groupSize.Y - 1) / groupSize.Y;
         return (x, y, 1);
     }
 }

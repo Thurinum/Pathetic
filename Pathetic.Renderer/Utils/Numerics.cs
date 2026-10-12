@@ -1,12 +1,11 @@
-﻿// ReSharper disable InconsistentNaming
-namespace Pathetic.Renderer.Utils;
+﻿namespace Pathetic.Renderer.Utils;
 
-public readonly record struct uint2(uint x, uint y)
+public readonly record struct UIntVector2(uint X, uint Y)
 {
-    public static implicit operator uint2((uint x, uint y) value) => new(value.x, value.y);
+    public static implicit operator UIntVector2((uint x, uint y) value) => new(value.x, value.y);
 }
 
-public readonly record struct uint3(uint x, uint y, uint z)
+public readonly record struct UIntVector3(uint X, uint Y, uint Z)
 {
-    public static implicit operator uint3((uint x, uint y, uint z) value) => new(value.x, value.y, value.z);
+    public static implicit operator UIntVector3((uint x, uint y, uint z) value) => new(value.x, value.y, value.z);
 }

@@ -17,7 +17,7 @@ public class CameraComponent(CameraProvider provider) : Component
 
     public override void LateUpdate(float deltaTime)
     {
-        float fovRadians = MathF.PI / 180.0f * FovDegrees;
+        float fovRadians = float.DegreesToRadians(FovDegrees);
         float tanHalfFovRad = MathF.Tan(fovRadians * 0.5f);
         
         CameraData cameraData = new()

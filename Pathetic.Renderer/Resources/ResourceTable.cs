@@ -149,7 +149,7 @@ internal sealed class ResourceTable : IResourceAccessor, IDisposable
     
     private static Texture CreateTexture(GraphicsDevice device, TextureSpec spec, uint framebufferWidth, uint framebufferHeight)
     {
-        uint2 size = spec.SizePolicy switch
+        UIntVector2 size = spec.SizePolicy switch
         {
             ExplicitSize s => (s.Width, s.Height),
             AutoSize       => (framebufferWidth, framebufferHeight),
@@ -158,8 +158,8 @@ internal sealed class ResourceTable : IResourceAccessor, IDisposable
 
         return device.ResourceFactory.CreateTexture(new TextureDescription
         {
-            Width = size.x, 
-            Height = size.y, 
+            Width = size.X, 
+            Height = size.Y, 
             Depth = 1,
             MipLevels = 1, 
             ArrayLayers = 1,

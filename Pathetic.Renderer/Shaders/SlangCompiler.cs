@@ -8,7 +8,7 @@ namespace Pathetic.Renderer.Shaders;
 public readonly record struct ShaderBinding(string Name, ResourceKind Kind, uint BindingIndex, uint BindingSpace);
 public readonly record struct ShaderCompilationResult(
     byte[] Code,
-    uint3 GroupSize,
+    UIntVector3 GroupSize,
     IReadOnlyList<ShaderBinding> Reflection);
 
 public sealed class SlangCompiler
