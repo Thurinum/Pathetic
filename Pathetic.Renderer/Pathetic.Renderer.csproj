@@ -14,7 +14,7 @@
       <PackageReference Include="NeoVeldrid" Version="1.2.1" />
       <PackageReference Include="NeoVeldrid.ImGui" Version="1.2.1" />
       <PackageReference Include="NeoVeldrid.StartupUtilities" Version="1.2.1" />
-      <PackageReference Include="Prowl.Slang" Version="3.6.8" />
+      <PackageReference Include="Prowl.Slang" Version="3.7.2" />
     </ItemGroup>
 
 </Project>
