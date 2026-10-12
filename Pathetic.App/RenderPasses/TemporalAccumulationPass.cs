@@ -1,10 +1,11 @@
+using Microsoft.Extensions.Options;
 using NeoVeldrid;
 using Pathetic.Renderer.Graph;
 using Pathetic.Renderer.Resources;
 
 namespace Pathetic.App.RenderPasses;
 
-public sealed class TemporalAccumulationPass(TemporalAccumulationSettings settings) : RenderPass
+public sealed class TemporalAccumulationPass(IOptions<TemporalAccumulationOptions> options) : RenderPass
 {
     private struct Params
     {
@@ -29,7 +30,7 @@ public sealed class TemporalAccumulationPass(TemporalAccumulationSettings settin
 
     protected override void Upload(RenderContext ctx)
     {
-        bool reset = !settings.IsEnabled || ctx.SceneRevision != _lastRevision;
+        bool reset = !options.Value.Enabled || ctx.SceneRevision != _lastRevision;
         _lastRevision = ctx.SceneRevision;
 
         Params @params = new() { Reset = reset ? 1u : 0u };

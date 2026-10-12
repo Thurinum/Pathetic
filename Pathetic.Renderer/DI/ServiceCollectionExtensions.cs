@@ -17,12 +17,9 @@ public static class ServiceCollectionExtensions
         }
         
         public IServiceCollection AddRenderer(
-            Action<EngineOptions> configureOptions,
             Action<RenderGraphBuilder> configurePasses,
             Action<PrimitiveBuilder>? configurePrimitives = null)
         {
-            services.Configure(configureOptions);
-            
             var passSelector = new RenderGraphBuilder();
             configurePasses(passSelector);
             services.AddSingleton(passSelector);

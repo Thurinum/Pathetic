@@ -17,7 +17,7 @@ public sealed class RenderBackend : IDisposable
     public bool Shown => _window.Exists;
 
     public RenderBackend(
-        IOptions<EngineOptions> options,
+        IOptions<RendererOptions> options,
         RenderGraph graph,
         ILogger<RenderBackend> logger)
     {
@@ -29,7 +29,7 @@ public sealed class RenderBackend : IDisposable
             Y = config.Y,
             WindowWidth = (int)config.WindowWidth,
             WindowHeight = (int)config.WindowHeight,
-            WindowTitle = config.AppName
+            WindowTitle = config.WindowTitle
         };
 
         GraphicsDeviceOptions deviceOptions = new()

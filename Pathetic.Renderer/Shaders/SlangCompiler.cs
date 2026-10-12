@@ -11,13 +11,13 @@ public readonly record struct ShaderCompilationResult(
     uint3 GroupSize,
     IReadOnlyList<ShaderBinding> Reflection);
 
-public class SlangCompiler
+public sealed class SlangCompiler
 {
-    private readonly EngineOptions _options;
+    private readonly RendererOptions _options;
     private readonly Session _session;
     public const string EntryPointName = "main";
 
-    public SlangCompiler(IOptions<EngineOptions> options)
+    public SlangCompiler(IOptions<RendererOptions> options)
     {
         _options = options.Value;
         

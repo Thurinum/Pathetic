@@ -9,7 +9,7 @@ using Pathetic.Renderer.Resources;
 namespace Pathetic.App.RenderPasses;
 
 public sealed class PathTracerPass(
-    IOptions<EngineOptions> options,
+    IOptions<PathTracerOptions> options,
     PrimitiveBuffer<PlanePrimitive> planes,
     PrimitiveBuffer<SpherePrimitive> spheres) : RenderPass
 {
