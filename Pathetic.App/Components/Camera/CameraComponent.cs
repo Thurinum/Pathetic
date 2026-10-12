@@ -7,8 +7,8 @@ public class CameraComponent(CameraProvider provider) : Component
 {
     private Transform _transform = null!;
     public float FovDegrees { get; } = 80.0f;
-    public float FocusDistance = 5.0f;
-    public float ApertureRadius = 0.15f;
+    public float FocusDistance { get; set; } = 5.0f;
+    public float ApertureRadius { get; set; } = 0.15f;
 
     public override void Awake()
     {

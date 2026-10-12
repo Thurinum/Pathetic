@@ -34,10 +34,10 @@ public class RenderGraphPipelineFactory(SlangCompiler compiler)
         return state;
     }
 
-    public void UpdateResourceSet(PassRenderState state, RenderPass owner, GraphicsDevice device, IResourceAccessor table)
+    public static void UpdateResourceSet(PassRenderState state, RenderPass owner, GraphicsDevice device, IResourceAccessor table)
     {
         state.Set?.Dispose();
-        BindableResource[] resources = state.Bindings.Select(b => table.Get(b.Name, owner)).ToArray();
+        BindableResource[] resources = state.Bindings.Select(b => table.GetResource(b.Name, owner)).ToArray();
         ResourceSetDescription setDesc = new(state.Layout, resources);
         state.Set = device.ResourceFactory.CreateResourceSet(setDesc);
     }

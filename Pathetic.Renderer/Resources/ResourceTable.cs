@@ -104,20 +104,20 @@ internal sealed class ResourceTable : IResourceAccessor, IDisposable
         return _resized;
     }
     
-    public BindableResource Get(string name, RenderPass? owner = null)
+    public BindableResource GetResource(string name, RenderPass? owner = null)
     {
         if (owner is not null && _resources.TryGetValue(new ResourceKey(name, owner), out RenderGraphResource? owned))
-            return owned.Resource ?? throw new NullReferenceException($"Accessed resource at {name} but it is null.");
+            return owned.Resource ?? throw new InvalidOperationException($"Accessed resource at {name} but it is null.");
 
         if (!_resources.TryGetValue(new ResourceKey(name, null), out RenderGraphResource? value))
             throw new ArgumentException($"No resource named {name} registered.");
         
-        return value.Resource ?? throw new NullReferenceException($"Accessed resource at {name} but it is null.");
+        return value.Resource ?? throw new InvalidOperationException($"Accessed resource at {name} but it is null.");
     }
 
-    public T Get<T>(string name, RenderPass? owner = null) where T : class, BindableResource
+    public T GetResource<T>(string name, RenderPass? owner = null) where T : class, BindableResource
     {
-        return Get(name, owner) as T ?? throw new NullReferenceException($"{name} is not a {typeof(T)}");
+        return GetResource(name, owner) as T ?? throw new InvalidOperationException($"{name} is not a {typeof(T)}");
     } 
     
     public bool Has(string name, RenderPass? owner = null)

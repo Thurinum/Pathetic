@@ -3,10 +3,10 @@ using Pathetic.Renderer.Resources;
 
 namespace Pathetic.Renderer.Graph;
 
-public class PassEntry(RenderPass pass)
+public sealed class PassEntry(RenderPass pass)
 {
-    public RenderPass Pass = pass;
-    public PassRenderState? State;
+    public RenderPass Pass { get; } = pass;
+    public PassRenderState? State { get; set; }
 }
 
 public sealed class RenderGraph(
@@ -18,7 +18,7 @@ public sealed class RenderGraph(
 {
     private readonly ResourceTable _resources = new();
     private readonly List<PassEntry> _passes = [];
-    private uint _frameIndex = 0;
+    private uint _frameIndex;
 
     public T? GetPass<T>() where T : RenderPass => _passes.Select(e => e.Pass).OfType<T>().SingleOrDefault();
 
@@ -49,7 +49,7 @@ public sealed class RenderGraph(
         var reallocatedBindingNames = _resources.Reallocate(device, ctx.Cmd);
         foreach (var entry in GetPassesWithBindings(reallocatedBindingNames))
         {
-            stateFactory.UpdateResourceSet(entry.State!, entry.Pass, device, _resources);
+            RenderGraphPipelineFactory.UpdateResourceSet(entry.State!, entry.Pass, device, _resources);
         }
         
         foreach (var provider in resourceProviders)
@@ -65,7 +65,7 @@ public sealed class RenderGraph(
             }
         }
 
-        var presentTexture = _resources.Get<Texture>(graphBuilder.PresentTextureName!);
+        var presentTexture = _resources.GetResource<Texture>(graphBuilder.PresentTextureName!);
         ctx.Cmd.CopyTexture(presentTexture, ctx.Target);
 
         _frameIndex++;
@@ -78,7 +78,7 @@ public sealed class RenderGraph(
         
         foreach (var entry in GetPassesWithBindings(resizedTextureNames))
         {
-            stateFactory.UpdateResourceSet(entry.State!, entry.Pass, device, _resources);
+            RenderGraphPipelineFactory.UpdateResourceSet(entry.State!, entry.Pass, device, _resources);
         }
     }
 
@@ -132,7 +132,7 @@ public sealed class RenderGraph(
         if (!_resources.Has<Texture>(graphBuilder.PresentTextureName))
             throw new InvalidOperationException($"Present texture {graphBuilder.PresentTextureName} isn't a valid resource.");
         
-        if (_resources.Get<Texture>(graphBuilder.PresentTextureName).Format != framebuffer.ColorTargets[0].Target.Format)
+        if (_resources.GetResource<Texture>(graphBuilder.PresentTextureName).Format != framebuffer.ColorTargets[0].Target.Format)
             throw new InvalidOperationException($"Present tex {graphBuilder.PresentTextureName} must have same format as the swapchain.");
     }
 

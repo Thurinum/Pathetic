@@ -7,7 +7,7 @@ public class SceneManager(ComponentFactory componentFactory)
         return new Scene(componentFactory);
     }
     
-    public SceneObject CreateObject(Scene scene, string name)
+    public static SceneObject CreateObject(Scene scene, string name)
     {
         var obj = new SceneObject
         {
@@ -19,7 +19,7 @@ public class SceneManager(ComponentFactory componentFactory)
         return obj;
     }
 
-    public void DestroyObject(Scene scene, SceneObject obj)
+    public static void DestroyObject(Scene scene, SceneObject obj)
     {
         if (obj.IsPendingDestroy)
             return;

@@ -4,7 +4,7 @@ namespace Pathetic.Renderer.Resources;
 
 public sealed class RenderGraphResource
 {
-    public required IResourceSpec Spec;
+    public required IResourceSpec Spec { get; set; }
 
     public BindableResource? Resource
     {
@@ -16,5 +16,5 @@ public sealed class RenderGraphResource
         }
     }
 
-    public uint ElementCapacity;
+    public uint ElementCapacity { get; set; }
 }

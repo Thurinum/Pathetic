@@ -3,7 +3,7 @@
 namespace Pathetic.Renderer.Utils;
 
 // ReSharper disable InconsistentNaming
-public static class VectorExtensions
+public static class Vector2Extensions
 {
     extension(Vector2 v)
     {
@@ -37,6 +37,10 @@ public static class VectorExtensions
         public Vector4 YYYY => new(v.Y, v.Y, v.Y, v.Y);
     }
 
+}
+
+public static class Vector3Extensions
+{
     extension(Vector3 v)
     {
         public Vector2 XX => new(v.X, v.X);

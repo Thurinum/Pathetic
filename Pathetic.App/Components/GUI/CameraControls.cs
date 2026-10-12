@@ -12,9 +12,9 @@ public class CameraControls : Component
     
     public Vector3 Target { get; set; } = Vector3.Zero;
     public float Distance { get; set; } = 5.0f;
-    public float AzimuthDegrees { get; set; } = 0.0f;
+    public float AzimuthDegrees { get; set; }
     public float ElevationDegrees { get; set; }
-    public float Speed { get; set; } = 0;
+    public float Speed { get; set; }
 
     public override void Awake()
     {

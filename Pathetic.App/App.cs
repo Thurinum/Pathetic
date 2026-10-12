@@ -14,12 +14,10 @@ public class App(SceneLoop loop, SceneManager sceneManager)
     {
         var scene = sceneManager.CreateScene();
 
-        sceneManager
-            .CreateObject(scene, "fpsCounter")
+        SceneManager.CreateObject(scene, "fpsCounter")
             .AddComponent<FPSCounter>();
 
-        sceneManager
-            .CreateObject(scene, "youssefAimePasTemporalAccumFix")
+        SceneManager.CreateObject(scene, "youssefAimePasTemporalAccumFix")
             .AddComponent<RenderSettingsComponent>();
 
         AddSphere(scene, new Vector3(2.0f, -100.5f, 0.0f), 100.0f, Rgb(0.6f, 0.6f, 0.6f));
@@ -27,7 +25,7 @@ public class App(SceneLoop loop, SceneManager sceneManager)
         AddSphere(scene, new Vector3(1.3f, -0.3f, 0.9f), 0.2f, Rgb(0.2f, 0.6f, 0.9f));
         AddSphere(scene, new Vector3(-0.2f, 1.0f, 0.0f), 0.7f, Rgb(0.0f, 0.0f, 0.0f), new RgbaByte(15, 12, 9, 255));
         
-        var camera = sceneManager.CreateObject(scene, "camera");
+        var camera = SceneManager.CreateObject(scene, "camera");
         camera.AddComponent<CameraComponent>();
         var t = camera.GetComponent<Transform>();
         t.Position = new Vector3(0, 5, 10);
@@ -49,9 +47,9 @@ public class App(SceneLoop loop, SceneManager sceneManager)
         loop.Run(scene);
     }
     
-    private void AddPlane(Scene scene, Vector3 pos, Quaternion rot)
+    private static void AddPlane(Scene scene, Vector3 pos, Quaternion rot)
     {
-        var obj = sceneManager.CreateObject(scene, "plane");
+        var obj = SceneManager.CreateObject(scene, "plane");
         var trans = obj.GetComponent<Transform>();
         trans.Position = pos;
         trans.Rotation = rot;
@@ -66,9 +64,9 @@ public class App(SceneLoop loop, SceneManager sceneManager)
     private static RgbaByte Rgb(float r, float g, float b) =>
         new((byte)MathF.Round(r * 255.0f), (byte)MathF.Round(g * 255.0f), (byte)MathF.Round(b * 255.0f), 255);
 
-    private void AddSphere(Scene scene, Vector3 position, float radius, RgbaByte albedo, RgbaByte emission = default)
+    private static void AddSphere(Scene scene, Vector3 position, float radius, RgbaByte albedo, RgbaByte emission = default)
     {
-        var obj = sceneManager.CreateObject(scene, "sphere");
+        var obj = SceneManager.CreateObject(scene, "sphere");
 
         obj.Transform.Position = position;
 
@@ -78,9 +76,9 @@ public class App(SceneLoop loop, SceneManager sceneManager)
         sphere.Emission = emission;
     }
     
-    private void AddCircle(Scene scene, float r, float x, float y)
+    private static void AddCircle(Scene scene, float r, float x, float y)
     {
-        var obj = sceneManager.CreateObject(scene, "circle");
+        var obj = SceneManager.CreateObject(scene, "circle");
 
         obj.Transform.Position = new Vector3(x, y, 0.0f);
         

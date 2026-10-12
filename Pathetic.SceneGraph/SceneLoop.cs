@@ -48,7 +48,7 @@ public class SceneLoop(RenderBackend backend)
         _lastTimestamp = Stopwatch.GetTimestamp();
     }
     
-    private void AwakeComponents(Scene scene)
+    private static void AwakeComponents(Scene scene)
     {
         foreach (var obj in scene.Objects)
         {
@@ -59,7 +59,7 @@ public class SceneLoop(RenderBackend backend)
         }   
     }
     
-    private void StartComponents(Scene scene)
+    private static void StartComponents(Scene scene)
     {
         foreach (var obj in scene.Objects)
         {
@@ -92,7 +92,7 @@ public class SceneLoop(RenderBackend backend)
         }   
     }
 
-    private void GUIComponents(Scene scene)
+    private static void GUIComponents(Scene scene)
     {
         foreach (var obj in scene.Objects)
         {
@@ -103,7 +103,7 @@ public class SceneLoop(RenderBackend backend)
         }   
     }
 
-    private void DestroyComponents(Scene scene)
+    private static void DestroyComponents(Scene scene)
     {
         foreach (var obj in scene.Objects)
         {

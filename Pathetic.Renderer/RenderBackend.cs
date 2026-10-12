@@ -7,7 +7,7 @@ using Pathetic.Renderer.Graph;
 
 namespace Pathetic.Renderer;
 
-public sealed class RenderBackend : IDisposable
+public sealed partial class RenderBackend : IDisposable
 {
     private readonly Sdl2Window _window;
     private readonly GraphicsDevice _device;
@@ -48,7 +48,7 @@ public sealed class RenderBackend : IDisposable
             out _device
         );
         
-        logger.LogInformation($"Device: {_device.DeviceName} ({_device.VendorName})");
+        LogDevice(logger, _device.DeviceName, _device.VendorName);
 
         _window.Resized += OnWindowResized;
         _cmd = _device.ResourceFactory.CreateCommandList();
@@ -110,4 +110,7 @@ public sealed class RenderBackend : IDisposable
         _graph.Dispose();
         _device.Dispose();
     }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Device: {DeviceName} ({VendorName})")]
+    private static partial void LogDevice(ILogger logger, string deviceName, string vendorName);
 }
