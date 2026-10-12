@@ -93,7 +93,7 @@ public class PrimitiveBuffer<T>(string name) : IPrimitiveBuffer where T : unmana
         hndl = PrimitiveHandle.Invalid;
     }
 
-    public bool IsDirty(int idx)
+    private bool IsDirty(int idx)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(idx);
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(idx, Count);
@@ -101,12 +101,12 @@ public class PrimitiveBuffer<T>(string name) : IPrimitiveBuffer where T : unmana
         return _dirtiness[idx];
     }
     
-    public void MarkAllDirty()
+    private void MarkAllDirty()
     {
         Array.Fill(_dirtiness, true, 0, Count);
     }
 
-    public void ClearDirty()
+    private void ClearDirty()
     {
         Array.Clear(_dirtiness, 0, Count);
     }
