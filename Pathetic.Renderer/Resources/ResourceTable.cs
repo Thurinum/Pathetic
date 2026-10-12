@@ -183,8 +183,7 @@ internal sealed class ResourceTable : IResourceAccessor, IDisposable
     
     private static DeviceBuffer CreateDynamicBuffer(GraphicsDevice device, DynamicBufferSpec spec, RenderGraphResource entry, uint elementCapacity = 256)
     {
-        if (elementCapacity <= 0)
-            throw new ArgumentException("Element capacity must be greater than 0.");
+        ArgumentOutOfRangeException.ThrowIfZero(elementCapacity);
         
         entry.ElementCapacity = elementCapacity;
         var bufferDesc = new BufferDescription(spec.Stride * entry.ElementCapacity, BufferUsage.StructuredBufferReadOnly | BufferUsage.Dynamic, spec.Stride);
