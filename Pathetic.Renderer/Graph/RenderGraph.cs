@@ -20,8 +20,6 @@ public sealed class RenderGraph(
     private readonly List<PassEntry> _passes = [];
     private uint _frameIndex;
 
-    public T? GetPass<T>() where T : RenderPass => _passes.Select(e => e.Pass).OfType<T>().SingleOrDefault();
-
     public void Build(GraphicsDevice device)
     {
         CreatePasses();
