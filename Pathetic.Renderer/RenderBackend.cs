@@ -18,7 +18,8 @@ public sealed partial class RenderBackend : IDisposable
 
     public RenderBackend(
         IOptions<RendererOptions> options,
-        RenderGraph graph,
+        IOptions<RenderGraphSpec> graphSpec,
+        RenderGraphFactory graphFactory,
         ILogger<RenderBackend> logger)
     {
         var config = options.Value;
@@ -58,8 +59,7 @@ public sealed partial class RenderBackend : IDisposable
             _window.Width,
             _window.Height);
 
-        _graph = graph;
-        _graph.Build(_device);
+        _graph = graphFactory.Create(graphSpec.Value, _device);
     }
     
     public InputSnapshot GetInput()

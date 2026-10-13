@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Pathetic.Renderer.Graph;
 using Pathetic.Renderer.Primitives;
 using Pathetic.Renderer.Resources;
@@ -16,28 +17,28 @@ public static class ServiceCollectionExtensions
             services.AddSingleton<IResourceProvider>(sp => sp.GetRequiredService<T>());
         }
         
-        public IServiceCollection AddRenderer(
-            Action<RenderGraphBuilder> configurePasses,
-            Action<PrimitiveBuilder>? configurePrimitives = null)
+        public void AddPrimitive<T>(string name) where T : unmanaged
         {
-            var passSelector = new RenderGraphBuilder();
-            configurePasses(passSelector);
-            services.AddSingleton(passSelector);
-            
-            if (passSelector.PassTypes.Count == 0)
-                throw new InvalidOperationException("No render pass selected");
-
-            var primitives = new PrimitiveBuilder(services);
-            configurePrimitives?.Invoke(primitives);
+            var buffer = new PrimitiveBuffer<T>(name);
+            services.AddSingleton(buffer);
+            services.AddSingleton<IPrimitiveBuffer>(buffer);
+        }
+        
+        public IServiceCollection AddRenderer(Action<RenderGraphSpecBuilder> configureGraph)
+        {
             services.AddSingleton<PrimitiveResourceProvider>();
             services.AddSingleton<IResourceProvider>(sp => sp.GetRequiredService<PrimitiveResourceProvider>());
             
             services.AddSingleton<SlangCompiler>();
             services.AddSingleton<RenderPassFactory>();
             services.AddSingleton<RenderGraphPipelineFactory>();
-            services.AddSingleton<RenderGraph>();
-            services.AddSingleton<RenderBackend>();
             services.AddSingleton<SceneRevision>();
+            services.AddSingleton<RenderGraphFactory>();
+            services.AddSingleton<RenderBackend>();
+            
+            var specBuilder = new RenderGraphSpecBuilder();
+            configureGraph(specBuilder);
+            services.AddSingleton(Options.Create(specBuilder.Build()));
             
             return services;
         }

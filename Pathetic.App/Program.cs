@@ -22,18 +22,15 @@ AddOptions<RendererOptions>();
 AddOptions<PathTracerOptions>();
 AddOptions<TemporalAccumulationOptions>();
 
-builder.Services.AddRenderer(passes =>
-{
-    passes.AddPass<CirclesPass>();
-    passes.AddPass<PathTracerPass>();
-    passes.AddPass<TemporalAccumulationPass>();
-    passes.Present(Resources.Color);
-}, primitives =>
-{
-    primitives.Register<SpherePrimitive>(Resources.Spheres);
-    primitives.Register<PlanePrimitive>(Resources.Planes);
-    primitives.Register<CirclePrimitive>(Resources.CirclePrimitives);
-});
+builder.Services.AddRenderer(graph => graph
+    .AddPass<CirclesPass>()
+    .AddPass<PathTracerPass>()
+    .AddPass<TemporalAccumulationPass>()
+    .Present(Resources.Color));
+
+builder.Services.AddPrimitive<SpherePrimitive>(Resources.Spheres);
+builder.Services.AddPrimitive<PlanePrimitive>(Resources.Planes);
+builder.Services.AddPrimitive<CirclePrimitive>(Resources.CirclePrimitives);
 
 builder.Services.AddRenderResourceProvider<CameraProvider>();
 builder.Services.AddSceneGraph();
