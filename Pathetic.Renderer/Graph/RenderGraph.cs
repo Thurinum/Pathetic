@@ -3,10 +3,10 @@ using Pathetic.Renderer.Resources;
 
 namespace Pathetic.Renderer.Graph;
 
-internal sealed class PassEntry(RenderPass pass)
+internal sealed class PassEntry(RenderPass pass, PassRenderState state)
 {
     public RenderPass Pass { get; } = pass;
-    public PassRenderState? State { get; set; }
+    public PassRenderState State { get; } = state;
 }
 
 internal sealed class RenderGraph(
@@ -36,7 +36,7 @@ internal sealed class RenderGraph(
         var reallocatedBindingNames = resources.Reallocate(device, ctx.Cmd);
         foreach (var entry in GetPassesWithBindings(reallocatedBindingNames))
         {
-            RenderGraphPipelineFactory.UpdateResourceSet(entry.State!, entry.Pass, device, resources);
+            RenderGraphPipelineFactory.UpdateResourceSet(entry.State, entry.Pass, device, resources);
         }
 
         foreach (var provider in resourceProviders)
@@ -48,7 +48,7 @@ internal sealed class RenderGraph(
         {
             if (entry.Pass.Enabled)
             {
-                entry.Pass.Execute(ctx, entry.State!);
+                entry.Pass.Execute(ctx, entry.State);
             }
         }
 
@@ -65,7 +65,7 @@ internal sealed class RenderGraph(
 
         foreach (var entry in GetPassesWithBindings(resizedTextureNames))
         {
-            RenderGraphPipelineFactory.UpdateResourceSet(entry.State!, entry.Pass, device, resources);
+            RenderGraphPipelineFactory.UpdateResourceSet(entry.State, entry.Pass, device, resources);
         }
     }
 
@@ -73,7 +73,7 @@ internal sealed class RenderGraph(
     {
         foreach (var entry in passes)
         {
-            entry.State?.Dispose();
+            entry.State.Dispose();
         }
 
         resources.Dispose();
@@ -83,7 +83,7 @@ internal sealed class RenderGraph(
     {
         if (bindingNames.Count > 0)
         {
-            return passes.Where(p => p.State!.Bindings.Any(b => bindingNames.Contains(b.Name)));
+            return passes.Where(p => p.State.Bindings.Any(b => bindingNames.Contains(b.Name)));
         }
 
         return [];

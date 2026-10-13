@@ -14,25 +14,26 @@ public sealed class RenderGraphFactory(
         string presentTexture = RenderGraphValidator.ValidateSpec(spec);
 
         var resources = new ResourceTable();
-        var passes = CreatePasses(spec);
+        var passes = CreatePasses(spec, device);
 
         var framebuffer = device.SwapchainFramebuffer;
         CreateResources(device, framebuffer, resources, passes);
         RenderGraphValidator.ValidatePresentTexture(presentTexture, resources, framebuffer);
-        BuildPassPipelines(device, passes);
         RenderGraphValidator.ValidatePassBindings(passes, resources);
         BindPassResources(device, passes, resources);
 
         return new RenderGraph(resources, passes, presentTexture, sceneRevision, resourceProviders);
     }
 
-    private List<PassEntry> CreatePasses(RenderGraphSpec spec)
+    private List<PassEntry> CreatePasses(RenderGraphSpec spec, GraphicsDevice device)
     {
         var passes = new List<PassEntry>(spec.PassTypes.Count);
 
         foreach (var passType in spec.PassTypes)
         {
-            passes.Add(new PassEntry(passFactory.CreateRenderPass(passType)));
+            var pass = passFactory.CreateRenderPass(passType);
+            var state = pipelineFactory.Build(device, pass);
+            passes.Add(new PassEntry(pass, state));
         }
 
         return passes;
@@ -66,19 +67,11 @@ public sealed class RenderGraphFactory(
         resources.Allocate(device, framebuffer.Width, framebuffer.Height);
     }
 
-    private void BuildPassPipelines(GraphicsDevice device, List<PassEntry> passes)
-    {
-        foreach (var entry in passes)
-        {
-            entry.State = pipelineFactory.Build(device, entry.Pass);
-        }
-    }
-
     private static void BindPassResources(GraphicsDevice device, List<PassEntry> passes, ResourceTable resources)
     {
         foreach (var entry in passes)
         {
-            RenderGraphPipelineFactory.UpdateResourceSet(entry.State!, entry.Pass, device, resources);
+            RenderGraphPipelineFactory.UpdateResourceSet(entry.State, entry.Pass, device, resources);
         }
     }
 }

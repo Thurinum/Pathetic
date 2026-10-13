@@ -31,7 +31,7 @@ internal static class RenderGraphValidator
             string shader = entry.Pass.ShaderModule;
 
             var bindings = new Dictionary<string, ResourceLayoutElementDescription>(StringComparer.Ordinal);
-            foreach (var binding in entry.State!.Bindings)
+            foreach (var binding in entry.State.Bindings)
                 bindings.TryAdd(binding.Name, binding);
 
             var declared = entry.Pass.Inputs
