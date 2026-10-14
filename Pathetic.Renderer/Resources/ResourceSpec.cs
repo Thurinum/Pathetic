@@ -26,10 +26,10 @@ public sealed record UniformBufferSpec : IResourceSpec
     }
 }
 public sealed record StructuredBufferSpec(string Name, uint Stride, uint ElementCount) : IResourceSpec;
-public interface IDynamicBufferSource
+public interface IDynamicBufferSpec : IResourceSpec
 {
+    uint Stride { get; }
     uint ElementCount { get; }
     void Upload(CommandList cmd, DeviceBuffer buf, bool resized);
 }
-public sealed record DynamicBufferSpec(string Name, uint Stride, IDynamicBufferSource Source) : IResourceSpec;
 

@@ -22,7 +22,7 @@ public static class ServiceCollectionExtensions
             var buffer = new DirtyTrackingBuffer<T>(name);
             services.AddSingleton(buffer);
             services.AddSingleton(new SparseSet<T>(buffer));
-            services.AddSingleton<IPrimitiveBuffer>(buffer);
+            services.AddSingleton<IDynamicBufferSpec>(buffer);
         }
         
         public IServiceCollection AddRenderer(Action<RenderGraphSpecBuilder> configureGraph)

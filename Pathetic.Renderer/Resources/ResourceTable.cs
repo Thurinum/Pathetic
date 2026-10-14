@@ -40,7 +40,7 @@ internal sealed class ResourceTable : IResourceAccessor, IDisposable
                 TextureSpec s => CreateTexture(device, s, width, height),
                 SamplerSpec s => CreateSampler(device, s),
                 StructuredBufferSpec s => CreateStructuredBuffer(device, s),
-                DynamicBufferSpec s => CreateDynamicBuffer(device, s, entry, Math.Max(DynamicBufferDefaultElementCount, s.Source.ElementCount)),
+                IDynamicBufferSpec s => CreateDynamicBuffer(device, s, entry, Math.Max(DynamicBufferDefaultElementCount, s.ElementCount)),
                 _ => throw new UnreachableException("bruh")
             };
         }
@@ -55,11 +55,11 @@ internal sealed class ResourceTable : IResourceAccessor, IDisposable
         
         foreach (RenderGraphResource entry in _resources.Values)
         {
-            if (entry.Spec is not DynamicBufferSpec spec)
+            if (entry.Spec is not IDynamicBufferSpec source)
                 continue;
 
             bool didReallocate = false;
-            uint requiredCapacity = spec.Source.ElementCount;
+            uint requiredCapacity = source.ElementCount;
             if (requiredCapacity > entry.ElementCapacity)
             {
                 if (_reallocated.Count == 0)
@@ -68,12 +68,12 @@ internal sealed class ResourceTable : IResourceAccessor, IDisposable
                 }
                 
                 _reallocated.Add(entry.Spec.Name);
-                uint newCapacity = Math.Max(spec.Source.ElementCount, entry.ElementCapacity * 2);
-                entry.Resource = CreateDynamicBuffer(device, spec, entry, newCapacity);
+                uint newCapacity = Math.Max(source.ElementCount, entry.ElementCapacity * 2);
+                entry.Resource = CreateDynamicBuffer(device, source, entry, newCapacity);
                 didReallocate = true;
             }
             
-            spec.Source.Upload(cmd, (DeviceBuffer)entry.Resource!, didReallocate);
+            source.Upload(cmd, (DeviceBuffer)entry.Resource!, didReallocate);
         }
 
         return _reallocated;
@@ -189,7 +189,7 @@ internal sealed class ResourceTable : IResourceAccessor, IDisposable
         return device.ResourceFactory.CreateBuffer(bufferDesc);
     }
     
-    private static DeviceBuffer CreateDynamicBuffer(GraphicsDevice device, DynamicBufferSpec spec, RenderGraphResource entry, uint elementCapacity = 256)
+    private static DeviceBuffer CreateDynamicBuffer(GraphicsDevice device, IDynamicBufferSpec spec, RenderGraphResource entry, uint elementCapacity = 256)
     {
         ArgumentOutOfRangeException.ThrowIfZero(elementCapacity);
         

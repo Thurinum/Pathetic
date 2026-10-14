@@ -1,9 +1,10 @@
 ﻿using System.Runtime.CompilerServices;
 using NeoVeldrid;
+using Pathetic.Renderer.Resources;
 
 namespace Pathetic.Renderer.Buffers;
 
-public sealed class DirtyTrackingBuffer<T>(string name) : IPrimitiveBuffer where T : unmanaged, IEquatable<T>
+public sealed class DirtyTrackingBuffer<T>(string name) : IDynamicBufferSpec where T : unmanaged, IEquatable<T>
 {
     private const int InitialSize = 256;
     
