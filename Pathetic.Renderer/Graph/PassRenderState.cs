@@ -5,6 +5,8 @@ namespace Pathetic.Renderer.Graph;
 
 public sealed class PassRenderState : IDisposable
 {
+    private bool _disposed;
+
     public required ResourceLayout Layout { get; init; }
     public required ResourceLayoutElementDescription[] Bindings { get; init; }
     public ResourceSet? Set { get; set; }
@@ -13,6 +15,11 @@ public sealed class PassRenderState : IDisposable
 
     public void Dispose()
     {
+        if (_disposed)
+            return;
+
+        _disposed = true;
+
         Layout.Dispose();
         Set?.Dispose();
         Pipeline.Dispose();

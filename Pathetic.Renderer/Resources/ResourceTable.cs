@@ -15,6 +15,7 @@ internal sealed class ResourceTable : IResourceAccessor, IDisposable
     private readonly HashSet<string> _resized = [];
     private uint _lastWidth;
     private uint _lastHeight;
+    private bool _disposed;
 
     public void Declare(IResourceSpec spec, RenderPass? owner = null)
     {
@@ -135,10 +136,17 @@ internal sealed class ResourceTable : IResourceAccessor, IDisposable
     
     public void Dispose()
     {
+        if (_disposed)
+            return;
+
+        _disposed = true;
+
         foreach (var resource in _resources.Values)
         {
             (resource.Resource as IDisposable)?.Dispose();
         }
+
+        _resources.Clear();
     }
 
     private static DeviceBuffer CreateUniformBuffer(GraphicsDevice device, UniformBufferSpec spec)

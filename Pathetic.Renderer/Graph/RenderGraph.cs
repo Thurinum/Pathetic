@@ -17,6 +17,7 @@ internal sealed class RenderGraph(
     IEnumerable<IResourceProvider> resourceProviders) : IDisposable
 {
     private uint _frameIndex;
+    private bool _disposed;
 
     public void Render(GraphicsDevice device, CommandList cmd, float deltaTime)
     {
@@ -71,6 +72,11 @@ internal sealed class RenderGraph(
 
     public void Dispose()
     {
+        if (_disposed)
+            return;
+
+        _disposed = true;
+
         foreach (var entry in passes)
         {
             entry.State.Dispose();

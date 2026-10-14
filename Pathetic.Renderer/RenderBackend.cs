@@ -14,6 +14,7 @@ public sealed partial class RenderBackend : IDisposable
     private readonly CommandList _cmd;
     private readonly ImGuiRenderer _imgui;
     private readonly RenderGraph _graph;
+    private bool _disposed;
     public bool Shown => _window.Exists;
 
     public RenderBackend(
@@ -104,6 +105,11 @@ public sealed partial class RenderBackend : IDisposable
 
     public void Dispose()
     {
+        if (_disposed)
+            return;
+
+        _disposed = true;
+
         _device.WaitForIdle();
         _imgui.Dispose();
         _cmd.Dispose();
