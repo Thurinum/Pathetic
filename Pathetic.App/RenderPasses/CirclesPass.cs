@@ -1,12 +1,12 @@
 using NeoVeldrid;
 using Pathetic.App.Components;
+using Pathetic.Renderer.Buffers;
 using Pathetic.Renderer.Graph;
-using Pathetic.Renderer.Primitives;
 using Pathetic.Renderer.Resources;
 
 namespace Pathetic.App.RenderPasses;
 
-public sealed class CirclesPass(PrimitiveBuffer<CirclePrimitive> circles) : RenderPass
+public sealed class CirclesPass(DirtyTrackingBuffer<CirclePrimitive> circles) : RenderPass
 {
     private struct Params
     {

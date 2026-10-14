@@ -1,10 +1,10 @@
-﻿using Pathetic.Renderer.Primitives;
+﻿using Pathetic.Renderer.Buffers;
 
 namespace Pathetic.SceneGraph;
 
-public abstract class RendererBase<T>(PrimitiveBuffer<T> primitives) : Component where T : unmanaged, IEquatable<T>
+public abstract class RendererBase<T>(SparseSet<T> primitives) : Component where T : unmanaged, IEquatable<T>
 {
-    private PrimitiveHandle _handle = PrimitiveHandle.Invalid;
+    private Handle _handle = Handle.Invalid;
 
     public override void Awake()
     {

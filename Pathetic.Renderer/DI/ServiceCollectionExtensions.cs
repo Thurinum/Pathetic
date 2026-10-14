@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Pathetic.Renderer.Buffers;
 using Pathetic.Renderer.Graph;
-using Pathetic.Renderer.Primitives;
 using Pathetic.Renderer.Resources;
 using Pathetic.Renderer.Shaders;
 
@@ -19,8 +19,9 @@ public static class ServiceCollectionExtensions
         
         public void AddPrimitive<T>(string name) where T : unmanaged, IEquatable<T>
         {
-            var buffer = new PrimitiveBuffer<T>(name);
+            var buffer = new DirtyTrackingBuffer<T>(name);
             services.AddSingleton(buffer);
+            services.AddSingleton(new SparseSet<T>(buffer));
             services.AddSingleton<IPrimitiveBuffer>(buffer);
         }
         

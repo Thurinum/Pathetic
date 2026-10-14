@@ -1,17 +1,16 @@
 using Microsoft.Extensions.Options;
 using NeoVeldrid;
 using Pathetic.App.Components;
-using Pathetic.Renderer;
+using Pathetic.Renderer.Buffers;
 using Pathetic.Renderer.Graph;
-using Pathetic.Renderer.Primitives;
 using Pathetic.Renderer.Resources;
 
 namespace Pathetic.App.RenderPasses;
 
 public sealed class PathTracerPass(
     IOptions<PathTracerOptions> options,
-    PrimitiveBuffer<PlanePrimitive> planes,
-    PrimitiveBuffer<SpherePrimitive> spheres) : RenderPass
+    DirtyTrackingBuffer<PlanePrimitive> planes,
+    DirtyTrackingBuffer<SpherePrimitive> spheres) : RenderPass
 {
     private struct Params
     {

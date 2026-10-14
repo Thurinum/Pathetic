@@ -1,7 +1,7 @@
 using Pathetic.Renderer.Graph;
 using Pathetic.Renderer.Resources;
 
-namespace Pathetic.Renderer.Primitives;
+namespace Pathetic.Renderer.Buffers;
 
 public sealed class PrimitiveResourceProvider(IEnumerable<IPrimitiveBuffer> buffers) : IResourceProvider
 {
