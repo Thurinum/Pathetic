@@ -13,6 +13,7 @@ public record struct SpherePrimitive
     [FieldOffset(12)] public float Radius;
     [FieldOffset(16)] public RgbaByte Albedo;
     [FieldOffset(20)] public RgbaByte Emission;
+    [FieldOffset(24)] public uint ObjectId; // owning SceneObject id, used by the selection passes
 }
 
 public class SphereComponent(SparseSet<SpherePrimitive> primitives) : RendererBase<SpherePrimitive>(primitives)
@@ -28,7 +29,8 @@ public class SphereComponent(SparseSet<SpherePrimitive> primitives) : RendererBa
             Center = Parent.Transform.Position,
             Radius = Radius,
             Albedo = Albedo,
-            Emission = Emission
+            Emission = Emission,
+            ObjectId = Parent.Id
         };
     }
 }

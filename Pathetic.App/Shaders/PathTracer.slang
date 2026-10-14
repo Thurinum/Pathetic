@@ -13,6 +13,7 @@ struct Params
     uint Seed;
     uint SamplesPerPixel;
     uint MaxBounces;
+    uint SelectedObjectId;
 }
 
 RWTexture2D<float4> pathTracerColor;
@@ -43,6 +44,17 @@ float3 Trace(Ray ray, inout Rng rng)
         {
             light += weight * Sky(ray.Direction);
             break;
+        }
+
+        // Active-object preview: a deterministic headlight-Lambert shade for the selected object,
+        // applied to the primary ray only. Secondary bounces keep the real material, so the object
+        // still lights and reflects the rest of the scene; only its directly visible pixels change.
+        if (bounce == 0 && params.SelectedObjectId != 0u && spheres[bestHit.Index].ObjectId == params.SelectedObjectId)
+        {
+            float3 selectionAlbedo = UnpackRgb(spheres[bestHit.Index].Albedo) / 255.0;
+            float3 selectionBase = lerp(selectionAlbedo, float3(1.0, 0.6, 0.15), 0.35);
+            float selectionNdotL = saturate(dot(bestHit.Normal, -camera.Forward));
+            return selectionBase * (0.25 + 0.75 * selectionNdotL);
         }
 
         float3 albedo = UnpackRgb(spheres[bestHit.Index].Albedo) / 255.0;

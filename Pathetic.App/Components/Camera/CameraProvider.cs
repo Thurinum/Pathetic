@@ -9,6 +9,8 @@ public class CameraProvider(SceneRevision revision) : IResourceProvider, IBuffer
     private CameraData _data;
     public uint Version { get; private set; }
 
+    public CameraData Data => _data;
+
     public void Set(in CameraData data)
     {
         if (data.Equals(_data))

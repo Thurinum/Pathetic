@@ -10,7 +10,8 @@ namespace Pathetic.App.RenderPasses;
 public sealed class PathTracerPass(
     IOptions<PathTracerOptions> options,
     DirtyTrackingBuffer<PlanePrimitive> planes,
-    DirtyTrackingBuffer<SpherePrimitive> spheres) : RenderPass
+    DirtyTrackingBuffer<SpherePrimitive> spheres,
+    SelectionState selection) : RenderPass
 {
     private struct Params
     {
@@ -19,6 +20,7 @@ public sealed class PathTracerPass(
         public uint Seed;
         public uint SamplesPerPixel;
         public uint MaxBounces;
+        public uint SelectedObjectId;
     }
 
     public override string ShaderModule => "PathTracer";
@@ -51,6 +53,7 @@ public sealed class PathTracerPass(
             Seed = ctx.FrameIndex,
             SamplesPerPixel = options.Value.SamplesPerPixel,
             MaxBounces = options.Value.MaxBounces,
+            SelectedObjectId = selection.SelectedObjectId,
         };
         ctx.Cmd.UpdateBuffer(buffer, 0, @params);
     }

@@ -38,6 +38,7 @@ public class SceneLoop(RenderWindow window, ImGuiHost gui, RenderGraphHost rdg)
                 GUIComponents(scene);
                 gui.End();
                 
+                scene.FlushCreated();
                 scene.FlushDestroyed();
             }
             window.EndFrame();

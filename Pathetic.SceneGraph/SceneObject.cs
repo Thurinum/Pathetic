@@ -2,6 +2,10 @@
 
 public class SceneObject : IDestroyable
 {
+    private static uint _nextId;
+
+    // Stable identity used by the renderer (e.g. the selection passes and, later, BVH leaves). Never 0.
+    public uint Id { get; } = Interlocked.Increment(ref _nextId);
     public required string Name { get; init; }
     public required Scene Owner { get; init; }
     public List<Component> Components { get; } = [];

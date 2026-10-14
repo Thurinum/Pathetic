@@ -5,6 +5,8 @@ using Pathetic.App;
 using Pathetic.App.Components;
 using Pathetic.App.Components.Camera;
 using Pathetic.App.RenderPasses;
+using Pathetic.Physics.DI;
+using Pathetic.Physics.Jitter.DI;
 using Pathetic.Renderer;
 using Pathetic.Renderer.DI;
 using Pathetic.SceneGraph.DI;
@@ -26,14 +28,19 @@ builder.Services.AddRenderer(graph => graph
     .AddPass<CirclesPass>()
     .AddPass<PathTracerPass>()
     .AddPass<TemporalAccumulationPass>()
-    .Present(Resources.Color));
+    .AddPass<PrimaryIdPass>()
+    .AddPass<SelectionOutlinePass>()
+    .Present(Resources.ColorOutlined));
 
 builder.Services.AddPrimitive<SpherePrimitive>(Resources.Spheres);
 builder.Services.AddPrimitive<PlanePrimitive>(Resources.Planes);
 builder.Services.AddPrimitive<CirclePrimitive>(Resources.CirclePrimitives);
 
 builder.Services.AddRenderResourceProvider<CameraProvider>();
+builder.Services.AddSingleton<SelectionState>();
 builder.Services.AddSceneGraph();
+builder.Services.AddPhysics();
+builder.Services.AddJitterPhysics();
 builder.Services.AddSingleton<App>(); 
 
 using var host = builder.Build();

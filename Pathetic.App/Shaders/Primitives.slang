@@ -6,6 +6,7 @@ public struct Sphere
     public float Radius;
     public uint Albedo;   // packed RgbaByte
     public uint Emission; // packed RgbaByte
+    public uint ObjectId; // owning SceneObject id; 0 means "no object"
 }
 
 // Unpacks a packed RgbaByte into its 0..255 components (order-independent of /255 below).

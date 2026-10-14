@@ -1,5 +1,7 @@
 <Solution>
   <Project Path="Pathetic.App/Pathetic.App.csproj" />
+  <Project Path="Pathetic.Physics/Pathetic.Physics.csproj" />
+  <Project Path="Pathetic.Physics.Jitter/Pathetic.Physics.Jitter.csproj" />
   <Project Path="Pathetic.Renderer/Pathetic.Renderer.csproj" />
   <Project Path="Pathetic.SceneGraph/Pathetic.SceneGraph.csproj" />
 </Solution>

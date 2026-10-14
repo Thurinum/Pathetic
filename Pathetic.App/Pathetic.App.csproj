@@ -9,6 +9,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Pathetic.Physics\Pathetic.Physics.csproj" />
+        <ProjectReference Include="..\Pathetic.Physics.Jitter\Pathetic.Physics.Jitter.csproj" />
         <ProjectReference Include="..\Pathetic.Renderer\Pathetic.Renderer.csproj" />
         <ProjectReference Include="..\Pathetic.SceneGraph\Pathetic.SceneGraph.csproj" />
     </ItemGroup>
