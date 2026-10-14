@@ -3,7 +3,7 @@ using NeoVeldrid;
 
 namespace Pathetic.Renderer.Primitives;
 
-public class PrimitiveBuffer<T>(string name) : IPrimitiveBuffer where T : unmanaged
+public sealed class PrimitiveBuffer<T>(string name) : IPrimitiveBuffer where T : unmanaged, IEquatable<T>
 {
     private const int InitialSize = 256;
     

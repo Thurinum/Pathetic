@@ -17,7 +17,7 @@ public static class ServiceCollectionExtensions
             services.AddSingleton<IResourceProvider>(sp => sp.GetRequiredService<T>());
         }
         
-        public void AddPrimitive<T>(string name) where T : unmanaged
+        public void AddPrimitive<T>(string name) where T : unmanaged, IEquatable<T>
         {
             var buffer = new PrimitiveBuffer<T>(name);
             services.AddSingleton(buffer);

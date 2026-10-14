@@ -2,7 +2,7 @@
 
 namespace Pathetic.SceneGraph;
 
-public abstract class RendererBase<T>(PrimitiveBuffer<T> primitives) : Component where T : unmanaged
+public abstract class RendererBase<T>(PrimitiveBuffer<T> primitives) : Component where T : unmanaged, IEquatable<T>
 {
     private PrimitiveHandle _handle = PrimitiveHandle.Invalid;
 
