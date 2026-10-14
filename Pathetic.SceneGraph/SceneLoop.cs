@@ -3,40 +3,44 @@ using Pathetic.Renderer;
 
 namespace Pathetic.SceneGraph;
 
-public class SceneLoop(RenderBackend backend)
+public class SceneLoop(RenderWindow window, ImGuiHost gui, RenderGraphHost rdg)
 {
     private long _lastTimestamp;
     private float _deltaTime;
     
     public void Run(Scene scene)
     {
+        window.Initialize();
+        gui.Initialize();
+        rdg.Initialize();
+
         _lastTimestamp = Stopwatch.GetTimestamp();
         
         AwakeComponents(scene);
         StartComponents(scene);
         
-        while (backend.Shown)
+        while (window.Exists)
         {
-            var input = backend.GetInput(); // todo how to pass input to components
+            var input = window.PumpEvents(); // todo how to pass input to components
             
-            if (!backend.Shown)
+            if (!window.Exists)
                 break;
             
-            backend.BeginFrame();
+            window.BeginFrame();
             {
                 UpdateDeltaTime();
                 UpdateComponents(scene);
                 LateUpdateComponents(scene);
             
-                backend.Render(_deltaTime);
+                rdg.Render(_deltaTime);
         
-                backend.BeginGUI(_deltaTime, input);
+                gui.Begin(_deltaTime, input);
                 GUIComponents(scene);
-                backend.EndGUI();
+                gui.End();
                 
                 scene.FlushDestroyed();
             }
-            backend.EndFrame();
+            window.EndFrame();
         }
         
         DestroyComponents(scene);

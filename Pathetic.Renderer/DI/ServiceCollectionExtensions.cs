@@ -35,7 +35,9 @@ public static class ServiceCollectionExtensions
             services.AddSingleton<RenderGraphPipelineFactory>();
             services.AddSingleton<SceneRevision>();
             services.AddSingleton<RenderGraphFactory>();
-            services.AddSingleton<RenderBackend>();
+            services.AddSingleton<RenderWindow>();
+            services.AddSingleton<ImGuiHost>();
+            services.AddSingleton<RenderGraphHost>();
             
             var specBuilder = new RenderGraphSpecBuilder();
             configureGraph(specBuilder);
