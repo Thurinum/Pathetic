@@ -49,7 +49,7 @@ public sealed class RenderGraphFactory(
         {
             foreach (var spec in provider.Resources)
             {
-                resources.Declare(spec, writer: WriterFor(spec, provider as IBufferSource));
+                resources.Declare(spec, writer: WriterFor(spec, provider as IResourceUploader));
             }
         }
 
@@ -70,7 +70,7 @@ public sealed class RenderGraphFactory(
         resources.Allocate(device, framebuffer.Width, framebuffer.Height);
     }
 
-    private static IBufferSource? WriterFor(IResourceSpec spec, IBufferSource? declarer)
+    private static IResourceUploader? WriterFor(IResourceSpec spec, IResourceUploader? declarer)
     {
         return spec switch
         {

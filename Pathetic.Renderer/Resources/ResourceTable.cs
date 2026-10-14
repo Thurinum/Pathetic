@@ -17,7 +17,7 @@ internal sealed class ResourceTable : IResourceAccessor, IDisposable
     private uint _lastHeight;
     private bool _disposed;
 
-    public void Declare(IResourceSpec spec, RenderPass? owner = null, IBufferSource? writer = null)
+    public void Declare(IResourceSpec spec, RenderPass? owner = null, IResourceUploader? writer = null)
     {
         var resource = new RenderGraphResource
         {

@@ -4,7 +4,7 @@ using Pathetic.Renderer.Resources;
 
 namespace Pathetic.App.Components.Camera;
 
-public class CameraProvider(SceneRevision revision) : IResourceProvider, IBufferSource
+public class CameraProvider(SceneRevision revision) : IResourceProvider, IResourceUploader
 {
     private CameraData _data;
 

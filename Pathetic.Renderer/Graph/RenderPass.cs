@@ -4,7 +4,7 @@ using Pathetic.Renderer.Utils;
 
 namespace Pathetic.Renderer.Graph;
 
-public abstract class RenderPass : IBufferSource
+public abstract class RenderPass : IResourceUploader
 {
     public bool Enabled { get; set; } = true;
     public abstract string ShaderModule { get; }
