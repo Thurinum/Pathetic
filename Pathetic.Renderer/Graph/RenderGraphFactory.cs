@@ -22,7 +22,7 @@ public sealed class RenderGraphFactory(
         RenderGraphValidator.ValidatePassBindings(passes, resources);
         BindPassResources(device, passes, resources);
 
-        return new RenderGraph(resources, passes, presentTexture, sceneRevision, resourceProviders);
+        return new RenderGraph(resources, passes, presentTexture, sceneRevision);
     }
 
     private List<PassEntry> CreatePasses(RenderGraphSpec spec, GraphicsDevice device)
@@ -45,9 +45,12 @@ public sealed class RenderGraphFactory(
         ResourceTable resources,
         List<PassEntry> passes)
     {
-        foreach (var resourceSpec in resourceProviders.SelectMany(p => p.Resources))
+        foreach (var provider in resourceProviders)
         {
-            resources.Declare(resourceSpec);
+            foreach (var spec in provider.Resources)
+            {
+                resources.Declare(spec, writer: WriterFor(spec, provider as IBufferSource));
+            }
         }
 
         foreach (var entry in passes)
@@ -55,7 +58,7 @@ public sealed class RenderGraphFactory(
             foreach (var output in entry.Pass.Outputs)
             {
                 var owner = output is UniformBufferSpec ? entry.Pass : null;
-                resources.Declare(output, owner);
+                resources.Declare(output, owner, WriterFor(output, entry.Pass));
             }
 
             foreach (var sampler in entry.Pass.Samplers)
@@ -65,6 +68,16 @@ public sealed class RenderGraphFactory(
         }
 
         resources.Allocate(device, framebuffer.Width, framebuffer.Height);
+    }
+
+    private static IBufferSource? WriterFor(IResourceSpec spec, IBufferSource? declarer)
+    {
+        return spec switch
+        {
+            IDynamicBufferSpec dynamicSpec => dynamicSpec,
+            UniformBufferSpec => declarer,
+            _ => null
+        };
     }
 
     private static void BindPassResources(GraphicsDevice device, List<PassEntry> passes, ResourceTable resources)

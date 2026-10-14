@@ -4,7 +4,8 @@ namespace Pathetic.Renderer.Resources;
 
 public sealed class RenderGraphResource
 {
-    public required IResourceSpec Spec { get; set; }
+    public required IResourceSpec Spec { get; init; }
+    public IBufferSource? Writer { get; init; }
 
     public BindableResource? Resource
     {

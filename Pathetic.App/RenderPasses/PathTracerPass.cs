@@ -42,7 +42,7 @@ public sealed class PathTracerPass(
         new(Resources.CirclesSampler, SamplerDescription.Linear),
     ];
 
-    protected override void Upload(RenderContext ctx)
+    public override void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
     {
         Params @params = new()
         {
@@ -52,6 +52,6 @@ public sealed class PathTracerPass(
             SamplesPerPixel = options.Value.SamplesPerPixel,
             MaxBounces = options.Value.MaxBounces,
         };
-        ctx.Cmd.UpdateBuffer(ctx.Resources.GetBuffer(Resources.Params, this), 0, @params);
+        ctx.Cmd.UpdateBuffer(buffer, 0, @params);
     }
 }

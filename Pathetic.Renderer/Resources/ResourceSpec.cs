@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using NeoVeldrid;
+using Pathetic.Renderer.Graph;
 
 namespace Pathetic.Renderer.Resources;
 
@@ -26,10 +27,13 @@ public sealed record UniformBufferSpec : IResourceSpec
     }
 }
 public sealed record StructuredBufferSpec(string Name, uint Stride, uint ElementCount) : IResourceSpec;
-public interface IDynamicBufferSpec : IResourceSpec
+public interface IBufferSource
+{
+    void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized);
+}
+public interface IDynamicBufferSpec : IResourceSpec, IBufferSource
 {
     uint Stride { get; }
     uint ElementCount { get; }
-    void Upload(CommandList cmd, DeviceBuffer buf, bool resized);
 }
 

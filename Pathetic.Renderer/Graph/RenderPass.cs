@@ -1,9 +1,10 @@
-﻿using Pathetic.Renderer.Resources;
+﻿using NeoVeldrid;
+using Pathetic.Renderer.Resources;
 using Pathetic.Renderer.Utils;
 
 namespace Pathetic.Renderer.Graph;
 
-public abstract class RenderPass
+public abstract class RenderPass : IBufferSource
 {
     public bool Enabled { get; set; } = true;
     public abstract string ShaderModule { get; }
@@ -12,12 +13,11 @@ public abstract class RenderPass
     public virtual IReadOnlyList<string> Inputs => [];
     public virtual IReadOnlyList<SamplerSpec> Samplers => [];
 
-    protected virtual void Upload(RenderContext ctx) {}
+    public virtual void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized) {}
     protected virtual (uint x, uint y) DispatchSize(RenderContext ctx) => (ctx.Width, ctx.Height);
 
     public void Execute(RenderContext ctx, PassRenderState state)
     {
-        Upload(ctx);
         ctx.Cmd.SetPipeline(state.Pipeline);
         ctx.Cmd.SetComputeResourceSet(0, state.Set);
         (uint w, uint h) = DispatchSize(ctx);

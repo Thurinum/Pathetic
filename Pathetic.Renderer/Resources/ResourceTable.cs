@@ -17,11 +17,12 @@ internal sealed class ResourceTable : IResourceAccessor, IDisposable
     private uint _lastHeight;
     private bool _disposed;
 
-    public void Declare(IResourceSpec spec, RenderPass? owner = null)
+    public void Declare(IResourceSpec spec, RenderPass? owner = null, IBufferSource? writer = null)
     {
         var resource = new RenderGraphResource
         {
-            Spec = spec
+            Spec = spec,
+            Writer = writer
         };
 
         if (!_resources.TryAdd(new ResourceKey(spec.Name, owner), resource))
@@ -49,34 +50,37 @@ internal sealed class ResourceTable : IResourceAccessor, IDisposable
         _lastHeight = height;
     }
     
-    public IReadOnlySet<string> Reallocate(GraphicsDevice device, CommandList cmd)
+    public IReadOnlySet<string> Upload(GraphicsDevice device, RenderContext ctx)
     {
         _reallocated.Clear();
         
         foreach (RenderGraphResource entry in _resources.Values)
         {
-            if (entry.Spec is not IDynamicBufferSpec source)
+            if (entry.Writer is null)
                 continue;
 
-            bool didReallocate = false;
-            uint requiredCapacity = source.ElementCount;
-            if (requiredCapacity > entry.ElementCapacity)
-            {
-                if (_reallocated.Count == 0)
-                {
-                    device.WaitForIdle();
-                }
-                
-                _reallocated.Add(entry.Spec.Name);
-                uint newCapacity = Math.Max(source.ElementCount, entry.ElementCapacity * 2);
-                entry.Resource = CreateDynamicBuffer(device, source, entry, newCapacity);
-                didReallocate = true;
-            }
-            
-            source.Upload(cmd, (DeviceBuffer)entry.Resource!, didReallocate);
+            bool didReallocate = entry.Spec is IDynamicBufferSpec dynamic && Reallocate(device, entry, dynamic);
+            entry.Writer.Upload(ctx, (DeviceBuffer)entry.Resource!, didReallocate);
         }
 
         return _reallocated;
+    }
+
+    private bool Reallocate(GraphicsDevice device, RenderGraphResource entry, IDynamicBufferSpec spec)
+    {
+        uint requiredCapacity = spec.ElementCount;
+        if (requiredCapacity <= entry.ElementCapacity)
+            return false;
+
+        if (_reallocated.Count == 0)
+        {
+            device.WaitForIdle();
+        }
+
+        _reallocated.Add(entry.Spec.Name);
+        uint newCapacity = Math.Max(requiredCapacity, entry.ElementCapacity * 2);
+        entry.Resource = CreateDynamicBuffer(device, spec, entry, newCapacity);
+        return true;
     }
     
     public IReadOnlySet<string> Resize(GraphicsDevice device, uint width, uint height)

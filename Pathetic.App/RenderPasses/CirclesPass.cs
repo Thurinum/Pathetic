@@ -26,9 +26,9 @@ public sealed class CirclesPass(DirtyTrackingBuffer<CirclePrimitive> circles) : 
         Resources.CirclePrimitives,
     ];
 
-    protected override void Upload(RenderContext ctx)
+    public override void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
     {
         Params @params = new() { Count = (uint)circles.Count };
-        ctx.Cmd.UpdateBuffer(ctx.Resources.GetBuffer(Resources.Params, this), 0, @params);
+        ctx.Cmd.UpdateBuffer(buffer, 0, @params);
     }
 }

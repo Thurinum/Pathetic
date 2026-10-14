@@ -1,11 +1,10 @@
-﻿using System.Runtime.CompilerServices;
-using Pathetic.Renderer;
+﻿using NeoVeldrid;
 using Pathetic.Renderer.Graph;
 using Pathetic.Renderer.Resources;
 
 namespace Pathetic.App.Components.Camera;
 
-public class CameraProvider(SceneRevision revision) : IResourceProvider
+public class CameraProvider(SceneRevision revision) : IResourceProvider, IBufferSource
 {
     private CameraData _data;
     public uint Version { get; private set; }
@@ -25,8 +24,8 @@ public class CameraProvider(SceneRevision revision) : IResourceProvider
         UniformBufferSpec.Of<CameraData>(Pathetic.App.Resources.Camera)    
     ];
     
-    public void Update(RenderContext ctx)
+    public void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
     {
-        ctx.Cmd.UpdateBuffer(ctx.Resources.GetBuffer(Pathetic.App.Resources.Camera), 0, _data);
+        ctx.Cmd.UpdateBuffer(buffer, 0, _data);
     }
 }

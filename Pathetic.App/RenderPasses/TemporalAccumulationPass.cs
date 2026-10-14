@@ -28,12 +28,12 @@ public sealed class TemporalAccumulationPass(IOptions<TemporalAccumulationOption
         Resources.PathTracerColor,
     ];
 
-    protected override void Upload(RenderContext ctx)
+    public override void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
     {
         bool reset = !options.Value.Enabled || ctx.SceneRevision != _lastRevision;
         _lastRevision = ctx.SceneRevision;
 
         Params @params = new() { Reset = reset ? 1u : 0u };
-        ctx.Cmd.UpdateBuffer(ctx.Resources.GetBuffer(Resources.Params, this), 0, @params);
+        ctx.Cmd.UpdateBuffer(buffer, 0, @params);
     }
 }

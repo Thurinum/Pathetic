@@ -13,8 +13,7 @@ internal sealed class RenderGraph(
     ResourceTable resources,
     List<PassEntry> passes,
     string texture,
-    SceneRevision sceneRevision,
-    IEnumerable<IResourceProvider> resourceProviders) : IDisposable
+    SceneRevision sceneRevision) : IDisposable
 {
     private uint _frameIndex;
     private bool _disposed;
@@ -34,15 +33,10 @@ internal sealed class RenderGraph(
             SceneRevision = sceneRevision.Value
         };
 
-        var reallocatedBindingNames = resources.Reallocate(device, ctx.Cmd);
+        var reallocatedBindingNames = resources.Upload(device, ctx);
         foreach (var entry in GetPassesWithBindings(reallocatedBindingNames))
         {
             RenderGraphPipelineFactory.UpdateResourceSet(entry.State, entry.Pass, device, resources);
-        }
-
-        foreach (var provider in resourceProviders)
-        {
-            provider.Update(ctx);
         }
 
         foreach (var entry in passes)

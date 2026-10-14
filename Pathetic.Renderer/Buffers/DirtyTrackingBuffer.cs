@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using NeoVeldrid;
+using Pathetic.Renderer.Graph;
 using Pathetic.Renderer.Resources;
 
 namespace Pathetic.Renderer.Buffers;
@@ -19,7 +20,7 @@ public sealed class DirtyTrackingBuffer<T>(string name) : IDynamicBufferSpec whe
 
     public uint ElementCount => (uint)Count;
 
-    public void Upload(CommandList cmd, DeviceBuffer buf, bool resized)
+    public void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
     {
         if (resized)
         {
@@ -30,7 +31,7 @@ public sealed class DirtyTrackingBuffer<T>(string name) : IDynamicBufferSpec whe
         {
             if (IsDirty(i))
             {
-                cmd.UpdateBuffer(buf, (uint)i * Stride, Data[i]);
+                ctx.Cmd.UpdateBuffer(buffer, (uint)i * Stride, Data[i]);
             }
         }
 
