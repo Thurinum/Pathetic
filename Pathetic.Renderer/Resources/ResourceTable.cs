@@ -42,7 +42,7 @@ internal sealed class ResourceTable : IResourceAccessor, IDisposable
                 SamplerSpec s => CreateSampler(device, s),
                 StructuredBufferSpec s => CreateStructuredBuffer(device, s),
                 IDynamicBufferSpec s => CreateDynamicBuffer(device, s, entry, Math.Max(DynamicBufferDefaultElementCount, s.ElementCount)),
-                _ => throw new UnreachableException("bruh")
+                _ => throw new UnreachableException($"Unknown resource spec {entry.Spec.GetType().Name}")
             };
         }
 

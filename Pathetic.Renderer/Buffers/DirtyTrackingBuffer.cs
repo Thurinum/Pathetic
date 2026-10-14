@@ -14,7 +14,7 @@ public sealed class DirtyTrackingBuffer<T>(string name) : IDynamicBufferSpec whe
 
     public string Name { get; } = name;
     public ReadOnlySpan<T> Data => _values.AsSpan(0, Count);
-    public int Capacity => _values.Length;
+    private int Capacity => _values.Length;
     public int Count { get; private set; }
     public uint Stride => (uint)Unsafe.SizeOf<T>();
 

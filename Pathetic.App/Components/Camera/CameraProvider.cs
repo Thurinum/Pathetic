@@ -7,7 +7,6 @@ namespace Pathetic.App.Components.Camera;
 public class CameraProvider(SceneRevision revision) : IResourceProvider, IBufferSource
 {
     private CameraData _data;
-    public uint Version { get; private set; }
 
     public void Set(in CameraData data)
     {
@@ -15,7 +14,6 @@ public class CameraProvider(SceneRevision revision) : IResourceProvider, IBuffer
             return;
 
         _data = data;
-        Version++;
         revision.Invalidate();
     }
 

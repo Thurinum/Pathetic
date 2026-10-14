@@ -11,7 +11,4 @@ public interface IResourceAccessor
     {
         return GetResource(name, owner) as T ?? throw new InvalidOperationException($"{name} is not a {typeof(T)}");
     }
-
-    Texture GetTexture(string name, RenderPass? owner = null) => GetResource<Texture>(name, owner);
-    DeviceBuffer GetBuffer(string name, RenderPass? owner = null) => GetResource<DeviceBuffer>(name, owner);
 }

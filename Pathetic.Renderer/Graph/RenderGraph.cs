@@ -24,7 +24,6 @@ internal sealed class RenderGraph(
         RenderContext ctx = new()
         {
             Cmd = cmd,
-            Resources = resources,
             Target = target,
             Width = target.Width,
             Height = target.Height,

@@ -9,11 +9,9 @@ public sealed class SparseSet<T>(DirtyTrackingBuffer<T> buffer) where T : unmana
     private int[] _denseIdxToHandleIdx = new int[InitialSize];
     private readonly Stack<int> _freeHandles = new();
 
-    public DirtyTrackingBuffer<T> Buffer { get; } = buffer;
-
     public Handle Add(in T value)
     {
-        int denseIdx = Buffer.Add(value);
+        int denseIdx = buffer.Add(value);
         EnsureCapacity(denseIdx + 1);
 
         int hndlIdx = _freeHandles.Count > 0 ? _freeHandles.Pop() : denseIdx;
@@ -29,7 +27,7 @@ public sealed class SparseSet<T>(DirtyTrackingBuffer<T> buffer) where T : unmana
         if (!IsValid(handle))
             throw new InvalidOperationException("Invalid or outdated handle.");
 
-        Buffer.UpdateAt(_handleIdxToDenseIdx[handle.Index], value);
+        buffer.UpdateAt(_handleIdxToDenseIdx[handle.Index], value);
     }
 
     public void Remove(ref Handle handle)
@@ -38,10 +36,10 @@ public sealed class SparseSet<T>(DirtyTrackingBuffer<T> buffer) where T : unmana
             throw new InvalidOperationException("Invalid or outdated handle.");
 
         int denseIdx = _handleIdxToDenseIdx[handle.Index];
-        int lastIdx = Buffer.Count - 1;
+        int lastIdx = buffer.Count - 1;
         int movedHndlIdx = _denseIdxToHandleIdx[lastIdx];
 
-        Buffer.RemoveAt(denseIdx);
+        buffer.RemoveAt(denseIdx);
 
         if (denseIdx != lastIdx)
         {
