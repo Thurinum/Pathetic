@@ -59,8 +59,15 @@ internal static class RenderGraphValidator
 
             foreach (var binding in bindings.Values)
             {
-                if (!declared.Contains(binding.Name))
-                    throw new InvalidOperationException($"Pass {passName} shader '{shader}' binds '{binding.Name}', which the pass does not declare as an Input, Output, or Sampler.");
+                if (declared.Contains(binding.Name))
+                    continue;
+
+                // Shared resources (frame state, camera, primitive buffers, pass textures) are
+                // declared once and bound by name, so a pass doesn't need to list them in Inputs.
+                if (resources.Has(binding.Name))
+                    continue;
+
+                throw new InvalidOperationException($"Pass {passName} shader '{shader}' binds '{binding.Name}', which is neither declared by the pass nor registered as a shared resource.");
             }
         }
     }

@@ -16,7 +16,6 @@ public sealed class PathTracerPass(
     {
         public uint PlaneCount;
         public uint SphereCount;
-        public uint Seed;
         public uint SamplesPerPixel;
         public uint MaxBounces;
     }
@@ -48,7 +47,6 @@ public sealed class PathTracerPass(
         {
             PlaneCount = (uint)planes.Count,
             SphereCount = (uint)spheres.Count,
-            Seed = ctx.FrameIndex,
             SamplesPerPixel = options.Value.SamplesPerPixel,
             MaxBounces = options.Value.MaxBounces,
         };

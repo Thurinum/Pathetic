@@ -33,6 +33,7 @@ builder.Services.AddPrimitive<PlanePrimitive>(Resources.Planes);
 builder.Services.AddPrimitive<CirclePrimitive>(Resources.CirclePrimitives);
 
 builder.Services.AddRenderResourceProvider<CameraProvider>();
+builder.Services.AddRenderResourceProvider<FrameStateProvider>();
 builder.Services.AddSceneGraph();
 builder.Services.AddSingleton<App>(); 
 

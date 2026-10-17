@@ -10,6 +10,7 @@ public static class Resources
 
     public const string Params = "params";
     public const string Camera = "camera";
+    public const string FrameState = "frameState";
     public const string Spheres = "spheres";
     public const string Planes = "planes";
     public const string CirclePrimitives = "circlePrimitives";

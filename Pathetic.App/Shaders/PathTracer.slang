@@ -5,12 +5,12 @@ import Camera;
 import Random;
 import Accumulation;
 import Environment;
+import FrameState;
 
 struct Params
 {
     uint PlaneCount;
     uint SphereCount;
-    uint Seed;
     uint SamplesPerPixel;
     uint MaxBounces;
 }
@@ -72,7 +72,7 @@ void main(uint3 dispatchThreadId : SV_DispatchThreadID)
     if (any(pixel >= frameSize))
         return;
     
-    Rng rng = Rng(pixel, params.Seed);
+    Rng rng = Rng(pixel, frameState.FrameIndex);
     Accumulator accum = Accumulator();
 
     for (uint k = 0; k < params.SamplesPerPixel; ++k)
