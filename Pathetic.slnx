@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Pathetic.App/Pathetic.App.csproj" />
+  <Project Path="Pathetic.Renderer/Pathetic.Renderer.csproj" />
+  <Project Path="Pathetic.SceneGraph/Pathetic.SceneGraph.csproj" />
+</Solution>

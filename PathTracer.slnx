@@ -1,5 +1,0 @@
-<Solution>
-  <Project Path="PathTracer.App/PathTracer.App.csproj" />
-  <Project Path="PathTracer.Core.Tests/PathTracer.Core.Tests.csproj" />
-  <Project Path="PathTracer.Core/PathTracer.Core.csproj" />
-</Solution>
