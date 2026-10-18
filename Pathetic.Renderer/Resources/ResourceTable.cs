@@ -10,12 +10,22 @@ internal readonly record struct ResourceKey(string Name, RenderPass? Owner);
 
 internal sealed class ResourceTable : IResourceMetadata, IDisposable
 {
+    private const string FrameStateName = "frameState";
     private readonly Dictionary<ResourceKey, RenderGraphResource> _resources = [];
     private readonly HashSet<string> _reallocated = [];
     private readonly HashSet<string> _resized = [];
     private uint _lastWidth;
     private uint _lastHeight;
     private bool _disposed;
+    private IReadOnlySet<string>? _visibleResources;
+
+    public ResourceTable()
+    {
+        Declare(UniformBufferSpec.Of<FrameState>(FrameStateName));
+    }
+
+    private SceneChange _pendingChanges;
+    public SceneChange SceneRevision { get; private set; }
 
     public void Declare(IResourceSpec spec, RenderPass? owner = null, IResourceUploader? writer = null)
     {
@@ -52,13 +62,23 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
     public IReadOnlySet<string> Upload(GraphicsDevice device, RenderContext ctx)
     {
         _reallocated.Clear();
-        
+        SceneRevision = _pendingChanges;
+        _pendingChanges = SceneChange.None;
+
         foreach (RenderGraphResource entry in _resources.Values)
         {
-            if (entry.Writer is null)
+            // Frame data has no writer; pass parameters are derived from the scene.
+            if (entry.Writer is null or RenderPass)
                 continue;
 
             bool didReallocate = entry.Spec is IStructuredBufferSpec spec && Reallocate(device, entry, spec);
+            bool visible = IsVisible(entry.Spec.Name);
+
+            if (entry.Writer.DirtyChanges == SceneChange.None && !didReallocate)
+                continue;
+
+            if (visible)
+                SceneRevision |= entry.Writer.DirtyChanges;
 
             // ignore textures and samplers
             // TODO: Texture upload path from CPU
@@ -66,10 +86,34 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
                 continue;
 
             entry.Writer.Upload(ctx, buffer, didReallocate);
+            entry.Writer.ClearDirty();
+
+            if (didReallocate && visible)
+                SceneRevision |= SceneChange.Allocation;
         }
+
+        foreach (RenderGraphResource entry in _resources.Values)
+        {
+            if (entry.Writer is not RenderPass pass || entry.Resource is not DeviceBuffer buffer)
+                continue;
+
+            pass.Upload(ctx, buffer, false);
+        }
+
+        // Hard-coded and deliberately last: shaders must observe this frame's revision.
+        ctx.Cmd.UpdateBuffer(GetResource<DeviceBuffer>(FrameStateName), 0, new FrameState
+        {
+            FrameIndex = ctx.FrameIndex,
+            DeltaTime = ctx.DeltaTime,
+            SceneRevision = SceneRevision
+        });
 
         return _reallocated;
     }
+
+    public void SetVisibleResources(IReadOnlySet<string> names) => _visibleResources = names;
+
+    private bool IsVisible(string name) => _visibleResources?.Contains(name) ?? true;
 
     private bool Reallocate(GraphicsDevice device, RenderGraphResource entry, IStructuredBufferSpec spec)
     {
@@ -113,6 +157,9 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
                 _resized.Add(entry.Spec.Name);
             }
         }
+
+        if (_resized.Count > 0)
+            _pendingChanges |= SceneChange.Allocation;
 
         _lastWidth = width;
         _lastHeight = height;

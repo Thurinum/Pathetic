@@ -46,7 +46,6 @@ public static class ServiceCollectionExtensions
             services.AddSingleton<SlangCompiler>();
             services.AddSingleton<RenderPassFactory>();
             services.AddSingleton<RenderGraphPipelineFactory>();
-            services.AddSingleton<SceneRevision>();
             services.AddSingleton<RenderGraphFactory>();
             services.AddSingleton<RenderWindow>();
             services.AddSingleton<ImGuiHost>();

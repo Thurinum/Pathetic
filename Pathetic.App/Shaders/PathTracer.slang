@@ -16,8 +16,6 @@ struct Params
 }
 
 RWTexture2D<float4> pathTracerColor;
-Texture2D<float4> circles;
-SamplerState circlesSampler;
 ConstantBuffer<Camera> camera;
 StructuredBuffer<Plane> planes;
 StructuredBuffer<Sphere> spheres;

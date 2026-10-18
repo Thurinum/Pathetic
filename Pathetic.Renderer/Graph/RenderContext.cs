@@ -11,6 +11,5 @@ public readonly record struct RenderContext
     public required uint Height { get; init; }
     public required float DeltaTime { get; init; }
     public required uint FrameIndex { get; init; }
-    public required uint SceneRevision { get; init; }
     public required IResourceMetadata Resources { get; init; }
 }

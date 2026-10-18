@@ -12,6 +12,10 @@ public abstract class RenderPass : IResourceUploader
     public virtual IReadOnlyList<IResourceSpec> Resources => [];
     public virtual IReadOnlyList<string> Inputs => [];
 
+    public SceneChange DirtyChanges => SceneChange.None;
+    public void SetDirty(SceneChange changes) { }
+    public void ClearDirty() { }
+
     public virtual void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized) {}
     protected virtual (uint x, uint y) DispatchSize(RenderContext ctx) => (ctx.Width, ctx.Height);
 

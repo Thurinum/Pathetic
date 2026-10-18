@@ -23,12 +23,10 @@ public sealed class PathTracerPass(IOptions<PathTracerOptions> options) : Render
     [
         new TextureSpec(ResourceName.PathTracerColor, PixelFormat.R32_G32_B32_A32_Float, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
         UniformBufferSpec.Of<Params>(ResourceName.Params),
-        new SamplerSpec(ResourceName.CirclesSampler, SamplerDescription.Linear),
     ];
 
     public override IReadOnlyList<string> Inputs { get; } =
     [
-        ResourceName.Circles,
         ResourceName.Camera,
         ResourceName.Planes,
         ResourceName.Spheres,

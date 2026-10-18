@@ -26,7 +26,7 @@ public sealed class CirclesPass : RenderPass
 
     public override void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
     {
-        Params @params = new() { Count = ctx.Resources.GetElementCount(ResourceName.CirclePrimitives) };
-        ctx.Cmd.UpdateBuffer(buffer, 0, @params);
+        uint count = ctx.Resources.GetElementCount(ResourceName.CirclePrimitives);
+        ctx.Cmd.UpdateBuffer(buffer, 0, new Params { Count = count });
     }
 }

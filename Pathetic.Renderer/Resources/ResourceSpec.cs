@@ -29,6 +29,12 @@ public sealed record UniformBufferSpec : IResourceSpec
 public interface IResourceUploader
 {
     IReadOnlyList<IResourceSpec> Resources { get; }
+
+    SceneChange DirtyChanges { get; }
+
+    void SetDirty(SceneChange changes);
+    void ClearDirty();
+
     void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized);
 }
 

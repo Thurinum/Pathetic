@@ -33,7 +33,6 @@ builder.Services.AddStructuredBuffer<PlanePrimitive>(ResourceName.Planes, sparse
 builder.Services.AddStructuredBuffer<CirclePrimitive>(ResourceName.CirclePrimitives, sparseStorage: true);
 
 builder.Services.AddStructuredBuffer<CameraProvider>();
-builder.Services.AddStructuredBuffer<FrameStateProvider>();
 builder.Services.AddSceneGraph();
 builder.Services.AddSingleton<App>(); 
 

@@ -12,8 +12,7 @@ internal sealed class PassEntry(RenderPass pass, PassRenderState state)
 internal sealed class RenderGraph(
     ResourceTable resources,
     List<PassEntry> passes,
-    string texture,
-    SceneRevision sceneRevision) : IDisposable
+    string texture) : IDisposable
 {
     private uint _frameIndex;
     private bool _disposed;
@@ -29,7 +28,6 @@ internal sealed class RenderGraph(
             Height = target.Height,
             DeltaTime = deltaTime,
             FrameIndex = _frameIndex,
-            SceneRevision = sceneRevision.Value,
             Resources = resources
         };
 
@@ -55,7 +53,6 @@ internal sealed class RenderGraph(
 
     public void Resize(GraphicsDevice device, uint width, uint height)
     {
-        sceneRevision.Invalidate();
         var resizedTextureNames = resources.Resize(device, width, height);
 
         foreach (var entry in GetPassesWithBindings(resizedTextureNames))
