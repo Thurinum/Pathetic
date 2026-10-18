@@ -1,67 +1,93 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Collections;
+using System.Numerics;
+using System.Runtime.CompilerServices;
 using NeoVeldrid;
 using Pathetic.Renderer.Graph;
 using Pathetic.Renderer.Resources;
 
 namespace Pathetic.Renderer.Buffers;
 
-public sealed class StructuredBuffer<T>(string name, bool resizable, bool deltaUpload, uint capacity = 256) 
+public sealed class StructuredBuffer<T> 
     : IStructuredBufferSpec where T : unmanaged, IEquatable<T>
 {
-    public string Name { get; } = name;
+    public string Name { get; }
     public int Count { get; private set; }
     public uint Stride => (uint)Unsafe.SizeOf<T>();
     public uint ElementCount => (uint)Count;
-    public uint InitialCapacity => capacity;
-    public bool IsResizable => resizable;
-    public bool DeltaUpload => deltaUpload;
+    public uint InitialCapacity { get; }
+    public bool IsResizable { get; }
+    public bool DeltaUpload => true;
     public IReadOnlyList<IResourceSpec> Resources => [this];
-    public SceneChange DirtyChanges => deltaUpload ? _dirtyChanges : SceneChange.Content;
+    public SceneChange DirtyChanges { get; private set; }
 
-    private T[] _values = new T[capacity];
-    private ReadOnlySpan<T> Data => _values.AsSpan(0, Count);
+    private T[] _values;
     private int Capacity => _values.Length;
-    private bool[]? _dirtyBits = deltaUpload ? new bool[capacity] : null;
-    private SceneChange _dirtyChanges;
+    private readonly BitArray _dirtyChunks;
+    private readonly int _chunkSize;
+
+    public StructuredBuffer(string name, bool resizable, uint capacity, uint chunkSize)
+    {
+        Name = name;
+        IsResizable = resizable;
+        InitialCapacity = capacity;
+        _values = new T[capacity];
+        _chunkSize = (int)chunkSize;
+
+        CheckCapacity();
+        _dirtyChunks = new BitArray((int)GetChunkCount());
+    }
+    
+    private uint GetChunkCount()
+    {
+        if (!IsPowerOfTwo(_chunkSize))
+        {
+            throw new InvalidOperationException("Structured buffer chunk size must be a power of two.");
+        }
+        
+        // Capacity + (ChunkSize - 1) / ChunkSize
+        // e.g. 64: 1000000 >> 6 == 0000001
+        long count = (Capacity + _chunkSize - 1) >> BitOperations.TrailingZeroCount(_chunkSize);
+        return (uint)count;
+    }
 
     public void SetDirty(SceneChange changes)
     {
-        if (!deltaUpload)
-            return;
-
-        _dirtyChanges |= changes;
+        DirtyChanges |= changes;
         MarkAllDirty();
     }
 
     public void ClearDirty()
     {
-        _dirtyChanges = SceneChange.None;
-
-        if (_dirtyBits is null)
-            return;
-
-        Array.Clear(_dirtyBits, 0, Count);
+        DirtyChanges = SceneChange.None;
+        _dirtyChunks.SetAll(false);
     }
 
     public void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
     {
-        if (!deltaUpload)
-        {
-            if (Count > 0)
-                ctx.Cmd.UpdateBuffer(buffer, 0, Data);
-
-            return;
-        }
-
         if (resized)
             MarkAllDirty();
 
-        for (int i = 0; i < Count; i++)
+        int c = 0;
+        while (c < _dirtyChunks.Length)
         {
-            if (!IsDirtyAt(i))
+            if (!_dirtyChunks[c])
+            {
+                c++;
                 continue;
+            }
 
-            ctx.Cmd.UpdateBuffer(buffer, (uint)i * Stride, Data[i]);
+            int startChunkIdx = c;
+            while (c < _dirtyChunks.Length && _dirtyChunks[c]) 
+                c++;
+            
+            int startIdx = startChunkIdx * _chunkSize;
+            if (startIdx > Count)
+                break;
+            
+            int endIdx = Math.Min(c * _chunkSize, Count);
+
+            var data = _values.AsSpan(startIdx, endIdx - startIdx);
+            ctx.Cmd.UpdateBuffer(buffer, (uint)startIdx * Stride, data);
         }
     }
 
@@ -71,8 +97,8 @@ public sealed class StructuredBuffer<T>(string name, bool resizable, bool deltaU
         int index = Count++;
         
         _values[index] = value;
-        _dirtyChanges |= SceneChange.Structure | SceneChange.Content;
-        _dirtyBits?[index] = true;
+        DirtyChanges |= SceneChange.Structure | SceneChange.Content;
+        MarkDirty(index);
 
         return index;
     }
@@ -86,7 +112,7 @@ public sealed class StructuredBuffer<T>(string name, bool resizable, bool deltaU
             return;
 
         _values[index] = value;
-        _dirtyChanges |= SceneChange.Content;
+        DirtyChanges |= SceneChange.Content;
         MarkDirty(index);
     }
 
@@ -100,26 +126,30 @@ public sealed class StructuredBuffer<T>(string name, bool resizable, bool deltaU
         if (index != last)
         {
             _values[index] = _values[last];
-            _dirtyBits?[index] = _dirtyBits[last];
         }
 
-        _dirtyChanges |= SceneChange.Structure;
+        MarkDirty(index);
+        DirtyChanges |= SceneChange.Structure;
         Count--;
     }
-
-    private bool IsDirtyAt(int index) => _dirtyBits![index];
-
-    private void MarkDirty(int index)
+    
+    // e.g. 64: 1000000 & 0111111 == 0
+    private static bool IsPowerOfTwo(long n)
     {
-        _dirtyBits?[index] = true;
+        if (n == 0)
+            throw new DivideByZeroException();
+        
+        return (n & (n - 1)) == 0;
     }
-
-    private void MarkAllDirty()
+    
+    private void CheckCapacity()
     {
-        if (_dirtyBits is not null)
-            Array.Fill(_dirtyBits, true, 0, Count);
+        if (!IsPowerOfTwo(Capacity))
+        {
+            throw new InvalidOperationException("Structured buffer capacity must be a power of two.");
+        }
     }
-
+    
     private void EnsureCapacity(int count)
     {
         if (count <= Capacity)
@@ -127,8 +157,17 @@ public sealed class StructuredBuffer<T>(string name, bool resizable, bool deltaU
 
         int newSize = Math.Max(count, Capacity * 2);
         Array.Resize(ref _values, newSize);
+        _dirtyChunks.Length = (int)GetChunkCount();
+    }
 
-        if (_dirtyBits is not null)
-            Array.Resize(ref _dirtyBits, newSize);
+    private void MarkDirty(int index)
+    {
+        int c = index / _chunkSize;
+        _dirtyChunks[c] = true;
+    }
+
+    private void MarkAllDirty()
+    {
+        _dirtyChunks.SetAll(true);
     }
 }

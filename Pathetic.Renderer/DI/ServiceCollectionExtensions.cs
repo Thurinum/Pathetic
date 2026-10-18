@@ -33,7 +33,7 @@ public static class ServiceCollectionExtensions
             bool deltaUpload = true,
             uint capacity = 256) where T : unmanaged, IEquatable<T>
         {
-            var buffer = new StructuredBuffer<T>(name, resizable, deltaUpload, capacity);
+            var buffer = new StructuredBuffer<T>(name, resizable, capacity, 64);
             services.AddSingleton(buffer);
             services.AddSingleton<IResourceUploader>(buffer);
 
