@@ -16,7 +16,7 @@ public sealed class TemporalAccumulationPass(IOptions<TemporalAccumulationOption
 
     public override IReadOnlyList<IResourceSpec> Resources { get; } =
     [
-        new TextureSpec(ResourceName.Color, PixelFormat.B8_G8_R8_A8_UNorm, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
+        new TextureSpec(ResourceName.PresentColor, PixelFormat.B8_G8_R8_A8_UNorm, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
         new TextureSpec(ResourceName.AccumImage, PixelFormat.R32_G32_B32_A32_Float, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
         UniformBufferSpec.Of<Params>(ResourceName.Params),
     ];

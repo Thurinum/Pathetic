@@ -30,10 +30,10 @@ public class App(SceneLoop loop, SceneManager sceneManager)
         var t = camera.GetComponent<Transform>();
         t.Position = new Vector3(0, 5, 10);
 
-        for (int i = 0; i < 100; i++)
-        {
-            AddCircle(scene, Random.Shared.NextSingle() * (150 - 50), Random.Shared.NextSingle(), Random.Shared.NextSingle());
-        }
+        // for (int i = 0; i < 100; i++)
+        // {
+        //     AddCircle(scene, Random.Shared.NextSingle() * (150 - 50), Random.Shared.NextSingle(), Random.Shared.NextSingle());
+        // }
 
         var orbit = camera.AddComponent<CameraControls>();
         orbit.Target = new Vector3(2,0,0);
