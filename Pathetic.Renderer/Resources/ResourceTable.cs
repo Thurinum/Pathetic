@@ -255,7 +255,7 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
 
         entry.ElementCapacity = elementCapacity;
         BufferUsage usage = BufferUsage.StructuredBufferReadOnly;
-        if (spec.IsResizable)
+        if (spec.IsDynamic)
             usage |= BufferUsage.Dynamic;
 
         var bufferDesc = new BufferDescription(spec.Stride * elementCapacity, usage, spec.Stride);

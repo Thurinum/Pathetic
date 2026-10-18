@@ -22,18 +22,18 @@ public static class ServiceCollectionExtensions
         /// </summary>
         /// <param name="name">Name of the resource as used in shaders.</param>
         /// <param name="sparseStorage">Whether to use a sparse set, which provides safe element removal while preserving buffer packing.</param>
-        /// <param name="resizable">Whether the auto-grow the buffer when capacity is reached.</param>
-        /// <param name="deltaUpload">Whether to upload the whole buffer on change or only the modified parts.</param>
+        /// <param name="resizable">Whether to auto-grow the buffer when capacity is reached.</param>
+        /// <param name="dynamic">Whether the buffer will be updated frequently.</param>
         /// <param name="capacity">How many elements the buffer can hold.</param>
         /// <typeparam name="T"></typeparam>
         public void AddStructuredBuffer<T>(
             string name,
             bool sparseStorage = false,
             bool resizable = true,
-            bool deltaUpload = true,
+            bool dynamic = true,
             uint capacity = 256) where T : unmanaged, IEquatable<T>
         {
-            var buffer = new StructuredBuffer<T>(name, resizable, capacity, 64);
+            var buffer = new StructuredBuffer<T>(name, resizable, dynamic, capacity, 64);
             services.AddSingleton(buffer);
             services.AddSingleton<IResourceUploader>(buffer);
 

@@ -16,7 +16,7 @@ public sealed class StructuredBuffer<T>
     public uint ElementCount => (uint)Count;
     public uint InitialCapacity { get; }
     public bool IsResizable { get; }
-    public bool DeltaUpload => true;
+    public bool IsDynamic { get; }
     public IReadOnlyList<IResourceSpec> Resources => [this];
     public SceneChange DirtyChanges { get; private set; }
 
@@ -25,10 +25,11 @@ public sealed class StructuredBuffer<T>
     private readonly BitArray _dirtyChunks;
     private readonly int _chunkSize;
 
-    public StructuredBuffer(string name, bool resizable, uint capacity, uint chunkSize)
+    public StructuredBuffer(string name, bool resizable, bool dynamic, uint capacity, uint chunkSize)
     {
         Name = name;
         IsResizable = resizable;
+        IsDynamic = dynamic;
         InitialCapacity = capacity;
         _values = new T[capacity];
         _chunkSize = (int)chunkSize;

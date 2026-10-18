@@ -44,6 +44,6 @@ public interface IStructuredBufferSpec : IResourceSpec, IResourceUploader
     uint ElementCount { get; }
     uint InitialCapacity { get; }
     bool IsResizable { get; }
-    bool DeltaUpload { get; }
+    bool IsDynamic { get; }
 }
 
