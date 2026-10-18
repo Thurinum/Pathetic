@@ -8,7 +8,7 @@ public sealed class FrameStateProvider : IResourceUploader
 {
     public IReadOnlyList<IResourceSpec> Resources { get; } =
     [
-        UniformBufferSpec.Of<FrameState>(Pathetic.App.ResourceName.FrameState)
+        UniformBufferSpec.Of<FrameState>(ResourceName.FrameState)
     ];
 
     public void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
