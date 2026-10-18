@@ -20,8 +20,8 @@ public sealed class PassRenderState : IDisposable
 
         _disposed = true;
 
-        Layout.Dispose();
-        Set?.Dispose();
         Pipeline.Dispose();
+        Set?.Dispose();
+        Layout.Dispose();
     }
 }

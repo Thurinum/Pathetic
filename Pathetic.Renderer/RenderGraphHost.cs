@@ -5,23 +5,28 @@ namespace Pathetic.Renderer;
 
 public sealed class RenderGraphHost(RenderWindow window, IOptions<RenderGraphSpec> graphSpec, RenderGraphFactory graphFactory) : IDisposable
 {
-    private RenderGraph? _graph;
+    private RenderGraph Graph
+    {
+        get => field ?? throw new InvalidOperationException($"{nameof(RenderGraphHost)} is not initialized.");
+        set;
+    }
+
     private bool _disposed;
 
     public void Initialize()
     {
-        _graph = graphFactory.Create(graphSpec.Value, window.Device);
+        Graph = graphFactory.Create(graphSpec.Value, window.Device);
         window.Resized += OnWindowResized;
     }
 
     public void Render(float deltaTime)
     {
-        _graph!.Render(window.Device, window.CommandList, deltaTime);
+        Graph.Render(window.Device, window.CommandList, deltaTime);
     }
 
     private void OnWindowResized()
     {
-        _graph?.Resize(window.Device, (uint)window.Width, (uint)window.Height);
+        Graph.Resize(window.Device, (uint)window.Width, (uint)window.Height);
     }
 
     public void Dispose()
@@ -31,6 +36,7 @@ public sealed class RenderGraphHost(RenderWindow window, IOptions<RenderGraphSpe
 
         _disposed = true;
 
-        _graph?.Dispose();
+        window.Device.WaitForIdle();
+        Graph.Dispose();
     }
 }
