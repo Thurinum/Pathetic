@@ -17,7 +17,6 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
     private uint _lastWidth;
     private uint _lastHeight;
     private bool _disposed;
-    private IReadOnlySet<string>? _visibleResources;
 
     public ResourceTable()
     {
@@ -72,13 +71,11 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
                 continue;
 
             bool didReallocate = entry.Spec is IStructuredBufferSpec spec && Reallocate(device, entry, spec);
-            bool visible = IsVisible(entry.Spec.Name);
 
             if (entry.Writer.DirtyChanges == SceneChange.None && !didReallocate)
                 continue;
 
-            if (visible)
-                SceneRevision |= entry.Writer.DirtyChanges;
+            SceneRevision |= entry.Writer.DirtyChanges;
 
             // ignore textures and samplers
             // TODO: Texture upload path from CPU
@@ -88,7 +85,7 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
             entry.Writer.Upload(ctx, buffer, didReallocate);
             entry.Writer.ClearDirty();
 
-            if (didReallocate && visible)
+            if (didReallocate)
                 SceneRevision |= SceneChange.Allocation;
         }
 
@@ -110,10 +107,6 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
 
         return _reallocated;
     }
-
-    public void SetVisibleResources(IReadOnlySet<string> names) => _visibleResources = names;
-
-    private bool IsVisible(string name) => _visibleResources?.Contains(name) ?? true;
 
     private bool Reallocate(GraphicsDevice device, RenderGraphResource entry, IStructuredBufferSpec spec)
     {

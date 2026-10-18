@@ -16,7 +16,7 @@ public sealed class RenderGraphFactory(
         var passes = CreatePasses(spec, device);
 
         var framebuffer = device.SwapchainFramebuffer;
-        CreateResources(device, framebuffer, resources, passes, presentTexture);
+        CreateResources(device, framebuffer, resources, passes);
         RenderGraphValidator.ValidatePresentTexture(presentTexture, resources, framebuffer);
         RenderGraphValidator.ValidatePassBindings(passes, resources);
         BindPassResources(device, passes, resources);
@@ -42,8 +42,7 @@ public sealed class RenderGraphFactory(
         GraphicsDevice device,
         Framebuffer framebuffer,
         ResourceTable resources,
-        List<PassEntry> passes,
-        string presentTexture)
+        List<PassEntry> passes)
     {
         IEnumerable<IResourceUploader> uploaders = resourceUploaders.Concat(passes.Select(IResourceUploader (entry) => entry.Pass));
 
@@ -56,40 +55,7 @@ public sealed class RenderGraphFactory(
             }
         }
 
-        resources.SetVisibleResources(FindVisibleResources(presentTexture, passes));
-
         resources.Allocate(device, framebuffer.Width, framebuffer.Height);
-    }
-    
-    private static HashSet<string> FindVisibleResources(string presentTexture, List<PassEntry> passes)
-    {
-        var producers = new Dictionary<string, RenderPass>(StringComparer.Ordinal);
-
-        foreach (var entry in passes)
-        {
-            foreach (var spec in entry.Pass.Resources)
-            {
-                producers.TryAdd(spec.Name, entry.Pass);
-            }
-        }
-
-        var visible = new HashSet<string>(StringComparer.Ordinal) { presentTexture };
-        var pending = new Queue<string>();
-        pending.Enqueue(presentTexture);
-
-        while (pending.Count > 0)
-        {
-            if (!producers.TryGetValue(pending.Dequeue(), out RenderPass? producer))
-                continue;
-
-            foreach (string input in producer.Inputs)
-            {
-                if (visible.Add(input))
-                    pending.Enqueue(input);
-            }
-        }
-
-        return visible;
     }
 
     private static void BindPassResources(GraphicsDevice device, List<PassEntry> passes, ResourceTable resources)
