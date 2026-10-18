@@ -35,8 +35,7 @@ internal static class RenderGraphValidator
                 bindings.TryAdd(binding.Name, binding);
 
             var declared = entry.Pass.Inputs
-                .Concat(entry.Pass.Outputs.Select(o => o.Name))
-                .Concat(entry.Pass.Samplers.Select(s => s.Name))
+                .Concat(entry.Pass.Resources.Select(resource => resource.Name))
                 .ToHashSet(StringComparer.Ordinal);
 
             foreach (var input in entry.Pass.Inputs)
@@ -48,7 +47,7 @@ internal static class RenderGraphValidator
                     throw new InvalidOperationException($"Pass {passName} declares input '{input}' that shader '{shader}' does not consume.");
             }
 
-            foreach (var sampler in entry.Pass.Samplers)
+            foreach (var sampler in entry.Pass.Resources.OfType<SamplerSpec>())
             {
                 if (!bindings.TryGetValue(sampler.Name, out var binding))
                     throw new InvalidOperationException($"Pass {passName} declares sampler '{sampler.Name}' that shader '{shader}' does not consume.");

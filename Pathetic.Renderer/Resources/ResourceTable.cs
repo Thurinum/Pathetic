@@ -61,7 +61,13 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
                 continue;
 
             bool didReallocate = entry.Spec is IDynamicBufferSpec dynamic && Reallocate(device, entry, dynamic);
-            entry.Writer.Upload(ctx, (DeviceBuffer)entry.Resource!, didReallocate);
+
+            // ignore textures and samplers
+            // TODO: Texture upload path from CPU
+            if (entry.Resource is not DeviceBuffer buffer)
+                continue;
+
+            entry.Writer.Upload(ctx, buffer, didReallocate);
         }
 
         return _reallocated;

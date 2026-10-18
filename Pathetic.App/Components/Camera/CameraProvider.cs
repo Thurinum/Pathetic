@@ -4,7 +4,7 @@ using Pathetic.Renderer.Resources;
 
 namespace Pathetic.App.Components.Camera;
 
-public class CameraProvider(SceneRevision revision) : IResourceProvider, IResourceUploader
+public class CameraProvider(SceneRevision revision) : IResourceUploader
 {
     private CameraData _data;
 
@@ -17,9 +17,9 @@ public class CameraProvider(SceneRevision revision) : IResourceProvider, IResour
         revision.Invalidate();
     }
 
-    public IEnumerable<IResourceSpec> Resources { get; } =
+    public IReadOnlyList<IResourceSpec> Resources { get; } =
     [
-        UniformBufferSpec.Of<CameraData>(Pathetic.App.Resources.Camera)    
+        UniformBufferSpec.Of<CameraData>(ResourceName.Camera)    
     ];
     
     public void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)

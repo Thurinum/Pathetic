@@ -13,20 +13,20 @@ public sealed class CirclesPass : RenderPass
 
     public override string ShaderModule => "Circles";
 
-    public override IReadOnlyList<IResourceSpec> Outputs { get; } =
+    public override IReadOnlyList<IResourceSpec> Resources { get; } =
     [
-        new TextureSpec(Resources.Circles, PixelFormat.R32_G32_B32_A32_Float, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
-        UniformBufferSpec.Of<Params>(Resources.Params),
+        new TextureSpec(ResourceName.Circles, PixelFormat.R32_G32_B32_A32_Float, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
+        UniformBufferSpec.Of<Params>(ResourceName.Params),
     ];
 
     public override IReadOnlyList<string> Inputs { get; } =
     [
-        Resources.CirclePrimitives,
+        ResourceName.CirclePrimitives,
     ];
 
     public override void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
     {
-        Params @params = new() { Count = ctx.Resources.GetElementCount(Resources.CirclePrimitives) };
+        Params @params = new() { Count = ctx.Resources.GetElementCount(ResourceName.CirclePrimitives) };
         ctx.Cmd.UpdateBuffer(buffer, 0, @params);
     }
 }

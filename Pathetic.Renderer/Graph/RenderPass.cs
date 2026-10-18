@@ -9,9 +9,8 @@ public abstract class RenderPass : IResourceUploader
     public bool Enabled { get; set; } = true;
     public abstract string ShaderModule { get; }
 
-    public virtual IReadOnlyList<IResourceSpec> Outputs => [];
+    public virtual IReadOnlyList<IResourceSpec> Resources => [];
     public virtual IReadOnlyList<string> Inputs => [];
-    public virtual IReadOnlyList<SamplerSpec> Samplers => [];
 
     public virtual void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized) {}
     protected virtual (uint x, uint y) DispatchSize(RenderContext ctx) => (ctx.Width, ctx.Height);

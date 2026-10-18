@@ -19,31 +19,27 @@ public sealed class PathTracerPass(IOptions<PathTracerOptions> options) : Render
 
     public override string ShaderModule => "PathTracer";
 
-    public override IReadOnlyList<IResourceSpec> Outputs { get; } =
+    public override IReadOnlyList<IResourceSpec> Resources { get; } =
     [
-        new TextureSpec(Resources.PathTracerColor, PixelFormat.R32_G32_B32_A32_Float, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
-        UniformBufferSpec.Of<Params>(Resources.Params),
+        new TextureSpec(ResourceName.PathTracerColor, PixelFormat.R32_G32_B32_A32_Float, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
+        UniformBufferSpec.Of<Params>(ResourceName.Params),
+        new SamplerSpec(ResourceName.CirclesSampler, SamplerDescription.Linear),
     ];
 
     public override IReadOnlyList<string> Inputs { get; } =
     [
-        Resources.Circles,
-        Resources.Camera,
-        Resources.Planes,
-        Resources.Spheres,
-    ];
-
-    public override IReadOnlyList<SamplerSpec> Samplers { get; } =
-    [
-        new(Resources.CirclesSampler, SamplerDescription.Linear),
+        ResourceName.Circles,
+        ResourceName.Camera,
+        ResourceName.Planes,
+        ResourceName.Spheres,
     ];
 
     public override void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
     {
         Params @params = new()
         {
-            PlaneCount = ctx.Resources.GetElementCount(Resources.Planes),
-            SphereCount = ctx.Resources.GetElementCount(Resources.Spheres),
+            PlaneCount = ctx.Resources.GetElementCount(ResourceName.Planes),
+            SphereCount = ctx.Resources.GetElementCount(ResourceName.Spheres),
             SamplesPerPixel = options.Value.SamplesPerPixel,
             MaxBounces = options.Value.MaxBounces,
         };

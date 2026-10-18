@@ -19,6 +19,7 @@ public sealed class DirtyTrackingBuffer<T>(string name) : IDynamicBufferSpec whe
     public uint Stride => (uint)Unsafe.SizeOf<T>();
 
     public uint ElementCount => (uint)Count;
+    public IReadOnlyList<IResourceSpec> Resources => [this];
 
     public void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
     {

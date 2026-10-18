@@ -1,7 +1,7 @@
 namespace Pathetic.App;
 
 // ship it
-public static class Resources
+public static class ResourceName
 {
     public const string PathTracerColor = "pathTracerColor";
     public const string AccumImage = "accumImage";

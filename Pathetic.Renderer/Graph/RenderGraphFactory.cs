@@ -7,7 +7,7 @@ public sealed class RenderGraphFactory(
     RenderPassFactory passFactory,
     RenderGraphPipelineFactory pipelineFactory,
     SceneRevision sceneRevision,
-    IEnumerable<IResourceProvider> resourceProviders)
+    IEnumerable<IResourceUploader> resourceUploaders)
 {
     internal RenderGraph Create(RenderGraphSpec spec, GraphicsDevice device)
     {
@@ -45,39 +45,18 @@ public sealed class RenderGraphFactory(
         ResourceTable resources,
         List<PassEntry> passes)
     {
-        foreach (var provider in resourceProviders)
-        {
-            foreach (var spec in provider.Resources)
-            {
-                resources.Declare(spec, writer: WriterFor(spec, provider as IResourceUploader));
-            }
-        }
+        IEnumerable<IResourceUploader> uploaders = resourceUploaders.Concat(passes.Select(IResourceUploader (entry) => entry.Pass));
 
-        foreach (var entry in passes)
+        foreach (var uploader in uploaders)
         {
-            foreach (var output in entry.Pass.Outputs)
+            foreach (var spec in uploader.Resources)
             {
-                var owner = output is UniformBufferSpec ? entry.Pass : null;
-                resources.Declare(output, owner, WriterFor(output, entry.Pass));
-            }
-
-            foreach (var sampler in entry.Pass.Samplers)
-            {
-                resources.Declare(sampler);
+                var owner = uploader is RenderPass pass && spec is UniformBufferSpec ? pass : null;
+                resources.Declare(spec, owner, writer: uploader);
             }
         }
 
         resources.Allocate(device, framebuffer.Width, framebuffer.Height);
-    }
-
-    private static IResourceUploader? WriterFor(IResourceSpec spec, IResourceUploader? declarer)
-    {
-        return spec switch
-        {
-            IDynamicBufferSpec dynamicSpec => dynamicSpec,
-            UniformBufferSpec => declarer,
-            _ => null
-        };
     }
 
     private static void BindPassResources(GraphicsDevice device, List<PassEntry> passes, ResourceTable resources)
