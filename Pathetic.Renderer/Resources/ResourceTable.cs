@@ -146,16 +146,16 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
 
         foreach (RenderGraphResource entry in _resources.Values)
         {
-            if (entry.Spec is TextureSpec { SizePolicy: AutoSize } spec)
+            if (entry.Spec is not TextureSpec { SizePolicy: AutoSize } spec) 
+                continue;
+            
+            if (_resized.Count == 0)
             {
-                if (_resized.Count == 0)
-                {
-                    device.WaitForIdle();
-                }
-                
-                entry.Resource = CreateTexture(device, spec, width, height);
-                _resized.Add(entry.Spec.Name);
+                device.WaitForIdle();
             }
+                
+            entry.Resource = CreateTexture(device, spec, width, height);
+            _resized.Add(entry.Spec.Name);
         }
 
         if (_resized.Count > 0)

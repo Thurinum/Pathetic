@@ -60,11 +60,7 @@ public sealed class RenderGraphFactory(
 
         resources.Allocate(device, framebuffer.Width, framebuffer.Height);
     }
-
-    /// <summary>
-    /// Resources that can reach the presented texture. Changes to anything else cannot
-    /// affect the image, so they must not invalidate accumulated frames.
-    /// </summary>
+    
     private static HashSet<string> FindVisibleResources(string presentTexture, List<PassEntry> passes)
     {
         var producers = new Dictionary<string, RenderPass>(StringComparer.Ordinal);
