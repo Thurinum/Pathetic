@@ -5,30 +5,13 @@ using Pathetic.Renderer.Resources;
 
 namespace Pathetic.Renderer.Buffers;
 
-/// <summary>
-/// A CPU-side array uploaded as a structured buffer.
-/// </summary>
-/// <param name="name">Resource name used to bind it from shaders.</param>
-/// <param name="capacity">Element capacity requested on first allocation.</param>
-/// <param name="resizable">
-/// When false the GPU buffer never grows; overflowing <paramref name="capacity"/> throws instead.
-/// </param>
-/// <param name="deltaUpload">
-/// When true only elements changed since the last upload are copied. When false the whole live
-/// range is copied every frame, which is cheaper for data that always changes.
-/// </param>
 public sealed class StructuredBuffer<T>(
     string name,
-    uint capacity = 256,
-    bool resizable = true,
-    bool deltaUpload = true) : IStructuredBufferSpec
-    where T : unmanaged, IEquatable<T>
+    bool resizable,
+    bool deltaUpload,
+    uint capacity = 256) : IStructuredBufferSpec where T : unmanaged, IEquatable<T>
 {
-    private T[] _values = new T[CheckedCapacity(capacity)];
-    private bool[]? _dirtiness = deltaUpload ? new bool[CheckedCapacity(capacity)] : null;
-
     public string Name { get; } = name;
-    public ReadOnlySpan<T> Data => _values.AsSpan(0, Count);
     public int Count { get; private set; }
     public uint Stride => (uint)Unsafe.SizeOf<T>();
     public uint ElementCount => (uint)Count;
@@ -36,9 +19,12 @@ public sealed class StructuredBuffer<T>(
     public bool IsResizable => resizable;
     public bool DeltaUpload => deltaUpload;
     public IReadOnlyList<IResourceSpec> Resources => [this];
-
+    
+    private T[] _values = new T[capacity];
+    private ReadOnlySpan<T> Data => _values.AsSpan(0, Count);
     private int Capacity => _values.Length;
-
+    private bool[]? _dirtyBits = deltaUpload ? new bool[capacity] : null;
+    
     public void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
     {
         if (!deltaUpload)
@@ -72,15 +58,21 @@ public sealed class StructuredBuffer<T>(
 
     public void UpdateAt(int index, in T value)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(index);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, Count);
+
         if (_values[index].Equals(value))
             return;
 
         _values[index] = value;
         MarkDirty(index);
     }
-
-    public void RemoveAt(int index)
+    
+    internal void RemoveAt(int index)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(index);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, Count);
+
         int last = Count - 1;
 
         if (index != last)
@@ -92,35 +84,29 @@ public sealed class StructuredBuffer<T>(
         Count--;
     }
 
-    private static int CheckedCapacity(uint capacity) =>
-        capacity is > 0 and <= int.MaxValue
-            ? (int)capacity
-            : throw new ArgumentOutOfRangeException(nameof(capacity), capacity, "Capacity must be positive.");
-
     private bool IsDirty(int index)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(index);
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, Count);
 
-        return _dirtiness![index];
+        return _dirtyBits![index];
     }
 
     private void MarkDirty(int index)
     {
-        if (_dirtiness is not null)
-            _dirtiness[index] = true;
+        _dirtyBits?[index] = true;
     }
 
     private void MarkAllDirty()
     {
-        if (_dirtiness is not null)
-            Array.Fill(_dirtiness, true, 0, Count);
+        if (_dirtyBits is not null)
+            Array.Fill(_dirtyBits, true, 0, Count);
     }
 
     private void ClearDirty()
     {
-        if (_dirtiness is not null)
-            Array.Clear(_dirtiness, 0, Count);
+        if (_dirtyBits is not null)
+            Array.Clear(_dirtyBits, 0, Count);
     }
 
     private void EnsureCapacity(int count)
@@ -131,7 +117,7 @@ public sealed class StructuredBuffer<T>(
         int newSize = Math.Max(count, Capacity * 2);
         Array.Resize(ref _values, newSize);
 
-        if (_dirtiness is not null)
-            Array.Resize(ref _dirtiness, newSize);
+        if (_dirtyBits is not null)
+            Array.Resize(ref _dirtyBits, newSize);
     }
 }

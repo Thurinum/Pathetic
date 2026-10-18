@@ -28,12 +28,12 @@ builder.Services.AddRenderer(graph => graph
     .AddPass<TemporalAccumulationPass>()
     .Present(ResourceName.Color));
 
-builder.Services.AddResource<SpherePrimitive>(ResourceName.Spheres, sparseStorage: true);
-builder.Services.AddResource<PlanePrimitive>(ResourceName.Planes, sparseStorage: true);
-builder.Services.AddResource<CirclePrimitive>(ResourceName.CirclePrimitives, sparseStorage: true);
+builder.Services.AddStructuredBuffer<SpherePrimitive>(ResourceName.Spheres, sparseStorage: true);
+builder.Services.AddStructuredBuffer<PlanePrimitive>(ResourceName.Planes, sparseStorage: true);
+builder.Services.AddStructuredBuffer<CirclePrimitive>(ResourceName.CirclePrimitives, sparseStorage: true);
 
-builder.Services.AddResource<CameraProvider>();
-builder.Services.AddResource<FrameStateProvider>();
+builder.Services.AddStructuredBuffer<CameraProvider>();
+builder.Services.AddStructuredBuffer<FrameStateProvider>();
 builder.Services.AddSceneGraph();
 builder.Services.AddSingleton<App>(); 
 
