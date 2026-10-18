@@ -1,12 +1,10 @@
 using NeoVeldrid;
-using Pathetic.App.Components;
-using Pathetic.Renderer.Buffers;
 using Pathetic.Renderer.Graph;
 using Pathetic.Renderer.Resources;
 
 namespace Pathetic.App.RenderPasses;
 
-public sealed class CirclesPass(DirtyTrackingBuffer<CirclePrimitive> circles) : RenderPass
+public sealed class CirclesPass : RenderPass
 {
     private struct Params
     {
@@ -28,7 +26,7 @@ public sealed class CirclesPass(DirtyTrackingBuffer<CirclePrimitive> circles) : 
 
     public override void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
     {
-        Params @params = new() { Count = (uint)circles.Count };
+        Params @params = new() { Count = ctx.Resources.GetElementCount(Resources.CirclePrimitives) };
         ctx.Cmd.UpdateBuffer(buffer, 0, @params);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using NeoVeldrid;
+using Pathetic.Renderer.Resources;
 
 namespace Pathetic.Renderer.Graph;
 
@@ -11,4 +12,5 @@ public readonly record struct RenderContext
     public required float DeltaTime { get; init; }
     public required uint FrameIndex { get; init; }
     public required uint SceneRevision { get; init; }
+    public required IResourceMetadata Resources { get; init; }
 }

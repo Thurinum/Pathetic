@@ -33,7 +33,7 @@ public sealed class RenderGraphPipelineFactory(SlangCompiler compiler)
         return state;
     }
 
-    public static void UpdateResourceSet(PassRenderState state, RenderPass owner, GraphicsDevice device, IResourceAccessor table)
+    internal static void UpdateResourceSet(PassRenderState state, RenderPass owner, GraphicsDevice device, ResourceTable table)
     {
         state.Set?.Dispose();
         BindableResource[] resources = state.Bindings.Select(b => table.GetResource(b.Name, owner)).ToArray();

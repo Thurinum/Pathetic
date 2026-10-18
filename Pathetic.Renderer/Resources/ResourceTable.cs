@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using NeoVeldrid;
 using Pathetic.Renderer.Graph;
 using Pathetic.Renderer.Utils;
@@ -7,7 +8,7 @@ namespace Pathetic.Renderer.Resources;
 
 internal readonly record struct ResourceKey(string Name, RenderPass? Owner);
 
-internal sealed class ResourceTable : IResourceAccessor, IDisposable
+internal sealed class ResourceTable : IResourceMetadata, IDisposable
 {
     private readonly Dictionary<ResourceKey, RenderGraphResource> _resources = [];
     private const int DynamicBufferDefaultElementCount = 256;
@@ -111,31 +112,43 @@ internal sealed class ResourceTable : IResourceAccessor, IDisposable
     
     public BindableResource GetResource(string name, RenderPass? owner = null)
     {
-        if (owner is not null && _resources.TryGetValue(new ResourceKey(name, owner), out RenderGraphResource? owned))
-            return owned.Resource ?? throw new InvalidOperationException($"Accessed resource at {name} but it is null.");
-
-        if (!_resources.TryGetValue(new ResourceKey(name, null), out RenderGraphResource? value))
+        if (!TryFind(name, owner, out RenderGraphResource? entry))
             throw new ArgumentException($"No resource named {name} registered.");
-        
-        return value.Resource ?? throw new InvalidOperationException($"Accessed resource at {name} but it is null.");
+
+        return entry.Resource ?? throw new InvalidOperationException($"Accessed resource at {name} but it is null.");
     }
 
     public T GetResource<T>(string name, RenderPass? owner = null) where T : class, BindableResource
     {
         return GetResource(name, owner) as T ?? throw new InvalidOperationException($"{name} is not a {typeof(T)}");
-    } 
-    
+    }
+
+    public uint GetElementCount(string name, RenderPass? owner = null)
+    {
+        if (!TryFind(name, owner, out RenderGraphResource? entry))
+            throw new ArgumentException($"No resource named {name} registered.");
+
+        return entry.Spec is IDynamicBufferSpec dynamicSpec
+            ? dynamicSpec.ElementCount
+            : throw new InvalidOperationException($"{name} is not a dynamic buffer and has no element count.");
+    }
+
     public bool Has(string name, RenderPass? owner = null)
     {
         return Has<BindableResource>(name, owner);
     }
-    
+
     public bool Has<T>(string name, RenderPass? owner = null) where T : BindableResource
     {
-        if (owner is not null && _resources.TryGetValue(new ResourceKey(name, owner), out var owned))
-            return owned.Resource is T;
+        return TryFind(name, owner, out RenderGraphResource? entry) && entry.Resource is T;
+    }
 
-        return _resources.TryGetValue(new ResourceKey(name, null), out var shared) && shared.Resource is T;
+    private bool TryFind(string name, RenderPass? owner, [NotNullWhen(true)] out RenderGraphResource? entry)
+    {
+        if (owner is not null && _resources.TryGetValue(new ResourceKey(name, owner), out entry))
+            return true;
+
+        return _resources.TryGetValue(new ResourceKey(name, null), out entry);
     }
     
     public void Dispose()

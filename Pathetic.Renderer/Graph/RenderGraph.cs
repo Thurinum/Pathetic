@@ -29,7 +29,8 @@ internal sealed class RenderGraph(
             Height = target.Height,
             DeltaTime = deltaTime,
             FrameIndex = _frameIndex,
-            SceneRevision = sceneRevision.Value
+            SceneRevision = sceneRevision.Value,
+            Resources = resources
         };
 
         var reallocatedBindingNames = resources.Upload(device, ctx);

@@ -1,17 +1,14 @@
+using System.Runtime.InteropServices;
 using Microsoft.Extensions.Options;
 using NeoVeldrid;
-using Pathetic.App.Components;
-using Pathetic.Renderer.Buffers;
 using Pathetic.Renderer.Graph;
 using Pathetic.Renderer.Resources;
 
 namespace Pathetic.App.RenderPasses;
 
-public sealed class PathTracerPass(
-    IOptions<PathTracerOptions> options,
-    DirtyTrackingBuffer<PlanePrimitive> planes,
-    DirtyTrackingBuffer<SpherePrimitive> spheres) : RenderPass
+public sealed class PathTracerPass(IOptions<PathTracerOptions> options) : RenderPass
 {
+    [StructLayout(LayoutKind.Sequential)]
     private struct Params
     {
         public uint PlaneCount;
@@ -45,8 +42,8 @@ public sealed class PathTracerPass(
     {
         Params @params = new()
         {
-            PlaneCount = (uint)planes.Count,
-            SphereCount = (uint)spheres.Count,
+            PlaneCount = ctx.Resources.GetElementCount(Resources.Planes),
+            SphereCount = ctx.Resources.GetElementCount(Resources.Spheres),
             SamplesPerPixel = options.Value.SamplesPerPixel,
             MaxBounces = options.Value.MaxBounces,
         };
