@@ -19,7 +19,7 @@ public static class ServiceCollectionExtensions
 
         public void AddResource<T>(string name, bool sparseStorage = false) where T : unmanaged, IEquatable<T>
         {
-            var buffer = new DirtyTrackingBuffer<T>(name);
+            var buffer = new StructuredBuffer<T>(name);
             services.AddSingleton(buffer);
             services.AddSingleton<IResourceUploader>(buffer);
 

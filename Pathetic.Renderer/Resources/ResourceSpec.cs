@@ -26,16 +26,18 @@ public sealed record UniformBufferSpec : IResourceSpec
         return new UniformBufferSpec(name, aligned16);
     }
 }
-public sealed record StructuredBufferSpec(string Name, uint Stride, uint ElementCount) : IResourceSpec;
-
 public interface IResourceUploader
 {
     IReadOnlyList<IResourceSpec> Resources { get; }
     void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized);
 }
-public interface IDynamicBufferSpec : IResourceSpec, IResourceUploader
+
+public interface IStructuredBufferSpec : IResourceSpec, IResourceUploader
 {
     uint Stride { get; }
     uint ElementCount { get; }
+    uint InitialCapacity { get; }
+    bool IsResizable { get; }
+    bool DeltaUpload { get; }
 }
 

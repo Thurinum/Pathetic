@@ -1,6 +1,6 @@
 ﻿namespace Pathetic.Renderer.Buffers;
 
-public sealed class SparseSet<T>(DirtyTrackingBuffer<T> buffer) where T : unmanaged, IEquatable<T>
+public sealed class SparseSet<T>(StructuredBuffer<T> buffer) where T : unmanaged, IEquatable<T>
 {
     private const int InitialSize = 256;
 

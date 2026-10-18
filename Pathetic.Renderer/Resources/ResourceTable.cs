@@ -11,7 +11,6 @@ internal readonly record struct ResourceKey(string Name, RenderPass? Owner);
 internal sealed class ResourceTable : IResourceMetadata, IDisposable
 {
     private readonly Dictionary<ResourceKey, RenderGraphResource> _resources = [];
-    private const int DynamicBufferDefaultElementCount = 256;
     private readonly HashSet<string> _reallocated = [];
     private readonly HashSet<string> _resized = [];
     private uint _lastWidth;
@@ -41,8 +40,7 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
                 UniformBufferSpec s => CreateUniformBuffer(device, s),
                 TextureSpec s => CreateTexture(device, s, width, height),
                 SamplerSpec s => CreateSampler(device, s),
-                StructuredBufferSpec s => CreateStructuredBuffer(device, s),
-                IDynamicBufferSpec s => CreateDynamicBuffer(device, s, entry, Math.Max(DynamicBufferDefaultElementCount, s.ElementCount)),
+                IStructuredBufferSpec s => CreateBuffer(device, s, entry, Math.Max(s.InitialCapacity, s.ElementCount)),
                 _ => throw new UnreachableException($"Unknown resource spec {entry.Spec.GetType().Name}")
             };
         }
@@ -60,7 +58,7 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
             if (entry.Writer is null)
                 continue;
 
-            bool didReallocate = entry.Spec is IDynamicBufferSpec dynamic && Reallocate(device, entry, dynamic);
+            bool didReallocate = entry.Spec is IStructuredBufferSpec spec && Reallocate(device, entry, spec);
 
             // ignore textures and samplers
             // TODO: Texture upload path from CPU
@@ -73,11 +71,16 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
         return _reallocated;
     }
 
-    private bool Reallocate(GraphicsDevice device, RenderGraphResource entry, IDynamicBufferSpec spec)
+    private bool Reallocate(GraphicsDevice device, RenderGraphResource entry, IStructuredBufferSpec spec)
     {
         uint requiredCapacity = spec.ElementCount;
         if (requiredCapacity <= entry.ElementCapacity)
             return false;
+
+        if (!spec.IsResizable)
+        {
+            throw new InvalidOperationException($"{spec.Name} overflowed its fixed capacity: {requiredCapacity} > {entry.ElementCapacity}.");
+        }
 
         if (_reallocated.Count == 0)
         {
@@ -86,7 +89,7 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
 
         _reallocated.Add(entry.Spec.Name);
         uint newCapacity = Math.Max(requiredCapacity, entry.ElementCapacity * 2);
-        entry.Resource = CreateDynamicBuffer(device, spec, entry, newCapacity);
+        entry.Resource = CreateBuffer(device, spec, entry, newCapacity);
         return true;
     }
     
@@ -134,7 +137,7 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
         if (!TryFind(name, owner, out RenderGraphResource? entry))
             throw new ArgumentException($"No resource named {name} registered.");
 
-        return entry.Spec is IDynamicBufferSpec dynamicSpec
+        return entry.Spec is IStructuredBufferSpec dynamicSpec
             ? dynamicSpec.ElementCount
             : throw new InvalidOperationException($"{name} is not a dynamic buffer and has no element count.");
     }
@@ -206,18 +209,16 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
         return device.ResourceFactory.CreateSampler(samplerSpec.Description);
     }
     
-    private static DeviceBuffer CreateStructuredBuffer(GraphicsDevice device, StructuredBufferSpec spec)
-    {
-        var bufferDesc = new BufferDescription(spec.Stride * spec.ElementCount, BufferUsage.StructuredBufferReadOnly, spec.Stride);
-        return device.ResourceFactory.CreateBuffer(bufferDesc);
-    }
-    
-    private static DeviceBuffer CreateDynamicBuffer(GraphicsDevice device, IDynamicBufferSpec spec, RenderGraphResource entry, uint elementCapacity = 256)
+    private static DeviceBuffer CreateBuffer(GraphicsDevice device, IStructuredBufferSpec spec, RenderGraphResource entry, uint elementCapacity)
     {
         ArgumentOutOfRangeException.ThrowIfZero(elementCapacity);
-        
+
         entry.ElementCapacity = elementCapacity;
-        var bufferDesc = new BufferDescription(spec.Stride * entry.ElementCapacity, BufferUsage.StructuredBufferReadOnly | BufferUsage.Dynamic, spec.Stride);
+        BufferUsage usage = BufferUsage.StructuredBufferReadOnly;
+        if (spec.IsResizable)
+            usage |= BufferUsage.Dynamic;
+
+        var bufferDesc = new BufferDescription(spec.Stride * elementCapacity, usage, spec.Stride);
         return device.ResourceFactory.CreateBuffer(bufferDesc);
     }
 }
