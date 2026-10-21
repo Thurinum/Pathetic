@@ -111,10 +111,7 @@ public class SceneLoop(RenderWindow window, ImGuiHost gui, RenderGraphHost rdg)
     {
         foreach (var obj in scene.Objects)
         {
-            foreach (var component in obj.Components)
-            {
-                component.OnDestroy();
-            }
+            obj.Dispose();
         }   
     }
 }
