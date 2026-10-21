@@ -2,16 +2,16 @@
 
 namespace Pathetic.SceneGraph;
 
-public abstract class RendererBase<T>(SparseSet<T> primitives) : Component where T : unmanaged, IEquatable<T>
+public abstract class RendererBase<T>(SparseSet<T> primitives) : Component.Component where T : unmanaged, IEquatable<T>
 {
     private Handle _handle = Handle.Invalid;
 
-    public override void Awake()
+    protected override void Setup()
     {
         _handle = primitives.Add(BuildPrimitive());
     }
 
-    public override void LateUpdate(float deltaTime)
+    protected override void LateUpdate(float deltaTime)
     {
         if (_handle.IsValid)
         {
@@ -19,7 +19,7 @@ public abstract class RendererBase<T>(SparseSet<T> primitives) : Component where
         }
     }
 
-    public override void OnDestroy()
+    protected override void Cleanup()
     {
         if (_handle.IsValid)
         {

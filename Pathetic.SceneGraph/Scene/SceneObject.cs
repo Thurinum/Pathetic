@@ -1,15 +1,15 @@
-﻿namespace Pathetic.SceneGraph;
+﻿namespace Pathetic.SceneGraph.Scene;
 
-public class SceneObject : IDestroyable
+public sealed class SceneObject : IDestroyable
 {
     public required string Name { get; init; }
     public required Scene Owner { get; init; }
-    public List<Component> Components { get; } = [];
+    public List<Component.Component> Components { get; } = [];
     public Transform Transform { get; internal set; } = null!;
     public bool IsPendingDestroy { get; internal set; }
     public bool IsDestroyed { get; private set; }
 
-    public T AddComponent<T>() where T : Component
+    public T AddComponent<T>() where T : Component.Component
     {
         if (IsPendingDestroy)
             throw new InvalidOperationException("Cannot add a component to a pending-destroy object.");
@@ -17,7 +17,7 @@ public class SceneObject : IDestroyable
         return Owner.ComponentFactory.CreateComponent<T>(this);
     }
 
-    public void RemoveComponent<T>() where T : Component
+    public void RemoveComponent<T>() where T : Component.Component
     {
         if (IsPendingDestroy)
             throw new InvalidOperationException("Cannot remove a component from a pending-destroy object.");
@@ -30,7 +30,7 @@ public class SceneObject : IDestroyable
         Owner.PendingDestroy.Add(component);
     }
 
-    public T GetComponent<T>() where T : Component
+    public T GetComponent<T>() where T : Component.Component
     {
         var components = GetComponents<T>();
         
@@ -43,18 +43,18 @@ public class SceneObject : IDestroyable
         return components[0];
     }
 
-    public bool TryGetComponent<T>(out T? component) where T : Component
+    public bool TryGetComponent<T>(out T? component) where T : Component.Component
     {
         component = Components.OfType<T>().SingleOrDefault();
         return component != null;
     }
 
-    public T[] GetComponents<T>() where T : Component
+    public T[] GetComponents<T>() where T : Component.Component
     {
         return Components.OfType<T>().ToArray();
     }
 
-    public void Destroy()
+    void IDestroyable.Destroy()
     {
         if (IsDestroyed)
             return;

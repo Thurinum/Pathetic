@@ -1,13 +1,13 @@
 using ImGuiNET;
 using Microsoft.Extensions.Options;
 using Pathetic.App.RenderPasses;
-using Pathetic.SceneGraph;
+using Pathetic.SceneGraph.Component;
 
 namespace Pathetic.App.Components.GUI;
 
 public class RenderSettingsComponent(IOptions<TemporalAccumulationOptions> options) : Component
 {
-    public override void OnGUI()
+    protected override void GUI()
     {
         ImGui.Begin("Renderer");
 

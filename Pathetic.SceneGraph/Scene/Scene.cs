@@ -1,6 +1,8 @@
-﻿namespace Pathetic.SceneGraph;
+﻿using Pathetic.SceneGraph.Component;
 
-public class Scene(ComponentFactory componentFactory)
+namespace Pathetic.SceneGraph.Scene;
+
+public sealed class Scene(ComponentFactory componentFactory)
 {
     public List<SceneObject> Objects { get; } = [];
     

@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using Pathetic.SceneGraph;
+using Pathetic.SceneGraph.Component;
 
 namespace Pathetic.App.Components.Camera;
 
@@ -10,12 +11,12 @@ public class CameraComponent(CameraProvider provider) : Component
     public float FocusDistance { get; set; } = 5.0f;
     public float ApertureRadius { get; set; } = 0.15f;
 
-    public override void Awake()
+    protected override void Setup()
     {
         _transform = Parent.GetComponent<Transform>();
     }
 
-    public override void LateUpdate(float deltaTime)
+    protected override void LateUpdate(float deltaTime)
     {
         float fovRadians = float.DegreesToRadians(FovDegrees);
         float tanHalfFovRad = MathF.Tan(fovRadians * 0.5f);

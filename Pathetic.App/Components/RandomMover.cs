@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using Pathetic.SceneGraph;
+using Pathetic.SceneGraph.Component;
 
 namespace Pathetic.App.Components;
 
@@ -9,7 +10,7 @@ public class RandomMover : Component
 
     private Vector3 _direction;
 
-    public override void Awake()
+    protected override void Setup()
     {
         float z = Random.Shared.NextSingle() * 2f - 1f;
         float angle = Random.Shared.NextSingle() * MathF.Tau;
@@ -17,7 +18,7 @@ public class RandomMover : Component
         _direction = new Vector3(radius * MathF.Cos(angle), radius * MathF.Sin(angle), z);
     }
 
-    public override void Update(float deltaTime)
+    protected override void Update(float deltaTime)
     {
         var transform = Parent.GetComponent<Transform>();
         Vector3 position = transform.Position;

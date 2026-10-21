@@ -2,7 +2,7 @@
 
 namespace Pathetic.SceneGraph;
 
-public class Transform : Component
+public class Transform : Component.Component
 {
     public Vector3 Position { get; set; }
     public Quaternion Rotation { get; set; } = Quaternion.Identity;

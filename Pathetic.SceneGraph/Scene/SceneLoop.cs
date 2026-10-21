@@ -1,9 +1,10 @@
 ﻿using System.Diagnostics;
 using Pathetic.Renderer;
+using Pathetic.SceneGraph.Component;
 
-namespace Pathetic.SceneGraph;
+namespace Pathetic.SceneGraph.Scene;
 
-public class SceneLoop(RenderWindow window, ImGuiHost gui, RenderGraphHost rdg)
+public sealed class SceneLoop(SceneManager sceneService, RenderWindow window, ImGuiHost gui, RenderGraphHost rdg)
 {
     private long _lastTimestamp;
     private float _deltaTime;
@@ -52,24 +53,24 @@ public class SceneLoop(RenderWindow window, ImGuiHost gui, RenderGraphHost rdg)
         _lastTimestamp = Stopwatch.GetTimestamp();
     }
     
-    private static void AwakeComponents(Scene scene)
+    private void AwakeComponents(Scene scene)
     {
         foreach (var obj in scene.Objects)
         {
-            foreach (var component in obj.Components)
+            foreach (IComponentLifecycle component in obj.Components)
             {
-                component.Awake();
+                component.Setup();
             }
         }   
     }
     
-    private static void StartComponents(Scene scene)
+    private void StartComponents(Scene scene)
     {
         foreach (var obj in scene.Objects)
         {
-            foreach (var component in obj.Components)
+            foreach (IComponentLifecycle component in obj.Components)
             {
-                component.Start();
+                component.LateSetup();
             }
         }   
     }
@@ -78,7 +79,7 @@ public class SceneLoop(RenderWindow window, ImGuiHost gui, RenderGraphHost rdg)
     {
         foreach (var obj in scene.Objects)
         {
-            foreach (var component in obj.Components)
+            foreach (IComponentLifecycle component in obj.Components)
             {
                 component.Update(_deltaTime);
             }
@@ -89,29 +90,29 @@ public class SceneLoop(RenderWindow window, ImGuiHost gui, RenderGraphHost rdg)
     {
         foreach (var obj in scene.Objects)
         {
-            foreach (var component in obj.Components)
+            foreach (IComponentLifecycle component in obj.Components)
             {
                 component.LateUpdate(_deltaTime);
             }
         }   
     }
 
-    private static void GUIComponents(Scene scene)
+    private void GUIComponents(Scene scene)
     {
         foreach (var obj in scene.Objects)
         {
-            foreach (var component in obj.Components)
+            foreach (IComponentLifecycle component in obj.Components)
             {
-                component.OnGUI();
+                component.GUI();
             }
         }   
     }
 
-    private static void DestroyComponents(Scene scene)
+    private void DestroyComponents(Scene scene)
     {
         foreach (var obj in scene.Objects)
         {
-            obj.Dispose();
+            sceneService.DestroyObject(scene, obj);
         }   
     }
 }
