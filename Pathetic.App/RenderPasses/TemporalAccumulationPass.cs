@@ -13,6 +13,7 @@ public sealed class TemporalAccumulationPass(
     {
         public uint Reset;
         public uint Tonemapper;
+        public float Exposure;
     }
 
     public override string ShaderModule => "TemporalAccumulation";
@@ -37,6 +38,7 @@ public sealed class TemporalAccumulationPass(
         {
             Reset = reset ? 1u : 0u,
             Tonemapper = (uint)tonemapping.Value.Tonemapper,
+            Exposure = tonemapping.Value.Exposure
         });
     }
 }

@@ -30,6 +30,10 @@ public class RenderSettingsComponent(
         if (ImGui.Combo("Tonemapper", ref tonemapper, TonemapperLabels, TonemapperLabels.Length))
             tonemapping.Value.Tonemapper = Tonemappers[tonemapper].Value;
 
+        float exposure = tonemapping.Value.Exposure;
+        if (ImGui.SliderFloat("Exposure (EV)", ref exposure, -10.0f, 10.0f))
+            tonemapping.Value.Exposure = exposure;
+
         ImGui.End();
     }
 }

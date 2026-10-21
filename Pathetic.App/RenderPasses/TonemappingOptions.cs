@@ -14,4 +14,5 @@ public sealed record TonemappingOptions : IConfig
     public static string Section => "Tonemapping";
 
     public Tonemapper Tonemapper { get; set; } = Tonemapper.Aces;
+    public float Exposure { get; set; } = 0;
 }

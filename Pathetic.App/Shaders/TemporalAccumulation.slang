@@ -5,6 +5,7 @@ struct Params
 { 
     uint Reset; 
     uint Tonemapper;
+    float Exposure;
 }
 
 RWTexture2D<float4> color;
@@ -29,6 +30,7 @@ void main(uint3 dispatchThreadId : SV_DispatchThreadID)
     accumImage[pixel] = accum;
     
     float3 hdr = accum.rgb / accum.a;
+    hdr *= exp2(params.Exposure);
     float3 ldr = Tonemap(hdr, (Tonemapper)params.Tonemapper);
     color[pixel] = float4(LinearToSRGB(ldr), 1.0);
 }
