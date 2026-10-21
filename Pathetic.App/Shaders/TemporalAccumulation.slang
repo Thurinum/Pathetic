@@ -4,6 +4,7 @@ import Tonemap;
 struct Params 
 { 
     uint Reset; 
+    uint Tonemapper;
 }
 
 RWTexture2D<float4> color;
@@ -28,6 +29,6 @@ void main(uint3 dispatchThreadId : SV_DispatchThreadID)
     accumImage[pixel] = accum;
     
     float3 hdr = accum.rgb / accum.a;
-    float3 ldr = ACES(hdr);
-    color[pixel] = float4(ldr, 1.0);
+    float3 ldr = Tonemap(hdr, (Tonemapper)params.Tonemapper);
+    color[pixel] = float4(LinearToSRGB(ldr), 1.0);
 }

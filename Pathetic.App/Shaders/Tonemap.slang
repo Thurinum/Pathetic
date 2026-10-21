@@ -1,14 +1,37 @@
 ﻿module Tonemap;
 
-public float3 Reinhard(float3 hdr)
+// sync with Pathetic.App.RenderPasses.Tonemapper.
+// TODO: reflect this enum to generate the ImGui
+public enum Tonemapper 
 {
-    float3 ldr = hdr / (1.0 + hdr);
-    float3 srgb = pow(ldr, 1.0 / 2.2);
-    return srgb;
+    None = 0,
+    Reinhard = 1,
+    ACES = 2
 }
 
-public float3 ACES(float3 x)
+public float3 Reinhard(float3 hdr)
+{
+    return hdr / (1.0 + hdr);
+}
+
+public float3 ACES(float3 hdr)
 {
     const float a = 2.51, b = 0.03, c = 2.43, d = 0.59, e = 0.14;
-    return saturate((x * (a * x + b)) / (x * (c * x + d) + e));
+    return saturate((hdr * (a * hdr + b)) / (hdr * (c * hdr + d) + e));
+}
+
+public float3 Tonemap(float3 hdr, Tonemapper mode)
+{
+    if (mode == Tonemapper.Reinhard)
+        return Reinhard(hdr);
+
+    if (mode == Tonemapper.ACES)
+        return ACES(hdr);
+
+    return hdr;
+}
+
+public float3 LinearToSRGB(float3 linear)
+{
+    return pow(max(linear, float3(0.0)), 1.0 / 2.2);
 }
