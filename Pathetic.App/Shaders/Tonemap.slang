@@ -31,7 +31,12 @@ public float3 Tonemap(float3 hdr, Tonemapper mode)
     return hdr;
 }
 
-public float3 LinearToSRGB(float3 linear)
+public float3 LinearToSRGB(float3 linear, OutputEncoding encoding)
 {
-    return pow(max(linear, float3(0.0)), 1.0 / 2.2);
+    linear = max(linear, float3(0.0));
+    
+    float3 low = linear * 12.92;
+    float3 high = 1.055 * pow(linear, 1.0 / 2.4) - 0.055;
+
+    return select(linear <= float3(0.0031308), low, high);
 }
