@@ -31,7 +31,7 @@ public float3 Tonemap(float3 hdr, Tonemapper mode)
     return hdr;
 }
 
-public float3 LinearToSRGB(float3 linear, OutputEncoding encoding)
+public float3 LinearToSRGB(float3 linear)
 {
     linear = max(linear, float3(0.0));
     
