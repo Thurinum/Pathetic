@@ -1,4 +1,5 @@
 module TemporalAccumulation;
+import Tonemap;
 
 struct Params 
 { 
@@ -25,5 +26,8 @@ void main(uint3 dispatchThreadId : SV_DispatchThreadID)
     float4 accum = (params.Reset != 0) ? float4(0.0) : accumImage[pixel];
     accum += float4(estimate, 1.0);
     accumImage[pixel] = accum;
-    color[pixel] = float4(accum.rgb / accum.a, 1.0);
+    
+    float3 hdr = accum.rgb / accum.a;
+    float3 ldr = ACES(hdr);
+    color[pixel] = float4(ldr, 1.0);
 }
