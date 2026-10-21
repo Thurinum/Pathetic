@@ -14,6 +14,7 @@ public class RenderSettingsComponent(
         (Tonemapper.None, "None"),
         (Tonemapper.Reinhard, "Reinhard"),
         (Tonemapper.Aces, "ACES"),
+        (Tonemapper.Agx, "AgX"),
     ];
 
     private static readonly string[] TonemapperLabels = Tonemappers.Select(t => t.Label).ToArray();

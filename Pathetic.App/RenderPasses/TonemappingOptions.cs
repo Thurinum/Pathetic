@@ -7,6 +7,7 @@ public enum Tonemapper : uint
     None = 0,
     Reinhard = 1,
     Aces = 2,
+    Agx = 3,
 }
 
 public sealed record TonemappingOptions : IConfig
