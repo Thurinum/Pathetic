@@ -17,9 +17,6 @@ public sealed class SceneLoop(SceneManager sceneService, RenderWindow window, Im
 
         _lastTimestamp = Stopwatch.GetTimestamp();
         
-        AwakeComponents(scene);
-        StartComponents(scene);
-        
         while (window.Exists)
         {
             var input = window.PumpEvents(); // todo how to pass input to components
@@ -30,6 +27,7 @@ public sealed class SceneLoop(SceneManager sceneService, RenderWindow window, Im
             window.BeginFrame();
             {
                 UpdateDeltaTime();
+                scene.FlushSetup();
                 UpdateComponents(scene);
                 LateUpdateComponents(scene);
             
@@ -53,35 +51,16 @@ public sealed class SceneLoop(SceneManager sceneService, RenderWindow window, Im
         _lastTimestamp = Stopwatch.GetTimestamp();
     }
     
-    private void AwakeComponents(Scene scene)
-    {
-        foreach (var obj in scene.Objects)
-        {
-            foreach (IComponentLifecycle component in obj.Components)
-            {
-                component.Setup();
-            }
-        }   
-    }
-    
-    private void StartComponents(Scene scene)
-    {
-        foreach (var obj in scene.Objects)
-        {
-            foreach (IComponentLifecycle component in obj.Components)
-            {
-                component.LateSetup();
-            }
-        }   
-    }
-    
     private void UpdateComponents(Scene scene)
     {
         foreach (var obj in scene.Objects)
         {
-            foreach (IComponentLifecycle component in obj.Components)
+            foreach (Component component in obj.Components)
             {
-                component.Update(_deltaTime);
+                if (!component.IsFullySetup)
+                    continue;
+                
+                ((IComponentLifecycle)component).Update(_deltaTime);
             }
         }   
     }
@@ -90,9 +69,12 @@ public sealed class SceneLoop(SceneManager sceneService, RenderWindow window, Im
     {
         foreach (var obj in scene.Objects)
         {
-            foreach (IComponentLifecycle component in obj.Components)
+            foreach (Component component in obj.Components)
             {
-                component.LateUpdate(_deltaTime);
+                if (!component.IsFullySetup)
+                    continue;
+                
+                ((IComponentLifecycle)component).LateUpdate(_deltaTime);
             }
         }   
     }
@@ -101,9 +83,12 @@ public sealed class SceneLoop(SceneManager sceneService, RenderWindow window, Im
     {
         foreach (var obj in scene.Objects)
         {
-            foreach (IComponentLifecycle component in obj.Components)
+            foreach (Component component in obj.Components)
             {
-                component.GUI();
+                if (!component.IsFullySetup)
+                    continue;
+                
+                ((IComponentLifecycle)component).GUI();
             }
         }   
     }
