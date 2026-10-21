@@ -1,6 +1,11 @@
 [*.cs]
 dotnet_diagnostic.IDE0005.severity = warning
+
+; CS1591 : Missing XML comment for publicly visible type or member 'xxx'
 dotnet_diagnostic.CS1591.severity = none
 
 ; CA1822: Member 'xxx' does not access instance data and can be marked as static
 dotnet_diagnostic.CA1822.severity = silent
+
+; CA1805: Member 'xxx' is explicitly initialized to its default value
+dotnet_diagnostic.CA1805.severity = none
