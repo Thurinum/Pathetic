@@ -1,3 +1,6 @@
 [*.cs]
 dotnet_diagnostic.IDE0005.severity = warning
 dotnet_diagnostic.CS1591.severity = none
+
+; CA1822: Member 'xxx' does not access instance data and can be marked as static
+dotnet_diagnostic.CA1822.severity = silent
