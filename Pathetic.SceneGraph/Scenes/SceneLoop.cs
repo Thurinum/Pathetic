@@ -2,7 +2,7 @@
 using Pathetic.Renderer;
 using Pathetic.SceneGraph.Components;
 
-namespace Pathetic.SceneGraph.Scene;
+namespace Pathetic.SceneGraph.Scenes;
 
 public sealed class SceneLoop(SceneManager sceneService, RenderWindow window, ImGuiHost gui, RenderGraphHost rdg)
 {

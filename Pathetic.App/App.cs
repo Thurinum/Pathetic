@@ -5,7 +5,7 @@ using Pathetic.App.Components.Camera;
 using Pathetic.App.Components.GUI;
 using Pathetic.Renderer.Utils;
 using Pathetic.SceneGraph;
-using Pathetic.SceneGraph.Scene;
+using Pathetic.SceneGraph.Scenes;
 
 namespace Pathetic.App;
 

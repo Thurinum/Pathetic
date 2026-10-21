@@ -1,6 +1,6 @@
 ﻿using Pathetic.SceneGraph.Components;
 
-namespace Pathetic.SceneGraph.Scene;
+namespace Pathetic.SceneGraph.Scenes;
 
 public sealed class Scene(ComponentFactory componentFactory)
 {

@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using Pathetic.SceneGraph.Scene;
+using Pathetic.SceneGraph.Scenes;
 
 namespace Pathetic.SceneGraph.Components;
 
@@ -7,7 +7,7 @@ public abstract class Component : IDestroyable, IComponentLifecycle
 {
     public SceneObject Parent { get; internal set; } = null!;
     public ILogger Logger { get; internal set; } = null!;
-    protected Scene.Scene Root => Parent.Owner;
+    protected Scene Root => Parent.Owner;
     
     public bool IsFullySetup { get; private set; }
     public bool IsPendingDestroy { get; internal set; }

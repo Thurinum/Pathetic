@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Pathetic.SceneGraph.Components;
-using Pathetic.SceneGraph.Scene;
+using Pathetic.SceneGraph.Scenes;
 
 namespace Pathetic.SceneGraph.DI;
 
