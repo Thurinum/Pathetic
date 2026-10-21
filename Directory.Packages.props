@@ -1,11 +1,10 @@
 <Project>
-
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
-
   <ItemGroup>
+    <PackageVersion Include="JetBrains.Annotations" Version="2026.2.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Ini" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
@@ -20,5 +19,4 @@
     <PackageVersion Include="NeoVeldrid.StartupUtilities" Version="1.2.1" />
     <PackageVersion Include="Prowl.Slang" Version="3.7.2" />
   </ItemGroup>
-
 </Project>

@@ -1,8 +1,10 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using JetBrains.Annotations;
+using Microsoft.Extensions.Logging;
 using Pathetic.SceneGraph.Scenes;
 
 namespace Pathetic.SceneGraph.Components;
 
+[UsedImplicitly(ImplicitUseTargetFlags.WithInheritors)]
 public abstract class Component : IDestroyable, IComponentLifecycle
 {
     public SceneObject Parent { get; internal set; } = null!;
