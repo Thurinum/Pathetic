@@ -1,8 +1,9 @@
 ﻿using Pathetic.Renderer.Buffers;
+using Pathetic.SceneGraph.Components;
 
 namespace Pathetic.SceneGraph;
 
-public abstract class RendererBase<T>(SparseSet<T> primitives) : Component.Component where T : unmanaged, IEquatable<T>
+public abstract class RendererBase<T>(SparseSet<T> primitives) : Component where T : unmanaged, IEquatable<T>
 {
     private Handle _handle = Handle.Invalid;
 

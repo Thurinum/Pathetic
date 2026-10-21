@@ -1,4 +1,4 @@
-﻿namespace Pathetic.SceneGraph.Component;
+﻿namespace Pathetic.SceneGraph.Components;
 
 internal interface IComponentLifecycle
 {

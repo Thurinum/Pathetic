@@ -1,4 +1,4 @@
-﻿using Pathetic.SceneGraph.Component;
+﻿using Pathetic.SceneGraph.Components;
 
 namespace Pathetic.SceneGraph.Scene;
 

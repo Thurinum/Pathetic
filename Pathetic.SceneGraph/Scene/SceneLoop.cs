@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 using Pathetic.Renderer;
-using Pathetic.SceneGraph.Component;
+using Pathetic.SceneGraph.Components;
 
 namespace Pathetic.SceneGraph.Scene;
 

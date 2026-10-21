@@ -1,7 +1,7 @@
 using ImGuiNET;
 using Microsoft.Extensions.Options;
 using Pathetic.App.RenderPasses;
-using Pathetic.SceneGraph.Component;
+using Pathetic.SceneGraph.Components;
 
 namespace Pathetic.App.Components.GUI;
 

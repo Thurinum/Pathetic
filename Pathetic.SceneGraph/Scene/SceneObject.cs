@@ -1,15 +1,17 @@
-﻿namespace Pathetic.SceneGraph.Scene;
+﻿using Pathetic.SceneGraph.Components;
+
+namespace Pathetic.SceneGraph.Scene;
 
 public sealed class SceneObject : IDestroyable
 {
     public required string Name { get; init; }
     public required Scene Owner { get; init; }
-    public List<Component.Component> Components { get; } = [];
+    public List<Component> Components { get; } = [];
     public Transform Transform { get; internal set; } = null!;
     public bool IsPendingDestroy { get; internal set; }
     public bool IsDestroyed { get; private set; }
 
-    public T AddComponent<T>() where T : Component.Component
+    public T AddComponent<T>() where T : Component
     {
         if (IsPendingDestroy)
             throw new InvalidOperationException("Cannot add a component to a pending-destroy object.");
@@ -17,7 +19,7 @@ public sealed class SceneObject : IDestroyable
         return Owner.ComponentFactory.CreateComponent<T>(this);
     }
 
-    public void RemoveComponent<T>() where T : Component.Component
+    public void RemoveComponent<T>() where T : Component
     {
         if (IsPendingDestroy)
             throw new InvalidOperationException("Cannot remove a component from a pending-destroy object.");
@@ -30,7 +32,7 @@ public sealed class SceneObject : IDestroyable
         Owner.PendingDestroy.Add(component);
     }
 
-    public T GetComponent<T>() where T : Component.Component
+    public T GetComponent<T>() where T : Component
     {
         var components = GetComponents<T>();
         
@@ -43,13 +45,13 @@ public sealed class SceneObject : IDestroyable
         return components[0];
     }
 
-    public bool TryGetComponent<T>(out T? component) where T : Component.Component
+    public bool TryGetComponent<T>(out T? component) where T : Component
     {
         component = Components.OfType<T>().SingleOrDefault();
         return component != null;
     }
 
-    public T[] GetComponents<T>() where T : Component.Component
+    public T[] GetComponents<T>() where T : Component
     {
         return Components.OfType<T>().ToArray();
     }

@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 using Pathetic.SceneGraph;
-using Pathetic.SceneGraph.Component;
+using Pathetic.SceneGraph.Components;
 
 namespace Pathetic.App.Components.Camera;
 
