@@ -1,5 +1,5 @@
 module TemporalAccumulation;
-import Tonemap;
+import Tonemapping.Tonemap;
 
 struct Params 
 { 
