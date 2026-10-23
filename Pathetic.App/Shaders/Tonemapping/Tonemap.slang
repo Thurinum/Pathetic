@@ -31,7 +31,7 @@ public float3 Tonemap(float3 hdr, Tonemapper mode)
         return ACES(hdr);
 
     if (mode == Tonemapper.AGX)
-        return AgX(hdr, AGX_DEFAULT);
+        return AgX(hdr, AGX_PUNCHY);
 
     return hdr;
 }
