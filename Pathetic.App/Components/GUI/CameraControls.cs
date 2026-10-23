@@ -1,13 +1,18 @@
 using System.Numerics;
 using ImGuiNET;
 using Pathetic.App.Components.Camera;
+using Pathetic.Input;
 using Pathetic.SceneGraph;
 using Pathetic.SceneGraph.Components;
 
 namespace Pathetic.App.Components.GUI;
 
-public class CameraControls : Component
+public class CameraControls(InputSystem input) : Component
 {
+    private const float MaxElevation = 89.9f;
+    private const float MouseSensitivity = 0.25f;
+    private const float ZoomSpeed = 0.5f;
+
     private Transform _transform = null!;
     private CameraComponent _camera = null!;
     
@@ -21,11 +26,26 @@ public class CameraControls : Component
     {
         _transform = Parent.GetComponent<Transform>();
         _camera = Parent.GetComponent<CameraComponent>();
+        GameInput.Camera.Enable();
     }
 
     protected override void Update(float deltaTime)
     {
-        AzimuthDegrees += Speed * deltaTime;
+        float boost = GameInput.CameraBoost.IsPressed ? 3.0f : 1.0f;
+
+        if (GameInput.CameraOrbit.IsPressed)
+        {
+            AzimuthDegrees += input.MouseDelta.X * MouseSensitivity * boost;
+            ElevationDegrees = Math.Clamp(
+                ElevationDegrees - input.MouseDelta.Y * MouseSensitivity * boost,
+                -MaxElevation,
+                MaxElevation);
+        }
+
+        if (input.MouseWheelDelta != 0.0f)
+            Distance = Math.Clamp(Distance - input.MouseWheelDelta * ZoomSpeed, 1.0f, 10.0f);
+
+        AzimuthDegrees += Speed * boost * deltaTime;
         
         float a = float.DegreesToRadians(AzimuthDegrees);
         float e = float.DegreesToRadians(ElevationDegrees);
@@ -42,6 +62,11 @@ public class CameraControls : Component
         _transform.Rotation = Quaternion.CreateFromRotationMatrix(world);
     }
 
+    protected override void Cleanup()
+    {
+        GameInput.Camera.Disable();
+    }
+
     protected override void GUI()
     {
         ImGui.SetNextWindowSize(new(500, 0), ImGuiCond.Always);
@@ -55,7 +80,6 @@ public class CameraControls : Component
         if (ImGui.SliderFloat("Azimuth", ref azimuth, 0, 360))
             AzimuthDegrees = azimuth;
 
-        const float MaxElevation = 89.9f;
         float elevation = ElevationDegrees;
         if (ImGui.SliderFloat("Elevation", ref elevation, -MaxElevation, MaxElevation))
             ElevationDegrees = elevation;

@@ -9,6 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Pathetic.Input\Pathetic.Input.vbproj" />
         <ProjectReference Include="..\Pathetic.Renderer\Pathetic.Renderer.csproj" />
         <ProjectReference Include="..\Pathetic.SceneGraph\Pathetic.SceneGraph.csproj" />
     </ItemGroup>

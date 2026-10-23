@@ -5,6 +5,7 @@ using Pathetic.App;
 using Pathetic.App.Components;
 using Pathetic.App.Components.Camera;
 using Pathetic.App.RenderPasses;
+using Pathetic.Input.DI;
 using Pathetic.Renderer;
 using Pathetic.Renderer.DI;
 using Pathetic.SceneGraph.DI;
@@ -34,6 +35,7 @@ builder.Services.AddStructuredBuffer<PlanePrimitive>(ResourceName.Planes, sparse
 // builder.Services.AddStructuredBuffer<CirclePrimitive>(ResourceName.Circles, sparseStorage: true);
 
 builder.Services.AddStructuredBuffer<CameraProvider>();
+builder.Services.AddInput();
 builder.Services.AddSceneGraph();
 builder.Services.AddSingleton<App>(); 
 

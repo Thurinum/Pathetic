@@ -10,6 +10,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Pathetic.Input\Pathetic.Input.vbproj" />
       <ProjectReference Include="..\Pathetic.Renderer\Pathetic.Renderer.csproj" />
     </ItemGroup>
 
