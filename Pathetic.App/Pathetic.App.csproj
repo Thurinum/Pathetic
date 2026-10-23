@@ -40,10 +40,4 @@
         </Content>
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="..\LICENSES\">
-        <Link>LICENSES</Link>
-      </Folder>
-    </ItemGroup>
-
 </Project>
