@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 using ImGuiNET;
-using Pathetic.SceneGraph;
+using Pathetic.SceneGraph.Components;
 
 namespace Pathetic.App.Components.GUI;
 
@@ -14,7 +14,7 @@ public class FPSCounter : Component
         ImGuiWindowFlags.NoInputs |
         ImGuiWindowFlags.AlwaysAutoResize;
 
-    public override void OnGUI()
+    protected override void GUI()
     {
         ImGui.SetNextWindowPos(new Vector2(10, 10), ImGuiCond.Always);
         ImGui.Begin("##fps", OverlayFlags);

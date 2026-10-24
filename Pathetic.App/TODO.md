@@ -1,7 +1,0 @@
-﻿- Simplifier le boilerplate deguelasse des bindings de render pass
-- Bouger certains shaders dans Core et loader les shaders de base là
-- Supporter toutes les primitives dans un buffer parce que ça va chier pour le BVH 
-- Add a compositor pass that chooses what layers to present in what order and blends them in a single pass
-- Passe de tonemapping (AgX)
-- Passe de supersampling/jitter
-- TAA (basically l'accumulation mais au lieu de discard quand ça bouge on utilise les motion vectors pour réutiliser les résultats avec un heuristique)

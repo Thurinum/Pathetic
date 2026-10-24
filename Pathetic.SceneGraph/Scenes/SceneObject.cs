@@ -1,6 +1,8 @@
-﻿namespace Pathetic.SceneGraph;
+﻿using Pathetic.SceneGraph.Components;
 
-public class SceneObject : IDestroyable
+namespace Pathetic.SceneGraph.Scenes;
+
+public sealed class SceneObject : IDestroyable
 {
     public required string Name { get; init; }
     public required Scene Owner { get; init; }
@@ -54,7 +56,7 @@ public class SceneObject : IDestroyable
         return Components.OfType<T>().ToArray();
     }
 
-    public void Destroy()
+    void IDestroyable.Destroy()
     {
         if (IsDestroyed)
             return;

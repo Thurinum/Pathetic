@@ -1,4 +1,5 @@
 ﻿using Pathetic.Renderer.Buffers;
+using Pathetic.SceneGraph.Components;
 
 namespace Pathetic.SceneGraph;
 
@@ -6,12 +7,12 @@ public abstract class RendererBase<T>(SparseSet<T> primitives) : Component where
 {
     private Handle _handle = Handle.Invalid;
 
-    public override void Awake()
+    protected override void Setup()
     {
         _handle = primitives.Add(BuildPrimitive());
     }
 
-    public override void LateUpdate(float deltaTime)
+    protected override void LateUpdate(float deltaTime)
     {
         if (_handle.IsValid)
         {
@@ -19,7 +20,7 @@ public abstract class RendererBase<T>(SparseSet<T> primitives) : Component where
         }
     }
 
-    public override void OnDestroy()
+    protected override void Cleanup()
     {
         if (_handle.IsValid)
         {

@@ -2,6 +2,7 @@ using System.Numerics;
 using ImGuiNET;
 using Pathetic.App.Components.Camera;
 using Pathetic.SceneGraph;
+using Pathetic.SceneGraph.Components;
 
 namespace Pathetic.App.Components.GUI;
 
@@ -16,13 +17,13 @@ public class CameraControls : Component
     public float ElevationDegrees { get; set; }
     public float Speed { get; set; }
 
-    public override void Awake()
+    protected override void Setup()
     {
         _transform = Parent.GetComponent<Transform>();
         _camera = Parent.GetComponent<CameraComponent>();
     }
 
-    public override void Update(float deltaTime)
+    protected override void Update(float deltaTime)
     {
         AzimuthDegrees += Speed * deltaTime;
         
@@ -41,7 +42,7 @@ public class CameraControls : Component
         _transform.Rotation = Quaternion.CreateFromRotationMatrix(world);
     }
 
-    public override void OnGUI()
+    protected override void GUI()
     {
         ImGui.SetNextWindowSize(new(500, 0), ImGuiCond.Always);
         ImGui.Begin("Camera");

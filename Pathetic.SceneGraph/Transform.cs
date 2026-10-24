@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using Pathetic.SceneGraph.Components;
 
 namespace Pathetic.SceneGraph;
 

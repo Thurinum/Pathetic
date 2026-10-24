@@ -20,10 +20,10 @@ public class PlaneComponent(SparseSet<PlanePrimitive> primitives) : RendererBase
     public float Width { get; set; } = 5.0f;
     public float Height { get; set; } = 5.0f;
 
-    public override void Awake()
+    protected override void Setup()
     {
         _transform = Parent.GetComponent<Transform>();
-        base.Awake();
+        base.Setup();
     }
 
     protected override PlanePrimitive BuildPrimitive()

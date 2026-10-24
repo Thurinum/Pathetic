@@ -1,9 +1,10 @@
 ﻿using System.Diagnostics;
 using Pathetic.Renderer;
+using Pathetic.SceneGraph.Components;
 
-namespace Pathetic.SceneGraph;
+namespace Pathetic.SceneGraph.Scenes;
 
-public class SceneLoop(RenderWindow window, ImGuiHost gui, RenderGraphHost rdg)
+public sealed class SceneLoop(SceneManager sceneService, RenderWindow window, ImGuiHost gui, RenderGraphHost rdg)
 {
     private long _lastTimestamp;
     private float _deltaTime;
@@ -16,9 +17,6 @@ public class SceneLoop(RenderWindow window, ImGuiHost gui, RenderGraphHost rdg)
 
         _lastTimestamp = Stopwatch.GetTimestamp();
         
-        AwakeComponents(scene);
-        StartComponents(scene);
-        
         while (window.Exists)
         {
             var input = window.PumpEvents(); // todo how to pass input to components
@@ -29,6 +27,7 @@ public class SceneLoop(RenderWindow window, ImGuiHost gui, RenderGraphHost rdg)
             window.BeginFrame();
             {
                 UpdateDeltaTime();
+                scene.FlushSetup();
                 UpdateComponents(scene);
                 LateUpdateComponents(scene);
             
@@ -52,35 +51,16 @@ public class SceneLoop(RenderWindow window, ImGuiHost gui, RenderGraphHost rdg)
         _lastTimestamp = Stopwatch.GetTimestamp();
     }
     
-    private static void AwakeComponents(Scene scene)
-    {
-        foreach (var obj in scene.Objects)
-        {
-            foreach (var component in obj.Components)
-            {
-                component.Awake();
-            }
-        }   
-    }
-    
-    private static void StartComponents(Scene scene)
-    {
-        foreach (var obj in scene.Objects)
-        {
-            foreach (var component in obj.Components)
-            {
-                component.Start();
-            }
-        }   
-    }
-    
     private void UpdateComponents(Scene scene)
     {
         foreach (var obj in scene.Objects)
         {
-            foreach (var component in obj.Components)
+            foreach (Component component in obj.Components)
             {
-                component.Update(_deltaTime);
+                if (!component.IsFullySetup)
+                    continue;
+                
+                ((IComponentLifecycle)component).Update(_deltaTime);
             }
         }   
     }
@@ -89,32 +69,35 @@ public class SceneLoop(RenderWindow window, ImGuiHost gui, RenderGraphHost rdg)
     {
         foreach (var obj in scene.Objects)
         {
-            foreach (var component in obj.Components)
+            foreach (Component component in obj.Components)
             {
-                component.LateUpdate(_deltaTime);
+                if (!component.IsFullySetup)
+                    continue;
+                
+                ((IComponentLifecycle)component).LateUpdate(_deltaTime);
             }
         }   
     }
 
-    private static void GUIComponents(Scene scene)
+    private void GUIComponents(Scene scene)
     {
         foreach (var obj in scene.Objects)
         {
-            foreach (var component in obj.Components)
+            foreach (Component component in obj.Components)
             {
-                component.OnGUI();
+                if (!component.IsFullySetup)
+                    continue;
+                
+                ((IComponentLifecycle)component).GUI();
             }
         }   
     }
 
-    private static void DestroyComponents(Scene scene)
+    private void DestroyComponents(Scene scene)
     {
         foreach (var obj in scene.Objects)
         {
-            foreach (var component in obj.Components)
-            {
-                component.OnDestroy();
-            }
+            sceneService.DestroyObject(scene, obj);
         }   
     }
 }

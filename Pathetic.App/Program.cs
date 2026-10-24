@@ -21,6 +21,7 @@ builder.Configuration.AddIniFile(iniPath, optional: false, reloadOnChange: false
 AddOptions<RendererOptions>();
 AddOptions<PathTracerOptions>();
 AddOptions<TemporalAccumulationOptions>();
+AddOptions<TonemappingOptions>();
 
 builder.Services.AddRenderer(graph => graph
     // .AddPass<CirclesPass>()

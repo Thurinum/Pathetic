@@ -1,8 +1,11 @@
 module TemporalAccumulation;
+import Tonemapping.Tonemap;
 
 struct Params 
 { 
     uint Reset; 
+    uint Tonemapper;
+    float Exposure;
 }
 
 RWTexture2D<float4> color;
@@ -25,5 +28,9 @@ void main(uint3 dispatchThreadId : SV_DispatchThreadID)
     float4 accum = (params.Reset != 0) ? float4(0.0) : accumImage[pixel];
     accum += float4(estimate, 1.0);
     accumImage[pixel] = accum;
-    color[pixel] = float4(accum.rgb / accum.a, 1.0);
+    
+    float3 hdr = accum.rgb / accum.a;
+    hdr *= exp2(params.Exposure);
+    float3 ldr = Tonemap(hdr, (Tonemapper)params.Tonemapper);
+    color[pixel] = float4(LinearToSRGB(ldr), 1.0);
 }

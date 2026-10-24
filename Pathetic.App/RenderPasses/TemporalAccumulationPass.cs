@@ -5,11 +5,15 @@ using Pathetic.Renderer.Resources;
 
 namespace Pathetic.App.RenderPasses;
 
-public sealed class TemporalAccumulationPass(IOptions<TemporalAccumulationOptions> options) : RenderPass
+public sealed class TemporalAccumulationPass(
+    IOptions<TemporalAccumulationOptions> options,
+    IOptions<TonemappingOptions> tonemapping) : RenderPass
 {
     private struct Params
     {
         public uint Reset;
+        public uint Tonemapper;
+        public float Exposure;
     }
 
     public override string ShaderModule => "TemporalAccumulation";
@@ -30,6 +34,11 @@ public sealed class TemporalAccumulationPass(IOptions<TemporalAccumulationOption
     {
         bool reset = !options.Value.Enabled || ctx.Resources.SceneRevision != SceneChange.None;
 
-        ctx.Cmd.UpdateBuffer(buffer, 0, new Params { Reset = reset ? 1u : 0u });
+        ctx.Cmd.UpdateBuffer(buffer, 0, new Params
+        {
+            Reset = reset ? 1u : 0u,
+            Tonemapper = (uint)tonemapping.Value.Tonemapper,
+            Exposure = tonemapping.Value.Exposure
+        });
     }
 }

@@ -1,7 +1,7 @@
 ﻿namespace Pathetic.SceneGraph;
 
-public interface IDestroyable
+internal interface IDestroyable
 {
-    public bool IsPendingDestroy { get; }
-    public void Destroy();
+    bool IsPendingDestroy { get; }
+    void Destroy();
 }

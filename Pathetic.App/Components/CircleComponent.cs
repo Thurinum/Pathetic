@@ -19,10 +19,10 @@ public class CircleComponent(SparseSet<CirclePrimitive> primitives) : RendererBa
     public float Radius { get; set; }
     private Transform _transform = null!;
 
-    public override void Awake()
+    protected override void Setup()
     {
         _transform = Parent.GetComponent<Transform>();
-        base.Awake();
+        base.Setup();
     }
 
     protected override CirclePrimitive BuildPrimitive()
