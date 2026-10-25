@@ -54,21 +54,15 @@ public sealed class SceneManager(ComponentFactory componentFactory, ILogger<Scen
     
     public void FlushDestroyed(Scene scene)
     {
-        while (scene.PendingDestroy.Count > 0)
+        while (scene.PendingDestroy.TryDequeue(out IDestroyable? destroyable))
         {
-            var batch = scene.PendingDestroy.ToArray();
-            scene.PendingDestroy.Clear();
-
-            foreach (var destroyable in batch)
+            try
             {
-                try
-                {
-                    destroyable.Destroy();
-                }
-                catch (Exception e)
-                {
-                    logger.LogError(e, "Error during destruction: {EMessage}.", e.Message);
-                }
+                destroyable.Destroy();
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, "Error during destruction: {EMessage}.", e.Message);
             }
         }
     }

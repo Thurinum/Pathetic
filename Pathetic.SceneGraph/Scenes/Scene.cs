@@ -6,12 +6,12 @@ public sealed class Scene(ComponentFactory componentFactory)
 {
     public List<SceneObject> Objects { get; } = [];
     internal ComponentFactory ComponentFactory { get; } = componentFactory;
-    internal List<Component> PendingSetup { get; } = [];
-    internal List<IDestroyable> PendingDestroy { get; } = [];
+    internal Queue<Component> PendingSetup { get; } = new();
+    internal Queue<IDestroyable> PendingDestroy { get; } = new();
 
     internal void MarkForSetup(Component component)
     {
-        PendingSetup.Add(component);
+        PendingSetup.Enqueue(component);
     }
     
     internal void MarkForDestroy(IDestroyable destroyable)
@@ -21,6 +21,6 @@ public sealed class Scene(ComponentFactory componentFactory)
 
         destroyable.IsPendingDestroy = true;
         
-        PendingDestroy.Add(destroyable);
+        PendingDestroy.Enqueue(destroyable);
     }
 }
