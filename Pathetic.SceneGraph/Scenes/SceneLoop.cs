@@ -27,7 +27,7 @@ public sealed class SceneLoop(SceneManager sceneService, RenderWindow window, Im
             window.BeginFrame();
             {
                 UpdateDeltaTime();
-                scene.FlushSetup();
+                sceneService.FlushSetup(scene);
                 UpdateComponents(scene);
                 LateUpdateComponents(scene);
             
@@ -37,7 +37,7 @@ public sealed class SceneLoop(SceneManager sceneService, RenderWindow window, Im
                 GUIComponents(scene);
                 gui.End();
                 
-                scene.FlushDestroyed();
+                sceneService.FlushDestroyed(scene);
             }
             window.EndFrame();
         }
@@ -100,6 +100,6 @@ public sealed class SceneLoop(SceneManager sceneService, RenderWindow window, Im
             sceneService.DestroyLater(scene, obj);
         }
 
-        scene.FlushDestroyed();
+        sceneService.FlushDestroyed(scene);
     }
 }
