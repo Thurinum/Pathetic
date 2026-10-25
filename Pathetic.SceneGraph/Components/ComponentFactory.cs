@@ -12,7 +12,7 @@ public sealed class ComponentFactory(IServiceProvider provider, ILoggerFactory l
         component.Parent = parent;
         component.Logger = loggerFactory.CreateLogger<T>();
         parent.Components.Add(component);
-        parent.Owner.PendingSetup.Add(component);
+        parent.Owner.MarkForSetup(component);
         return component;
     }
 }

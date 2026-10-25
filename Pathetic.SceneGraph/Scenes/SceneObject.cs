@@ -1,4 +1,5 @@
-﻿using Pathetic.SceneGraph.Components;
+﻿using Microsoft.Extensions.Logging;
+using Pathetic.SceneGraph.Components;
 
 namespace Pathetic.SceneGraph.Scenes;
 
@@ -8,12 +9,14 @@ public sealed class SceneObject : IDestroyable
     public required Scene Owner { get; init; }
     public List<Component> Components { get; } = [];
     public Transform Transform { get; internal set; } = null!;
+    
     public bool IsPendingDestroy { get; internal set; }
+    bool IDestroyable.IsPendingDestroy { get => IsPendingDestroy; set => IsPendingDestroy = value;}
     public bool IsDestroyed { get; private set; }
 
     public T AddComponent<T>() where T : Component
     {
-        if (IsPendingDestroy)
+        if (IsPendingDestroy || IsDestroyed)
             throw new InvalidOperationException("Cannot add a component to a pending-destroy object.");
         
         return Owner.ComponentFactory.CreateComponent<T>(this);
@@ -21,15 +24,11 @@ public sealed class SceneObject : IDestroyable
 
     public void RemoveComponent<T>() where T : Component
     {
-        if (IsPendingDestroy)
+        if (IsPendingDestroy || IsDestroyed)
             throw new InvalidOperationException("Cannot remove a component from a pending-destroy object.");
 
         var component = GetComponent<T>();
-        if (component.IsPendingDestroy)
-            return;
-
-        component.IsPendingDestroy = true;
-        Owner.PendingDestroy.Add(component);
+        Owner.MarkForDestroy(component);
     }
 
     public T GetComponent<T>() where T : Component
@@ -60,13 +59,31 @@ public sealed class SceneObject : IDestroyable
     {
         if (IsDestroyed)
             return;
-
+            
         IsDestroyed = true;
 
-        for (int i = Components.Count - 1; i >= 0; i--)
-            Components[i].Destroy();
+        var snapshot = Components.ToArray();
 
-        Components.Clear();
-        Owner.Objects.Remove(this);
+        try
+        {
+            for (int i = snapshot.Length - 1; i >= 0; i--)
+            {
+                Component component = snapshot[i];
+
+                try
+                {
+                    ((IDestroyable)component).Destroy();
+                }
+                catch (Exception e)
+                {
+                    component.Logger.LogError(e, "Cleanup failed for {Component}", component.GetType().Name);
+                }
+            }
+        }
+        finally
+        {
+            Components.Clear();
+            Owner.Objects.Remove(this);
+        }
     }
 }

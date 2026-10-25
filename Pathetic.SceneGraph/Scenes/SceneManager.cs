@@ -21,12 +21,8 @@ public sealed class SceneManager(ComponentFactory componentFactory)
         return obj;
     }
 
-    public void DestroyObject(Scene scene, SceneObject obj)
+    public void DestroyLater(Scene scene, IDestroyable thing)
     {
-        if (obj.IsPendingDestroy)
-            return;
-
-        obj.IsPendingDestroy = true;
-        scene.PendingDestroy.Add(obj);
+        scene.MarkForDestroy(thing);
     }
 }

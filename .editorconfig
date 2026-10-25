@@ -9,3 +9,5 @@ dotnet_diagnostic.CA1822.severity = silent
 
 ; CA1805: Member 'xxx' is explicitly initialized to its default value
 dotnet_diagnostic.CA1805.severity = none
+
+dotnet_diagnostic.CA1848.severity = silent

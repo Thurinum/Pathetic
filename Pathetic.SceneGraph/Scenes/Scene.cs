@@ -2,13 +2,27 @@
 
 namespace Pathetic.SceneGraph.Scenes;
 
-public sealed class Scene(ComponentFactory componentFactory)
+public sealed partial class Scene(ComponentFactory componentFactory)
 {
     public List<SceneObject> Objects { get; } = [];
-    
     internal ComponentFactory ComponentFactory { get; } = componentFactory;
-    internal List<Component> PendingSetup { get; } = [];
-    internal List<IDestroyable> PendingDestroy { get; } = [];
+    private List<Component> PendingSetup { get; } = [];
+    private List<IDestroyable> PendingDestroy { get; } = [];
+
+    internal void MarkForSetup(Component component)
+    {
+        PendingSetup.Add(component);
+    }
+    
+    internal void MarkForDestroy(IDestroyable destroyable)
+    {
+        if (destroyable.IsDestroyed || destroyable.IsPendingDestroy)
+            return;
+
+        destroyable.IsPendingDestroy = true;
+        
+        PendingDestroy.Add(destroyable);
+    }
 
     public void FlushSetup()
     {
@@ -37,13 +51,22 @@ public sealed class Scene(ComponentFactory componentFactory)
     
     public void FlushDestroyed()
     {
-        if (PendingDestroy.Count == 0)
-            return;
+        while (PendingDestroy.Count > 0)
+        {
+            var batch = PendingDestroy.ToArray();
+            PendingDestroy.Clear();
 
-        var batch = PendingDestroy.ToArray();
-        PendingDestroy.Clear();
-
-        foreach (var destroyable in batch)
-            destroyable.Destroy();
+            foreach (var destroyable in batch)
+            {
+                try
+                {
+                    destroyable.Destroy();
+                }
+                catch (Exception)
+                {
+                    // todo: log 
+                }
+            }
+        }
     }
 }

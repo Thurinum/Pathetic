@@ -97,7 +97,9 @@ public sealed class SceneLoop(SceneManager sceneService, RenderWindow window, Im
     {
         foreach (var obj in scene.Objects)
         {
-            sceneService.DestroyObject(scene, obj);
-        }   
+            sceneService.DestroyLater(scene, obj);
+        }
+
+        scene.FlushDestroyed();
     }
 }

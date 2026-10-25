@@ -5,7 +5,7 @@ using Pathetic.SceneGraph.Scenes;
 namespace Pathetic.SceneGraph.Components;
 
 [UsedImplicitly(ImplicitUseTargetFlags.WithInheritors)]
-public abstract class Component : IDestroyable, IComponentLifecycle
+public abstract class Component : IComponentLifecycle, IDestroyable
 {
     public SceneObject Parent { get; internal set; } = null!;
     public ILogger Logger { get; internal set; } = null!;
@@ -13,6 +13,7 @@ public abstract class Component : IDestroyable, IComponentLifecycle
     
     public bool IsFullySetup { get; private set; }
     public bool IsPendingDestroy { get; internal set; }
+    bool IDestroyable.IsPendingDestroy { get => IsPendingDestroy; set => IsPendingDestroy = value;}
     public bool IsDestroyed { get; private set; }
     
     void IComponentLifecycle.Setup() => Setup();
@@ -29,13 +30,20 @@ public abstract class Component : IDestroyable, IComponentLifecycle
     protected virtual void GUI() {}
     protected virtual void Cleanup() {}
 
-    public void Destroy()
+    void IDestroyable.Destroy()
     {
         if (IsDestroyed)
             return;
-
-        Cleanup();
-        Parent.Components.Remove(this);
+        
         IsDestroyed = true;
+        
+        try
+        {
+            Cleanup();
+        }
+        finally
+        {
+            Parent.Components.Remove(this);
+        }
     }
 }
