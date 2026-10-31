@@ -218,7 +218,7 @@ def build_request(scene, depsgraph, settings) -> dict[str, Any]:
         if obj.hide_render:
             continue
 
-        if obj.type == "MESH":
+        if obj.type in {"MESH", "CURVE", "SURFACE", "META", "FONT"}:
             triangles.extend(_iter_mesh_triangles(obj, depsgraph, material_cache))
         elif obj.type == "LIGHT":
             spheres.extend(_iter_light_spheres([obj], settings))
