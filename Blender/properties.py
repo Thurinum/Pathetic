@@ -12,7 +12,7 @@ class PatheticSettings(bpy.types.PropertyGroup):
     samples_per_frame: bpy.props.IntProperty(
         name="Samples per Frame",
         description="Samples taken in each GPU dispatch. Smaller values keep dispatches short and avoid driver timeouts",
-        default=8,
+        default=4,
         min=1,
         max=64,
     )

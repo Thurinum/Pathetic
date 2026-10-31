@@ -40,6 +40,10 @@ The executable is produced at:
 Pathetic.App/bin/Release/net10.0/win-x64/Pathetic.App.exe
 ```
 
+The current build is framework-dependent, so the .NET 10 runtime must be installed. If
+you want a self-contained executable, publish with `-r win-x64 --self-contained true`
+and point the add-on at the published `Pathetic.App.exe`.
+
 ## Install the Blender extension
 
 The add-on lives in `Blender/` and has a `blender_manifest.toml`, so it can be installed
