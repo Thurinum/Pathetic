@@ -115,7 +115,7 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
 
             process = subprocess.run(
                 command,
-                cwd=os.path.dirname(executable),
+                cwd=os.path.dirname(executable) or None,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,

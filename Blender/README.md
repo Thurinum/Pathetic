@@ -42,7 +42,8 @@ Pathetic.App/bin/Release/net10.0/win-x64/Pathetic.App.exe
 
 The current build is framework-dependent, so the .NET 10 runtime must be installed. If
 you want a self-contained executable, publish with `-r win-x64 --self-contained true`
-and point the add-on at the published `Pathetic.App.exe`.
+and point the add-on at the published `Pathetic.App.exe`. Keep `Pathetic.ini` and the
+`Shaders/` directory next to the executable; the headless bridge loads both at startup.
 
 ## Install the Blender extension
 
