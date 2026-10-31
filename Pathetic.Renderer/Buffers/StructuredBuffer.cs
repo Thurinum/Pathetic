@@ -20,6 +20,14 @@ public sealed class StructuredBuffer<T>
     public IReadOnlyList<IResourceSpec> Resources => [this];
     public SceneChange DirtyChanges { get; private set; }
 
+    /// <summary>
+    /// Increments whenever the contents of this buffer change. Consumers that derive data from
+    /// this buffer (like the scene BVH) use it to avoid rebuilding when nothing changed.
+    /// </summary>
+    public uint Revision { get; private set; }
+
+    public ReadOnlySpan<T> Values => _values.AsSpan(0, Count);
+
     private T[] _values;
     private int Capacity => _values.Length;
     private readonly BitArray _dirtyChunks;
@@ -54,6 +62,22 @@ public sealed class StructuredBuffer<T>
     public void SetDirty(SceneChange changes)
     {
         DirtyChanges |= changes;
+        Revision++;
+        MarkAllDirty();
+    }
+
+    /// <summary>
+    /// Replaces the entire contents of this buffer. This is used by derived buffers such as
+    /// the flattened BVH, whose element count changes as a whole.
+    /// </summary>
+    public void SetAll(ReadOnlySpan<T> values)
+    {
+        EnsureCapacity(values.Length);
+        values.CopyTo(_values);
+        Count = values.Length;
+
+        DirtyChanges |= SceneChange.Structure | SceneChange.Content;
+        Revision++;
         MarkAllDirty();
     }
 
@@ -82,10 +106,12 @@ public sealed class StructuredBuffer<T>
                 c++;
             
             int startIdx = startChunkIdx * _chunkSize;
-            if (startIdx > Count)
+            if (startIdx >= Count)
                 break;
             
             int endIdx = Math.Min(c * _chunkSize, Count);
+            if (endIdx <= startIdx)
+                continue;
 
             var data = _values.AsSpan(startIdx, endIdx - startIdx);
             ctx.Cmd.UpdateBuffer(buffer, (uint)startIdx * Stride, data);
@@ -99,6 +125,7 @@ public sealed class StructuredBuffer<T>
         
         _values[index] = value;
         DirtyChanges |= SceneChange.Structure | SceneChange.Content;
+        Revision++;
         MarkDirty(index);
 
         return index;
@@ -114,6 +141,7 @@ public sealed class StructuredBuffer<T>
 
         _values[index] = value;
         DirtyChanges |= SceneChange.Content;
+        Revision++;
         MarkDirty(index);
     }
 
@@ -131,6 +159,7 @@ public sealed class StructuredBuffer<T>
 
         MarkDirty(index);
         DirtyChanges |= SceneChange.Structure;
+        Revision++;
         Count--;
     }
     
@@ -156,7 +185,10 @@ public sealed class StructuredBuffer<T>
         if (count <= Capacity)
             return;
 
-        int newSize = Math.Max(count, Capacity * 2);
+        int newSize = Math.Max(Capacity * 2, 1);
+        while (newSize < count)
+            newSize *= 2;
+
         Array.Resize(ref _values, newSize);
         _dirtyChunks.Length = (int)GetChunkCount();
     }

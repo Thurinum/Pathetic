@@ -14,13 +14,13 @@ internal static class RenderGraphValidator
             ?? throw new InvalidOperationException("No present texture is set.");
     }
 
-    public static void ValidatePresentTexture(string presentTexture, ResourceTable resources, Framebuffer framebuffer)
+    public static void ValidatePresentTexture(string presentTexture, ResourceTable resources, PixelFormat targetFormat)
     {
         if (!resources.Has<Texture>(presentTexture))
             throw new InvalidOperationException($"Present texture {presentTexture} isn't a valid resource.");
 
-        if (resources.GetResource<Texture>(presentTexture).Format != framebuffer.ColorTargets[0].Target.Format)
-            throw new InvalidOperationException($"Present tex {presentTexture} must have same format as the swapchain.");
+        if (resources.GetResource<Texture>(presentTexture).Format != targetFormat)
+            throw new InvalidOperationException($"Present tex {presentTexture} must have the same format as the output target.");
     }
 
     public static void ValidatePassBindings(List<PassEntry> passes, ResourceTable resources)

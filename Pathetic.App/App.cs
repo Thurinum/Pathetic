@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using NeoVeldrid;
+using Pathetic.App.Bvh;
 using Pathetic.App.Components;
 using Pathetic.App.Components.Camera;
 using Pathetic.App.Components.GUI;
@@ -9,7 +10,7 @@ using Pathetic.SceneGraph.Scenes;
 
 namespace Pathetic.App;
 
-public class App(SceneLoop loop, SceneManager sceneManager)
+public class App(SceneLoop loop, SceneManager sceneManager, SceneBvh sceneBvh)
 {
     public void Run()
     {
@@ -45,7 +46,7 @@ public class App(SceneLoop loop, SceneManager sceneManager)
         AddPlane(scene, new Vector3( 1,  0,  0), Quaternion.FromEuler(new Vector3(  0, -90,  0))); // right  -X
         AddPlane(scene, new Vector3( 0,  0, -1), Quaternion.FromEuler(new Vector3(  0,   0,  0))); // back   +Z
         
-        loop.Run(scene);
+        loop.Run(scene, sceneBvh.Update);
     }
     
     private void AddPlane(Scene scene, Vector3 pos, Quaternion rot)

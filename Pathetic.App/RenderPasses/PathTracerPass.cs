@@ -11,10 +11,11 @@ public sealed class PathTracerPass(IOptions<PathTracerOptions> options) : Render
     [StructLayout(LayoutKind.Sequential)]
     private struct Params
     {
-        public uint PlaneCount;
         public uint SphereCount;
+        public uint TriangleCount;
         public uint SamplesPerPixel;
         public uint MaxBounces;
+        public uint BvhNodeCount;
     }
 
     public override string ShaderModule => "PathTracer";
@@ -30,16 +31,20 @@ public sealed class PathTracerPass(IOptions<PathTracerOptions> options) : Render
         ResourceName.Camera,
         ResourceName.Planes,
         ResourceName.Spheres,
+        ResourceName.Triangles,
+        ResourceName.BvhNodes,
+        ResourceName.BvhPrimitiveRefs,
     ];
 
     public override void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
     {
         Params @params = new()
         {
-            PlaneCount = ctx.Resources.GetElementCount(ResourceName.Planes),
             SphereCount = ctx.Resources.GetElementCount(ResourceName.Spheres),
+            TriangleCount = ctx.Resources.GetElementCount(ResourceName.Triangles),
             SamplesPerPixel = options.Value.SamplesPerPixel,
             MaxBounces = options.Value.MaxBounces,
+            BvhNodeCount = ctx.Resources.GetElementCount(ResourceName.BvhNodes),
         };
         ctx.Cmd.UpdateBuffer(buffer, 0, @params);
     }

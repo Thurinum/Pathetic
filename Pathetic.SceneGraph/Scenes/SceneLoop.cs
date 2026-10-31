@@ -9,7 +9,7 @@ public sealed class SceneLoop(SceneManager sceneService, RenderWindow window, Im
     private long _lastTimestamp;
     private float _deltaTime;
     
-    public void Run(Scene scene)
+    public void Run(Scene scene, Action? beforeRender = null)
     {
         window.Initialize();
         gui.Initialize();
@@ -30,7 +30,8 @@ public sealed class SceneLoop(SceneManager sceneService, RenderWindow window, Im
                 scene.FlushSetup();
                 UpdateComponents(scene);
                 LateUpdateComponents(scene);
-            
+
+                beforeRender?.Invoke();
                 rdg.Render(_deltaTime);
         
                 gui.Begin(_deltaTime, input);

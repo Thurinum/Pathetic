@@ -8,8 +8,8 @@ public sealed record PathTracerOptions : IConfig
     public static string Section => "PathTracer";
     
     [Range(1, 4096)] 
-    public uint SamplesPerPixel { get; init; } = 4;
+    public uint SamplesPerPixel { get; set; } = 4;
     
     [Range(1, 67)]
-    public uint MaxBounces { get; init; } = 8;
+    public uint MaxBounces { get; set; } = 8;
 }

@@ -8,16 +8,20 @@ public sealed class RenderGraphFactory(
     RenderGraphPipelineFactory pipelineFactory,
     IEnumerable<IResourceUploader> resourceUploaders)
 {
-    internal RenderGraph Create(RenderGraphSpec spec, GraphicsDevice device)
+    public RenderGraph Create(
+        RenderGraphSpec spec,
+        GraphicsDevice device,
+        uint width,
+        uint height,
+        PixelFormat presentFormat)
     {
         string presentTexture = RenderGraphValidator.ValidateSpec(spec);
 
         var resources = new ResourceTable();
         var passes = CreatePasses(spec, device);
 
-        var framebuffer = device.SwapchainFramebuffer;
-        CreateResources(device, framebuffer, resources, passes);
-        RenderGraphValidator.ValidatePresentTexture(presentTexture, resources, framebuffer);
+        CreateResources(device, width, height, resources, passes);
+        RenderGraphValidator.ValidatePresentTexture(presentTexture, resources, presentFormat);
         RenderGraphValidator.ValidatePassBindings(passes, resources);
         BindPassResources(device, passes, resources);
 
@@ -40,7 +44,8 @@ public sealed class RenderGraphFactory(
 
     private void CreateResources(
         GraphicsDevice device,
-        Framebuffer framebuffer,
+        uint width,
+        uint height,
         ResourceTable resources,
         List<PassEntry> passes)
     {
@@ -55,7 +60,7 @@ public sealed class RenderGraphFactory(
             }
         }
 
-        resources.Allocate(device, framebuffer.Width, framebuffer.Height);
+        resources.Allocate(device, width, height);
     }
 
     private static void BindPassResources(GraphicsDevice device, List<PassEntry> passes, ResourceTable resources)

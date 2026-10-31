@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
+using NeoVeldrid;
 using Pathetic.Renderer.Graph;
 
 namespace Pathetic.Renderer;
@@ -16,15 +17,30 @@ public sealed class RenderGraphHost(RenderWindow window, IOptions<RenderGraphSpe
 
     public void Initialize()
     {
-        Graph = graphFactory.Create(graphSpec.Value, window.Device);
+        Texture swapchainTarget = window.Device.SwapchainFramebuffer.ColorTargets[0].Target;
+        Graph = graphFactory.Create(
+            graphSpec.Value,
+            window.Device,
+            (uint)window.Width,
+            (uint)window.Height,
+            swapchainTarget.Format);
         window.Resized += OnWindowResized;
         _initialized = true;
     }
 
     public void Render(float deltaTime)
     {
-        Graph.Render(window.Device, window.CommandList, deltaTime);
+        Texture swapchainTarget = window.Device.SwapchainFramebuffer.ColorTargets[0].Target;
+        Graph.Render(
+            window.Device,
+            window.CommandList,
+            deltaTime,
+            (uint)window.Width,
+            (uint)window.Height,
+            swapchainTarget);
     }
+
+    public Texture PresentTexture => Graph.PresentTexture;
 
     private void OnWindowResized()
     {
