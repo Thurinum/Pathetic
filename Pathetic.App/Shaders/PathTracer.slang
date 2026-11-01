@@ -81,6 +81,7 @@ HitResult TraceBvh(Ray ray)
 
                 if (hit.IsHit())
                 {
+                    hit.Index = primitive.Index;
                     bestT = hit.T;
                     bestHit = hit;
                 }

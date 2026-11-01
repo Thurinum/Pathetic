@@ -50,23 +50,23 @@ def _load_raw_pixels(path: str, expected_width: int, expected_height: int) -> li
     linear = np.where(rgb <= 0.04045, rgb / 12.92, np.power((rgb + 0.055) / 1.055, 2.4))
     rgba[..., :3] = linear
 
-    return rgba.reshape(-1).tolist()
+    return rgba.reshape((-1, 4)).tolist()
 
 
-def _load_raw_pixels_python(data: bytes, width: int, height: int) -> list[float]:
-    pixels = [0.0] * (width * height * 4)
+def _load_raw_pixels_python(data: bytes, width: int, height: int) -> list[list[float]]:
+    pixels: list[list[float]] = []
 
     for y in range(height):
-        source_row = y * width * 4
-        destination_row = (height - 1 - y) * width * 4
+        source_row = (height - 1 - y) * width * 4
 
         for x in range(width):
             source = source_row + x * 4
-            destination = destination_row + x * 4
-            pixels[destination + 0] = _srgb_to_linear(data[source + 0] / 255.0)
-            pixels[destination + 1] = _srgb_to_linear(data[source + 1] / 255.0)
-            pixels[destination + 2] = _srgb_to_linear(data[source + 2] / 255.0)
-            pixels[destination + 3] = data[source + 3] / 255.0
+            pixels.append([
+                _srgb_to_linear(data[source + 0] / 255.0),
+                _srgb_to_linear(data[source + 1] / 255.0),
+                _srgb_to_linear(data[source + 2] / 255.0),
+                data[source + 3] / 255.0,
+            ])
 
     return pixels
 
