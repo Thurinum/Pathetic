@@ -222,6 +222,12 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
                     self.tag_redraw()
                 except Exception:
                     pass
+                area = getattr(self, "_viewport_area", None)
+                if area is not None:
+                    try:
+                        area.tag_redraw()
+                    except Exception:
+                        pass
 
         if bridge.running:
             return 0.01
@@ -249,6 +255,8 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
         region_data = getattr(context, "region_data", None)
         if region is None or region_data is None:
             return
+
+        self._viewport_area = getattr(context, "area", None)
 
         if region_data.view_perspective not in {"PERSP", "CAMERA"}:
             return
