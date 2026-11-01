@@ -395,13 +395,19 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
             )
             self._viewport_texture = texture
 
-        gpu.state.blend_set("ALPHA_PREMULT")
-        self.bind_display_space_shader(depsgraph.scene)
-        draw_texture_2d(
-            texture,
-            (0, 0),
-            context.region.width,
-            context.region.height,
-        )
-        self.unbind_display_space_shader()
-        gpu.state.blend_set("NONE")
+        from mathutils import Matrix
+
+        gpu.matrix.push_projection()
+        gpu.matrix.load_projection_matrix(Matrix.Identity(4))
+        try:
+            with gpu.matrix.push_pop():
+                gpu.matrix.load_identity()
+                gpu.state.depth_test_set("NONE")
+                gpu.state.blend_set("ALPHA_PREMULT")
+                self.bind_display_space_shader(depsgraph.scene)
+                draw_texture_2d(texture, (-1.0, -1.0), 2.0, 2.0)
+                self.unbind_display_space_shader()
+                gpu.state.blend_set("NONE")
+                gpu.state.depth_test_set("LESS_EQUAL")
+        finally:
+            gpu.matrix.pop_projection()
