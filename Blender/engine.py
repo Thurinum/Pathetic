@@ -386,6 +386,17 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
         self._ensure_viewport_poll()
 
     def view_draw(self, context, depsgraph):
+        bridge = getattr(self, "_viewport_bridge", None)
+        if bridge is not None:
+            latest = bridge.latest()
+            if latest is not None:
+                width, height, frame_index, pixels = latest
+                if frame_index != getattr(self, "_viewport_frame_index", -1):
+                    self._viewport_frame_index = frame_index
+                    self._viewport_pixels = pixels
+                    self._viewport_dimensions = (width, height)
+                    self._viewport_texture = None
+
         viewport_pixels = getattr(self, "_viewport_pixels", None)
         viewport_dimensions = getattr(self, "_viewport_dimensions", None)
         if viewport_pixels is None or viewport_dimensions is None:
@@ -393,7 +404,7 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
 
         try:
             import gpu
-            from gpu_extras.presets import draw_texture_2d
+            from gpu_extras.batch import batch_for_shader
         except ImportError:
             return
 
@@ -442,6 +453,16 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
 
         from mathutils import Matrix
 
+        shader = gpu.shader.from_builtin("IMAGE")
+        positions = ((-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0))
+        texcoords = ((0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0))
+        batch = batch_for_shader(
+            shader,
+            "TRIS",
+            {"pos": positions, "texCoord": texcoords},
+            indices=((0, 1, 2), (2, 3, 0)),
+        )
+
         gpu.matrix.push_projection()
         gpu.matrix.load_projection_matrix(Matrix.Identity(4))
         try:
@@ -449,8 +470,15 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
                 gpu.matrix.load_identity()
                 gpu.state.depth_test_set("NONE")
                 gpu.state.blend_set("ALPHA_PREMULT")
-                draw_texture_2d(texture, (-1.0, -1.0), 2.0, 2.0)
+                shader.uniform_sampler("image", texture)
+                batch.draw(shader)
                 gpu.state.blend_set("NONE")
                 gpu.state.depth_test_set("LESS_EQUAL")
         finally:
             gpu.matrix.pop_projection()
+
+        if bridge is not None and bridge.running:
+            try:
+                self.tag_redraw()
+            except Exception:
+                pass
