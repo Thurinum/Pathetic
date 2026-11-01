@@ -345,21 +345,49 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
         texture = getattr(self, "_viewport_texture", None)
         if texture is None:
             try:
-                buffer = gpu.types.Buffer("UBYTE", width * height * 4, viewport_pixels)
-            except TypeError:
-                buffer = gpu.types.Buffer("UBYTE", width * height * 4, list(viewport_pixels))
+                import numpy as np
+            except ImportError:
+                np = None
+
+            if np is not None:
+                pixels = np.frombuffer(viewport_pixels, dtype=np.uint8).astype(np.float32) / 255.0
+                pixels = pixels.reshape((-1, 4))
+                rgb = pixels[:, :3]
+                pixels[:, :3] = np.where(
+                    rgb <= 0.04045,
+                    rgb / 12.92,
+                    np.power((rgb + 0.055) / 1.055, 2.4),
+                )
+                flat = pixels.reshape(-1)
+            else:
+                flat = [
+                    _srgb_to_linear(value / 255.0)
+                    for value in viewport_pixels
+                ]
+
+            try:
+                buffer = gpu.types.Buffer("FLOAT", width * height * 4, flat)
+            except (TypeError, ValueError):
+                buffer = gpu.types.Buffer(
+                    "FLOAT",
+                    width * height * 4,
+                    flat.tolist() if np is not None else flat,
+                )
+
             texture = gpu.types.GPUTexture(
                 (width, height),
-                format="SRGB8_A8",
+                format="RGBA16F",
                 data=buffer,
             )
             self._viewport_texture = texture
 
         gpu.state.blend_set("ALPHA_PREMULT")
+        self.bind_display_space_shader(depsgraph.scene)
         draw_texture_2d(
             texture,
             (0, 0),
             context.region.width,
             context.region.height,
         )
+        self.unbind_display_space_shader()
         gpu.state.blend_set("NONE")
