@@ -394,6 +394,9 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
                 data=buffer,
             )
             self._viewport_texture = texture
+            if getattr(self, "_viewport_logged_size", None) != (width, height):
+                self._viewport_logged_size = (width, height)
+                log(f"viewport texture {width}x{height} screen-space")
 
         from mathutils import Matrix
 

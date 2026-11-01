@@ -10,7 +10,7 @@ bl_info = {
 
 import bpy
 
-from .bridge import stop_all
+from .bridge import log, stop_all
 from .engine import PatheticRenderEngine
 from .preferences import PatheticPreferences
 from .properties import PatheticSettings
@@ -78,6 +78,7 @@ def register():
         bpy.utils.register_class(cls)
 
     bpy.types.Scene.pathetic = bpy.props.PointerProperty(type=PatheticSettings)
+    log("pathetic_renderer registered (screen-space preview build)")
 
 
 def unregister():
