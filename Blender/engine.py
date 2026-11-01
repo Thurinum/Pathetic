@@ -6,6 +6,7 @@ import shutil
 import struct
 import subprocess
 import tempfile
+import time
 import traceback
 
 import bpy
@@ -15,6 +16,28 @@ from .bridge import PatheticBridge, log
 from .preferences import get_executable
 
 CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
+
+_ENGINE_INSTANCES = []
+_GLOBAL_POLL_REGISTERED = False
+
+
+def _global_viewport_poll():
+    global _GLOBAL_POLL_REGISTERED
+
+    any_running = False
+    for engine in list(_ENGINE_INSTANCES):
+        try:
+            any_running = engine._viewport_poll_once() or any_running
+        except Exception:
+            traceback.print_exc()
+            if engine in _ENGINE_INSTANCES:
+                _ENGINE_INSTANCES.remove(engine)
+
+    if any_running:
+        return 0.02
+
+    _GLOBAL_POLL_REGISTERED = False
+    return None
 
 
 def _srgb_to_linear(value: float) -> float:
@@ -198,17 +221,26 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
         return bridge
 
     def _ensure_viewport_poll(self) -> None:
-        if getattr(self, "_viewport_poll_registered", False):
-            return
+        global _GLOBAL_POLL_REGISTERED
 
-        self._viewport_poll_registered = True
-        bpy.app.timers.register(self._viewport_poll, first_interval=0.01)
+        if self not in _ENGINE_INSTANCES:
+            _ENGINE_INSTANCES.append(self)
 
-    def _viewport_poll(self):
+        if not _GLOBAL_POLL_REGISTERED:
+            _GLOBAL_POLL_REGISTERED = True
+            bpy.app.timers.register(_global_viewport_poll, first_interval=0.01)
+            log("global viewport poll timer registered")
+
+    def _viewport_poll_once(self) -> bool:
+        if not getattr(self, "_viewport_poll_seen", False):
+            self._viewport_poll_seen = True
+            log("viewport poll alive")
+
         bridge = getattr(self, "_viewport_bridge", None)
         if bridge is None:
-            self._viewport_poll_registered = False
-            return None
+            if self in _ENGINE_INSTANCES:
+                _ENGINE_INSTANCES.remove(self)
+            return False
 
         latest = bridge.latest()
         if latest is not None:
@@ -218,22 +250,30 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
                 self._viewport_pixels = pixels
                 self._viewport_dimensions = (width, height)
                 self._viewport_texture = None
-                try:
-                    self.tag_redraw()
-                except Exception:
-                    pass
-                area = getattr(self, "_viewport_area", None)
-                if area is not None:
+
+                now = time.monotonic()
+                last_draw = getattr(self, "_viewport_last_redraw", 0.0)
+                if now - last_draw >= (1.0 / 30.0):
+                    self._viewport_last_redraw = now
+
                     try:
-                        area.tag_redraw()
+                        self.tag_redraw()
                     except Exception:
                         pass
 
-        if bridge.running:
-            return 0.01
+                    area = getattr(self, "_viewport_area", None)
+                    if area is not None:
+                        try:
+                            area.tag_redraw()
+                        except Exception:
+                            pass
 
-        self._viewport_poll_registered = False
-        return None
+                    try:
+                        bpy.ops.wm.redraw_timer(type="DRAW_WIN_SWAP", iterations=1)
+                    except Exception:
+                        pass
+
+        return bridge.running
 
     def _stop_viewport(self) -> None:
         bridge = getattr(self, "_viewport_bridge", None)
@@ -243,6 +283,8 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
         self._viewport_loaded = False
         self._viewport_pixels = None
         self._viewport_texture = None
+        if self in _ENGINE_INSTANCES:
+            _ENGINE_INSTANCES.remove(self)
 
     def view_update(self, context, depsgraph):
         scene = depsgraph.scene
@@ -407,9 +449,7 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
                 gpu.matrix.load_identity()
                 gpu.state.depth_test_set("NONE")
                 gpu.state.blend_set("ALPHA_PREMULT")
-                self.bind_display_space_shader(depsgraph.scene)
                 draw_texture_2d(texture, (-1.0, -1.0), 2.0, 2.0)
-                self.unbind_display_space_shader()
                 gpu.state.blend_set("NONE")
                 gpu.state.depth_test_set("LESS_EQUAL")
         finally:
