@@ -11,15 +11,16 @@ namespace Pathetic.App.Components;
 /// payload consumed by the path tracer.
 /// </summary>
 // Matches the std430 layout Slang uses for a StructuredBuffer element. A float3 is
-// 16-byte aligned, so the vertices are at 0, 16 and 32 rather than tightly packed.
+// 16-byte aligned but only 12 bytes wide, so the vertices are at 0, 16 and 32 and
+// the color fields start immediately after the last 12-byte vertex.
 [StructLayout(LayoutKind.Explicit, Size = 64)]
 public record struct TrianglePrimitive
 {
     [FieldOffset(00)] public Vector3 V0;
     [FieldOffset(16)] public Vector3 V1;
     [FieldOffset(32)] public Vector3 V2;
-    [FieldOffset(48)] public RgbaByte Albedo;
-    [FieldOffset(52)] public RgbaByte Emission;
+    [FieldOffset(44)] public RgbaByte Albedo;
+    [FieldOffset(48)] public RgbaByte Emission;
 }
 
 /// <summary>

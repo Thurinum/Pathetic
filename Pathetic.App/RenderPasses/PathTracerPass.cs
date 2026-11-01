@@ -16,6 +16,7 @@ public sealed class PathTracerPass(IOptions<PathTracerOptions> options) : Render
         public uint SamplesPerPixel;
         public uint MaxBounces;
         public uint BvhNodeCount;
+        public uint BvhPrimitiveCount;
     }
 
     public override string ShaderModule => "PathTracer";
@@ -45,6 +46,7 @@ public sealed class PathTracerPass(IOptions<PathTracerOptions> options) : Render
             SamplesPerPixel = options.Value.SamplesPerPixel,
             MaxBounces = options.Value.MaxBounces,
             BvhNodeCount = ctx.Resources.GetElementCount(ResourceName.BvhNodes),
+            BvhPrimitiveCount = ctx.Resources.GetElementCount(ResourceName.BvhPrimitiveRefs),
         };
         ctx.Cmd.UpdateBuffer(buffer, 0, @params);
     }

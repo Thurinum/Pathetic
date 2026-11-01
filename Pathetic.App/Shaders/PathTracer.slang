@@ -15,6 +15,7 @@ struct Params
     uint SamplesPerPixel;
     uint MaxBounces;
     uint BvhNodeCount;
+    uint BvhPrimitiveCount;
 }
 
 RWTexture2D<float4> pathTracerColor;
@@ -38,9 +39,17 @@ HitResult TraceBvh(Ray ray)
     uint stackSize = 0;
     stack[stackSize++] = BvhNode.Root;
 
-    while (stackSize > 0)
+    // Defensive traversal budget. A malformed node graph must never turn into an
+    // unbounded GPU dispatch (which the driver turns into a TDR/reset).
+    uint traversalBudget = min(params.BvhNodeCount * 2u + 32u, 65536u);
+    uint traversed = 0;
+
+    while (stackSize > 0 && traversed++ < traversalBudget)
     {
         uint nodeIndex = stack[--stackSize];
+        if (nodeIndex >= params.BvhNodeCount)
+            continue;
+
         BvhNode node = bvhNodes[nodeIndex];
 
         if (!node.Intersects(ray, 1e-4, bestT))
@@ -48,9 +57,13 @@ HitResult TraceBvh(Ray ray)
 
         if (node.PrimitiveCount > 0)
         {
-            for (uint i = 0; i < node.PrimitiveCount; ++i)
+            uint first = node.FirstPrimitive;
+            uint count = min(node.PrimitiveCount, 8u);
+            uint end = min(first + count, params.BvhPrimitiveCount);
+
+            for (uint i = first; i < end; ++i)
             {
-                BvhPrimitiveRef primitive = bvhPrimitiveRefs[node.FirstPrimitive + i];
+                BvhPrimitiveRef primitive = bvhPrimitiveRefs[i];
                 HitResult hit = HitResult.Miss();
 
                 switch (primitive.Type)
@@ -76,9 +89,9 @@ HitResult TraceBvh(Ray ray)
             continue;
         }
 
-        if (node.Left != uint(-1))
+        if (stackSize < 64 && node.Left != 0xFFFFFFFFu)
             stack[stackSize++] = node.Left;
-        if (node.Right != uint(-1))
+        if (stackSize < 64 && node.Right != 0xFFFFFFFFu)
             stack[stackSize++] = node.Right;
     }
 
