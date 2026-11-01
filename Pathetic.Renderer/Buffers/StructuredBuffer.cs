@@ -67,6 +67,17 @@ public sealed class StructuredBuffer<T>
     }
 
     /// <summary>
+    /// Removes every element, keeping the current GPU allocation.
+    /// </summary>
+    public void Clear()
+    {
+        Count = 0;
+        DirtyChanges |= SceneChange.Structure | SceneChange.Content;
+        Revision++;
+        MarkAllDirty();
+    }
+
+    /// <summary>
     /// Replaces the entire contents of this buffer. This is used by derived buffers such as
     /// the flattened BVH, whose element count changes as a whole.
     /// </summary>

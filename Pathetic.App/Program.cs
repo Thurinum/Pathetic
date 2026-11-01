@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Pathetic.App;
 using Pathetic.App.Blender;
 using Pathetic.App.Bvh;
@@ -15,15 +16,22 @@ using Pathetic.SceneGraph.DI;
 bool headless = args.Any(arg => string.Equals(arg, "--headless", StringComparison.OrdinalIgnoreCase));
 bool compileShaders = args.Any(arg => string.Equals(arg, "--compile-shaders", StringComparison.OrdinalIgnoreCase));
 bool validateScene = args.Any(arg => string.Equals(arg, "--validate-scene", StringComparison.OrdinalIgnoreCase));
+bool bridge = args.Any(arg => string.Equals(arg, "--bridge", StringComparison.OrdinalIgnoreCase));
 string? scenePath = GetArgument(args, "--scene");
 string? outputPath = GetArgument(args, "--output");
 
-string[] hostArgs = headless || compileShaders || validateScene ? [] : args;
+string[] hostArgs = headless || compileShaders || validateScene || bridge ? [] : args;
 var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
 {
     Args = hostArgs,
     ContentRootPath = AppContext.BaseDirectory
 });
+
+if (bridge)
+{
+    // stdout is the binary frame stream. Logging must not contaminate it.
+    builder.Logging.ClearProviders();
+}
 
 string iniPath = Path.Combine(AppContext.BaseDirectory, "Pathetic.ini");
 builder.Configuration.AddIniFile(iniPath, optional: false, reloadOnChange: false);
@@ -50,6 +58,8 @@ builder.Services.AddStructuredBuffer<CameraProvider>();
 builder.Services.AddSingleton<SceneBvh>();
 builder.Services.AddSceneGraph();
 builder.Services.AddSingleton<HeadlessRenderer>();
+builder.Services.AddTransient<RenderSession>();
+builder.Services.AddSingleton<BridgeRunner>();
 builder.Services.AddSingleton<App>();
 
 using var host = builder.Build();
@@ -58,7 +68,11 @@ await host.StartAsync();
 
 try
 {
-    if (compileShaders)
+    if (bridge)
+    {
+        host.Services.GetRequiredService<BridgeRunner>().Run();
+    }
+    else if (compileShaders)
     {
         SlangCompiler compiler = host.Services.GetRequiredService<SlangCompiler>();
 

@@ -156,6 +156,23 @@ def _camera(scene, depsgraph, aspect: float) -> dict[str, Any]:
     )
 
 
+def build_camera(
+    scene,
+    depsgraph,
+    aspect: float,
+    *,
+    camera_matrix=None,
+    tan_half_fov: float | None = None,
+) -> dict[str, Any]:
+    if camera_matrix is None:
+        return _camera(scene, depsgraph, aspect)
+
+    return _camera_from_matrix(
+        camera_matrix,
+        tan_half_fov if tan_half_fov is not None else 0.5,
+    )
+
+
 def _iter_mesh_triangles(obj, depsgraph, material_cache):
     evaluated = obj.evaluated_get(depsgraph)
     mesh = evaluated.to_mesh()

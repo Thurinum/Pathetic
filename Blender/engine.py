@@ -6,12 +6,12 @@ import shutil
 import struct
 import subprocess
 import tempfile
-import threading
 import traceback
 
 import bpy
 
 from . import exporter
+from .bridge import PatheticBridge
 from .preferences import get_executable
 
 CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
@@ -70,10 +70,6 @@ def _load_raw_pixels_python(data: bytes, width: int, height: int) -> list[list[f
             ])
 
     return pixels
-
-
-def _flatten_pixels(pixels: list[list[float]]) -> list[float]:
-    return [channel for pixel in pixels for channel in pixel]
 
 
 def _run_request(
@@ -186,85 +182,67 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
             if settings.cleanup_temp_files and not settings.keep_alive:
                 shutil.rmtree(temporary_directory, ignore_errors=True)
 
-    def _viewport_state(self):
-        state = getattr(self, "_viewport_state_cache", None)
-        if state is None:
-            state = {
-                "lock": threading.Lock(),
-                "pending": None,
-                "result": None,
-                "running": False,
-                "poll_registered": False,
-            }
-            self._viewport_state_cache = state
-        return state
+    def _get_bridge(self, executable: str) -> PatheticBridge:
+        bridge = getattr(self, "_viewport_bridge", None)
+        if bridge is None or bridge.executable != executable:
+            if bridge is not None:
+                bridge.stop()
+            bridge = PatheticBridge(executable)
+            self._viewport_bridge = bridge
+            self._viewport_loaded = False
 
-    def _schedule_viewport(self, executable, request, timeout_seconds):
-        state = self._viewport_state()
-        with state["lock"]:
-            state["pending"] = (executable, request, timeout_seconds)
-            if state["running"]:
-                return
-            state["running"] = True
+        if not bridge.running:
+            bridge.start()
+            self._viewport_loaded = False
 
-        if not state["poll_registered"]:
-            state["poll_registered"] = True
-            bpy.app.timers.register(self._viewport_poll, first_interval=0.05)
+        return bridge
 
-        threading.Thread(target=self._viewport_worker, daemon=True).start()
+    def _ensure_viewport_poll(self) -> None:
+        if getattr(self, "_viewport_poll_registered", False):
+            return
 
-    def _viewport_worker(self):
-        state = self._viewport_state()
-
-        while True:
-            with state["lock"]:
-                job = state["pending"]
-                state["pending"] = None
-                if job is None:
-                    state["running"] = False
-                    return
-
-            executable, request, timeout_seconds = job
-            temporary_directory = tempfile.mkdtemp(prefix="pathetic_view_")
-            try:
-                pixels = _run_request(executable, request, timeout_seconds, temporary_directory)
-                with state["lock"]:
-                    state["result"] = (pixels, request["width"], request["height"])
-            except Exception:
-                traceback.print_exc()
-            finally:
-                shutil.rmtree(temporary_directory, ignore_errors=True)
+        self._viewport_poll_registered = True
+        bpy.app.timers.register(self._viewport_poll, first_interval=0.01)
 
     def _viewport_poll(self):
-        state = self._viewport_state()
-        with state["lock"]:
-            result = state["result"]
-            state["result"] = None
-            running = state["running"]
-            pending = state["pending"] is not None
+        bridge = getattr(self, "_viewport_bridge", None)
+        if bridge is None:
+            self._viewport_poll_registered = False
+            return None
 
-        if result is not None:
-            pixels, width, height = result
-            self._viewport_pixels = pixels
-            self._viewport_dimensions = (width, height)
-            self._viewport_texture = None
-            try:
-                self.tag_redraw()
-            except Exception:
-                pass
+        latest = bridge.latest()
+        if latest is not None:
+            width, height, frame_index, pixels = latest
+            if frame_index != getattr(self, "_viewport_frame_index", -1):
+                self._viewport_frame_index = frame_index
+                self._viewport_pixels = pixels
+                self._viewport_dimensions = (width, height)
+                self._viewport_texture = None
+                try:
+                    self.tag_redraw()
+                except Exception:
+                    pass
 
-        if running or pending:
-            return 0.05
+        if bridge.running:
+            return 0.01
 
-        state["poll_registered"] = False
+        self._viewport_poll_registered = False
         return None
+
+    def _stop_viewport(self) -> None:
+        bridge = getattr(self, "_viewport_bridge", None)
+        if bridge is not None:
+            bridge.stop()
+        self._viewport_bridge = None
+        self._viewport_loaded = False
+        self._viewport_pixels = None
+        self._viewport_texture = None
 
     def view_update(self, context, depsgraph):
         scene = depsgraph.scene
         settings = scene.pathetic
         if not settings.viewport_preview:
-            self._viewport_pixels = None
-            self._viewport_texture = None
+            self._stop_viewport()
             return
 
         region = getattr(context, "region", None)
@@ -289,42 +267,67 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
         except (AttributeError, IndexError, ZeroDivisionError):
             tan_half_fov = 0.5
 
-        request = exporter.build_request(
-            scene,
-            depsgraph,
-            settings,
-            width=width,
-            height=height,
-            camera_matrix=region_data.view_matrix.inverted(),
-            tan_half_fov=tan_half_fov,
-            samples=settings.viewport_samples,
-            samples_per_frame=settings.viewport_samples,
-        )
-
-        if settings.force_standard_view:
-            _force_standard_view(scene)
-
         view_key = (
             width,
             height,
             scene.frame_current,
             tuple(round(value, 4) for row in region_data.view_matrix for value in row),
             tuple(round(value, 4) for row in region_data.perspective_matrix for value in row),
+            tuple(update.id.name for update in depsgraph.updates),
+        )
+        settings_key = (
             int(settings.viewport_samples),
             int(settings.max_bounces),
             str(settings.tonemapper),
             float(settings.exposure),
-            tuple(update.id.name for update in depsgraph.updates),
         )
-        if view_key == getattr(self, "_viewport_key", None):
-            return
-        self._viewport_key = view_key
 
-        self._schedule_viewport(
-            executable,
-            request,
-            int(settings.timeout_seconds),
+        if view_key == getattr(self, "_viewport_key", None) and settings_key == getattr(
+            self, "_viewport_settings_key", None
+        ):
+            return
+
+        bridge = self._get_bridge(executable)
+        needs_load = (
+            not getattr(self, "_viewport_loaded", False)
+            or bool(depsgraph.updates)
+            or getattr(self, "_viewport_size", None) != (width, height)
         )
+
+        if needs_load:
+            request = exporter.build_request(
+                scene,
+                depsgraph,
+                settings,
+                width=width,
+                height=height,
+                camera_matrix=region_data.view_matrix.inverted(),
+                tan_half_fov=tan_half_fov,
+                samples=settings.viewport_samples,
+                samples_per_frame=settings.viewport_samples,
+            )
+            bridge.load(request)
+            self._viewport_loaded = True
+            self._viewport_size = (width, height)
+        else:
+            camera = exporter.build_camera(
+                scene,
+                depsgraph,
+                width / height,
+                camera_matrix=region_data.view_matrix.inverted(),
+                tan_half_fov=tan_half_fov,
+            )
+            bridge.camera(camera)
+
+        if settings_key != getattr(self, "_viewport_settings_key", None):
+            bridge.settings(settings)
+
+        if settings.force_standard_view:
+            _force_standard_view(scene)
+
+        self._viewport_key = view_key
+        self._viewport_settings_key = settings_key
+        self._ensure_viewport_poll()
 
     def view_draw(self, context, depsgraph):
         viewport_pixels = getattr(self, "_viewport_pixels", None)
@@ -341,22 +344,22 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
         width, height = viewport_dimensions
         texture = getattr(self, "_viewport_texture", None)
         if texture is None:
-            flat = _flatten_pixels(viewport_pixels)
-            buffer = gpu.types.Buffer("FLOAT", width * height * 4, flat)
+            try:
+                buffer = gpu.types.Buffer("UBYTE", width * height * 4, viewport_pixels)
+            except TypeError:
+                buffer = gpu.types.Buffer("UBYTE", width * height * 4, list(viewport_pixels))
             texture = gpu.types.GPUTexture(
                 (width, height),
-                format="RGBA16F",
+                format="SRGB8_A8",
                 data=buffer,
             )
             self._viewport_texture = texture
 
         gpu.state.blend_set("ALPHA_PREMULT")
-        self.bind_display_space_shader(depsgraph.scene)
         draw_texture_2d(
             texture,
             (0, 0),
             context.region.width,
             context.region.height,
         )
-        self.unbind_display_space_shader()
         gpu.state.blend_set("NONE")

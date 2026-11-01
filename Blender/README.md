@@ -19,7 +19,6 @@ Blender's render result.
 
 ## What is not supported yet
 
-- Interactive `Rendered` viewport shading. `F12` is the supported path.
 - Image textures, procedural textures, normals, roughness, metallic, transparency, etc.
 - Smooth normals and per-vertex normals. Triangles are flat-shaded.
 - Multiple scattering materials, volumes, denoising, motion blur.
@@ -66,10 +65,16 @@ locations.
 1. Set `Render Properties > Render Engine` to **Pathetic**.
 2. Open the **Pathetic** panel.
 3. Set samples, samples per frame, bounces and tonemapper.
-4. Press `F12`.
+4. Press `Z → Rendered` for the interactive viewport preview, or `F12` for a final render.
 
-The extension runs Pathetic as a subprocess, waits for the headless bridge to finish,
-and writes the result into Blender's Render Result.
+For the viewport, the extension keeps a single Pathetic process alive (`--bridge`) and
+streams length-prefixed RGBA frames over stdout while it accumulates samples. Camera
+changes are sent as small commands; object/geometry changes trigger a scene reload.
+For `F12`, the extension runs a one-shot headless render.
+
+The first viewport frame waits for Pathetic to create its Vulkan device and compile
+shaders. After that, frames stream continuously. Use **Viewport Scale** and **Viewport
+Samples** in the Pathetic panel to trade quality for responsiveness.
 
 ## GPU / driver safety
 

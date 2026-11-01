@@ -10,6 +10,7 @@ bl_info = {
 
 import bpy
 
+from .bridge import stop_all
 from .engine import PatheticRenderEngine
 from .preferences import PatheticPreferences
 from .properties import PatheticSettings
@@ -67,6 +68,7 @@ def register():
 
 
 def unregister():
+    stop_all()
     del bpy.types.Scene.pathetic
 
     for cls in reversed(classes):
