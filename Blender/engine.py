@@ -296,8 +296,8 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
             or (settings.viewport_auto_reload and bool(depsgraph.updates))
         )
 
-        update_names = [update.id.name for update in depsgraph.updates]
-        log(f"view_update load={needs_load} size={width}x{height} updates={update_names}")
+        if needs_load:
+            log(f"view_update load size={width}x{height}")
 
         if needs_load:
             request = exporter.build_request(
@@ -386,7 +386,6 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
                 data=buffer,
             )
             self._viewport_texture = texture
-            log(f"viewport texture {width}x{height}")
 
         gpu.state.blend_set("ALPHA_PREMULT")
         self.bind_display_space_shader(depsgraph.scene)

@@ -45,6 +45,7 @@ class PatheticBridge:
         self._frame_lock = threading.Lock()
         self._latest_frame = None
         self._frame_counter = 0
+        self._command_counter = 0
 
     @property
     def running(self) -> bool:
@@ -124,12 +125,14 @@ class PatheticBridge:
             return
 
         message_type = message.get("type", "?")
+        self._command_counter += 1
         data = (json.dumps(message, separators=(",", ":")) + "\n").encode("utf-8")
         with self._write_lock:
             try:
                 self._process.stdin.write(data)
                 self._process.stdin.flush()
-                log(f"sent {message_type} ({len(data)} bytes)")
+                if message_type != "camera" or self._command_counter % 30 == 0:
+                    log(f"sent {message_type} ({len(data)} bytes)")
             except (BrokenPipeError, OSError):
                 log(f"failed to send {message_type}")
 
