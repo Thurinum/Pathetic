@@ -20,6 +20,29 @@ CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 _ENGINE_INSTANCES = []
 _GLOBAL_POLL_REGISTERED = False
 
+_VIEWPORT_VERTEX_SHADER = """
+in vec2 pos;
+in vec2 texCoord;
+out vec2 uv;
+
+void main()
+{
+    uv = texCoord;
+    gl_Position = vec4(pos, 0.0, 1.0);
+}
+"""
+
+_VIEWPORT_FRAGMENT_SHADER = """
+uniform sampler2D image;
+in vec2 uv;
+out vec4 fragColor;
+
+void main()
+{
+    fragColor = texture(image, uv);
+}
+"""
+
 
 def _global_viewport_poll():
     global _GLOBAL_POLL_REGISTERED
@@ -386,6 +409,11 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
         self._ensure_viewport_poll()
 
     def view_draw(self, context, depsgraph):
+        draw_count = getattr(self, "_viewport_draw_count", 0) + 1
+        self._viewport_draw_count = draw_count
+        if draw_count == 1 or draw_count % 60 == 0:
+            log(f"view_draw {draw_count}")
+
         bridge = getattr(self, "_viewport_bridge", None)
         if bridge is not None:
             latest = bridge.latest()
@@ -451,9 +479,14 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
                 self._viewport_logged_size = (width, height)
                 log(f"viewport texture {width}x{height} screen-space")
 
-        from mathutils import Matrix
+        shader = getattr(self, "_viewport_shader", None)
+        if shader is None:
+            shader = gpu.types.GPUShader(
+                _VIEWPORT_VERTEX_SHADER,
+                _VIEWPORT_FRAGMENT_SHADER,
+            )
+            self._viewport_shader = shader
 
-        shader = gpu.shader.from_builtin("IMAGE")
         positions = ((-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0))
         texcoords = ((0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0))
         batch = batch_for_shader(
@@ -463,19 +496,12 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
             indices=((0, 1, 2), (2, 3, 0)),
         )
 
-        gpu.matrix.push_projection()
-        gpu.matrix.load_projection_matrix(Matrix.Identity(4))
-        try:
-            with gpu.matrix.push_pop():
-                gpu.matrix.load_identity()
-                gpu.state.depth_test_set("NONE")
-                gpu.state.blend_set("ALPHA_PREMULT")
-                shader.uniform_sampler("image", texture)
-                batch.draw(shader)
-                gpu.state.blend_set("NONE")
-                gpu.state.depth_test_set("LESS_EQUAL")
-        finally:
-            gpu.matrix.pop_projection()
+        gpu.state.depth_test_set("NONE")
+        gpu.state.blend_set("ALPHA_PREMULT")
+        shader.uniform_sampler("image", texture)
+        batch.draw(shader)
+        gpu.state.blend_set("NONE")
+        gpu.state.depth_test_set("LESS_EQUAL")
 
         if bridge is not None and bridge.running:
             try:
