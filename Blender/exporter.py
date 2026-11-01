@@ -102,6 +102,28 @@ def _vertical_tan_half_fov(camera_data, aspect: float) -> float:
     return math.tan(angle * 0.5)
 
 
+def _camera_from_matrix(
+    matrix,
+    tan_half_fov: float,
+    focus_distance: float = 10.0,
+    aperture_radius: float = 0.0,
+) -> dict[str, Any]:
+    right = matrix.col[0].xyz.normalized()
+    up = matrix.col[1].xyz.normalized()
+    forward = -matrix.col[2].xyz.normalized()
+    origin = matrix.translation
+
+    return {
+        "origin": _to_pathetic(origin),
+        "right": _to_pathetic(right),
+        "up": _to_pathetic(up),
+        "forward": _to_pathetic(forward),
+        "tanHalfFov": tan_half_fov,
+        "focusDistance": focus_distance,
+        "apertureRadius": aperture_radius,
+    }
+
+
 def _camera(scene, depsgraph, aspect: float) -> dict[str, Any]:
     camera = scene.camera
     if camera is None:
@@ -109,10 +131,6 @@ def _camera(scene, depsgraph, aspect: float) -> dict[str, Any]:
 
     evaluated = camera.evaluated_get(depsgraph)
     matrix = evaluated.matrix_world
-    right = matrix.col[0].xyz.normalized()
-    up = matrix.col[1].xyz.normalized()
-    forward = -matrix.col[2].xyz.normalized()
-    origin = matrix.translation
 
     focus_distance = 10.0
     aperture_radius = 0.0
@@ -121,7 +139,7 @@ def _camera(scene, depsgraph, aspect: float) -> dict[str, Any]:
     if dof.use_dof:
         focus_distance = float(dof.focus_distance)
         if dof.focus_object is not None:
-            focus_distance = (dof.focus_object.matrix_world.translation - origin).length
+            focus_distance = (dof.focus_object.matrix_world.translation - matrix.translation).length
 
         if dof.aperture_fstop > 0.0:
             # Blender's lens is in millimetres; Pathetic's aperture is in world units.
@@ -130,15 +148,12 @@ def _camera(scene, depsgraph, aspect: float) -> dict[str, Any]:
     if getattr(camera.data, "shift_x", 0.0) != 0.0 or getattr(camera.data, "shift_y", 0.0) != 0.0:
         print("[Pathetic] Camera shift is not supported and will be ignored.")
 
-    return {
-        "origin": _to_pathetic(origin),
-        "right": _to_pathetic(right),
-        "up": _to_pathetic(up),
-        "forward": _to_pathetic(forward),
-        "tanHalfFov": _vertical_tan_half_fov(camera.data, aspect),
-        "focusDistance": focus_distance,
-        "apertureRadius": aperture_radius,
-    }
+    return _camera_from_matrix(
+        matrix,
+        _vertical_tan_half_fov(camera.data, aspect),
+        focus_distance,
+        aperture_radius,
+    )
 
 
 def _iter_mesh_triangles(obj, depsgraph, material_cache):
@@ -206,8 +221,23 @@ def _iter_light_spheres(objects, settings):
         }
 
 
-def build_request(scene, depsgraph, settings) -> dict[str, Any]:
-    width, height = _resolution(scene)
+def build_request(
+    scene,
+    depsgraph,
+    settings,
+    *,
+    width: int | None = None,
+    height: int | None = None,
+    camera_matrix=None,
+    tan_half_fov: float | None = None,
+    samples: int | None = None,
+    samples_per_frame: int | None = None,
+) -> dict[str, Any]:
+    if width is None or height is None:
+        width, height = _resolution(scene)
+
+    width = max(1, int(width))
+    height = max(1, int(height))
     aspect = width / height
 
     material_cache: dict[int, tuple[list[int], list[int]]] = {}
@@ -223,15 +253,25 @@ def build_request(scene, depsgraph, settings) -> dict[str, Any]:
         elif obj.type == "LIGHT":
             spheres.extend(_iter_light_spheres([obj], settings))
 
+    if camera_matrix is None:
+        camera = _camera(scene, depsgraph, aspect)
+    else:
+        camera = _camera_from_matrix(
+            camera_matrix,
+            tan_half_fov if tan_half_fov is not None else 0.5,
+        )
+
     return {
         "width": width,
         "height": height,
-        "samples": int(settings.samples),
-        "samplesPerPixel": int(settings.samples_per_frame),
+        "samples": int(samples if samples is not None else settings.samples),
+        "samplesPerPixel": int(
+            samples_per_frame if samples_per_frame is not None else settings.samples_per_frame
+        ),
         "maxBounces": int(settings.max_bounces),
         "tonemapper": str(settings.tonemapper),
         "exposure": float(settings.exposure),
-        "camera": _camera(scene, depsgraph, aspect),
+        "camera": camera,
         "spheres": spheres,
         "planes": [],
         "triangles": triangles,

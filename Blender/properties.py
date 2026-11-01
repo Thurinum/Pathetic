@@ -30,6 +30,26 @@ class PatheticSettings(bpy.types.PropertyGroup):
         min=0.0001,
         soft_max=10.0,
     )
+    viewport_preview: bpy.props.BoolProperty(
+        name="Viewport Preview",
+        description="Render a low-resolution Pathetic preview in the 3D viewport",
+        default=True,
+    )
+    viewport_scale: bpy.props.IntProperty(
+        name="Viewport Scale",
+        description="Percentage of the viewport resolution used for the preview",
+        default=50,
+        min=10,
+        max=100,
+        subtype="PERCENTAGE",
+    )
+    viewport_samples: bpy.props.IntProperty(
+        name="Viewport Samples",
+        description="Samples per viewport preview (keep this low for responsiveness)",
+        default=2,
+        min=1,
+        max=32,
+    )
     tonemapper: bpy.props.EnumProperty(
         name="Tonemapper",
         items=[
