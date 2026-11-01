@@ -11,7 +11,7 @@ import traceback
 import bpy
 
 from . import exporter
-from .bridge import PatheticBridge
+from .bridge import PatheticBridge, log
 from .preferences import get_executable
 
 CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
@@ -288,11 +288,16 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
             return
 
         bridge = self._get_bridge(executable)
+        token = int(settings.viewport_reload_token)
         needs_load = (
             not getattr(self, "_viewport_loaded", False)
-            or bool(depsgraph.updates)
             or getattr(self, "_viewport_size", None) != (width, height)
+            or getattr(self, "_viewport_reload_token", None) != token
+            or (settings.viewport_auto_reload and bool(depsgraph.updates))
         )
+
+        update_names = [update.id.name for update in depsgraph.updates]
+        log(f"view_update load={needs_load} size={width}x{height} updates={update_names}")
 
         if needs_load:
             request = exporter.build_request(
@@ -309,6 +314,7 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
             bridge.load(request)
             self._viewport_loaded = True
             self._viewport_size = (width, height)
+            self._viewport_reload_token = token
         else:
             camera = exporter.build_camera(
                 scene,
@@ -380,6 +386,7 @@ class PatheticRenderEngine(bpy.types.RenderEngine):
                 data=buffer,
             )
             self._viewport_texture = texture
+            log(f"viewport texture {width}x{height}")
 
         gpu.state.blend_set("ALPHA_PREMULT")
         self.bind_display_space_shader(depsgraph.scene)

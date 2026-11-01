@@ -38,7 +38,7 @@ class PatheticSettings(bpy.types.PropertyGroup):
     viewport_scale: bpy.props.IntProperty(
         name="Viewport Scale",
         description="Percentage of the viewport resolution used for the preview",
-        default=50,
+        default=33,
         min=10,
         max=100,
         subtype="PERCENTAGE",
@@ -46,9 +46,19 @@ class PatheticSettings(bpy.types.PropertyGroup):
     viewport_samples: bpy.props.IntProperty(
         name="Viewport Samples",
         description="Samples per viewport preview (keep this low for responsiveness)",
-        default=2,
+        default=1,
         min=1,
         max=32,
+    )
+    viewport_auto_reload: bpy.props.BoolProperty(
+        name="Auto Reload Geometry",
+        description="Reload the full scene whenever Blender reports an object update",
+        default=False,
+    )
+    viewport_reload_token: bpy.props.IntProperty(
+        name="Viewport Reload Token",
+        default=0,
+        options={"HIDDEN"},
     )
     tonemapper: bpy.props.EnumProperty(
         name="Tonemapper",

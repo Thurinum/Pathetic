@@ -4,11 +4,23 @@ import json
 import os
 import struct
 import subprocess
+import tempfile
 import threading
+import time
+import traceback
 
 CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
+LOG_PATH = os.path.join(tempfile.gettempdir(), "pathetic_viewport.log")
 
 _ACTIVE_BRIDGES: list[PatheticBridge] = []
+
+
+def log(message: str) -> None:
+    try:
+        with open(LOG_PATH, "a", encoding="utf-8") as handle:
+            handle.write(f"{time.strftime('%H:%M:%S')} {message}\n")
+    except OSError:
+        pass
 
 
 def _read_exact(stream, count: int) -> bytes | None:
@@ -43,16 +55,26 @@ class PatheticBridge:
             return
 
         self.stop()
+        log(f"starting bridge: {self.executable}")
         self._process = subprocess.Popen(
             [self.executable, "--bridge"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
             cwd=os.path.dirname(self.executable) or None,
             creationflags=CREATE_NO_WINDOW,
         )
         threading.Thread(target=self._read_frames, daemon=True).start()
+        threading.Thread(target=self._read_stderr, daemon=True).start()
         _ACTIVE_BRIDGES.append(self)
+
+    def _read_stderr(self) -> None:
+        stream = self._process.stderr if self._process is not None else None
+        if stream is None:
+            return
+
+        for line in iter(stream.readline, b""):
+            log(f"bridge stderr: {line.decode(errors='replace').rstrip()}")
 
     def _read_frames(self) -> None:
         stream = self._process.stdout if self._process is not None else None
@@ -62,24 +84,32 @@ class PatheticBridge:
         while True:
             header = _read_exact(stream, 4)
             if header is None:
+                log("bridge stdout closed")
                 return
 
             length = struct.unpack("<i", header)[0]
             if length < 12:
+                log(f"bridge invalid frame length {length}")
                 return
 
             payload = _read_exact(stream, length)
             if payload is None:
+                log("bridge frame payload truncated")
                 return
 
             width, height, frame_index = struct.unpack("<III", payload[:12])
             pixels = payload[12:]
             if len(pixels) != width * height * 4:
+                log(f"bridge frame size mismatch: {width}x{height} {len(pixels)} bytes")
                 return
 
             with self._frame_lock:
                 self._latest_frame = (width, height, frame_index, pixels)
                 self._frame_counter += 1
+                counter = self._frame_counter
+
+            if counter == 1 or counter % 30 == 0:
+                log(f"frame {frame_index} {width}x{height} ({counter} received)")
 
     def latest(self):
         with self._frame_lock:
@@ -93,13 +123,15 @@ class PatheticBridge:
         if not self.running:
             return
 
+        message_type = message.get("type", "?")
         data = (json.dumps(message, separators=(",", ":")) + "\n").encode("utf-8")
         with self._write_lock:
             try:
                 self._process.stdin.write(data)
                 self._process.stdin.flush()
+                log(f"sent {message_type} ({len(data)} bytes)")
             except (BrokenPipeError, OSError):
-                pass
+                log(f"failed to send {message_type}")
 
     def load(self, request: dict) -> None:
         self._send({"type": "load", "scene": request})
@@ -120,6 +152,8 @@ class PatheticBridge:
         process = self._process
         if process is None:
             return
+
+        log("stopping bridge")
 
         try:
             if process.poll() is None:

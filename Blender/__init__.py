@@ -16,6 +16,16 @@ from .preferences import PatheticPreferences
 from .properties import PatheticSettings
 
 
+class PATHETIC_OT_reload_viewport(bpy.types.Operator):
+    bl_idname = "pathetic.reload_viewport"
+    bl_label = "Reload Geometry"
+    bl_description = "Send the current scene geometry to the Pathetic viewport bridge"
+
+    def execute(self, context):
+        context.scene.pathetic.viewport_reload_token += 1
+        return {"FINISHED"}
+
+
 class PATHETIC_PT_render_settings(bpy.types.Panel):
     bl_label = "Pathetic"
     bl_space_type = "PROPERTIES"
@@ -43,6 +53,8 @@ class PATHETIC_PT_render_settings(bpy.types.Panel):
         layout.prop(settings, "viewport_preview")
         layout.prop(settings, "viewport_scale")
         layout.prop(settings, "viewport_samples")
+        layout.prop(settings, "viewport_auto_reload")
+        layout.operator("pathetic.reload_viewport", icon="FILE_REFRESH")
         layout.separator()
         layout.prop(settings, "timeout_seconds")
         layout.prop(settings, "cleanup_temp_files")
@@ -56,6 +68,7 @@ classes = (
     PatheticSettings,
     PatheticRenderEngine,
     PatheticPreferences,
+    PATHETIC_OT_reload_viewport,
     PATHETIC_PT_render_settings,
 )
 
