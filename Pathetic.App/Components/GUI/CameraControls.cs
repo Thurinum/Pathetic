@@ -11,6 +11,7 @@ public class CameraControls(InputActions inputActions) : Component
 {
     private const float MinDistance = 0.1f;
     private const float MaxDistance = 100.0f;
+    private const float MaxElevation = 89.9f;
 
     private Transform _transform = null!;
     private CameraComponent _camera = null!;
@@ -21,6 +22,7 @@ public class CameraControls(InputActions inputActions) : Component
     public float ElevationDegrees { get; set; }
     public float Speed { get; set; }
     public float ZoomSpeed { get; set; } = 0.15f;
+    public float OrbitSensitivity { get; set; } = 0.25f;
 
     protected override void Setup()
     {
@@ -34,6 +36,19 @@ public class CameraControls(InputActions inputActions) : Component
         if (zoom != 0.0f)
         {
             Distance = Math.Clamp(Distance * MathF.Exp(-ZoomSpeed * zoom), MinDistance, MaxDistance);
+        }
+
+        inputActions.EditorViewport.Focus.Triggered += () =>
+        {
+            throw new InvalidOperationException("sdfsdfsd");
+        };
+        
+        if (inputActions.EditorViewport.Orbit.Value)
+        {
+            Vector2 delta = inputActions.EditorViewport.LookDelta.Value;
+
+            AzimuthDegrees -= delta.X * OrbitSensitivity;
+            ElevationDegrees = Math.Clamp(ElevationDegrees - delta.Y * OrbitSensitivity, -MaxElevation, MaxElevation);
         }
 
         AzimuthDegrees += Speed * deltaTime;
@@ -66,7 +81,6 @@ public class CameraControls(InputActions inputActions) : Component
         if (ImGui.SliderFloat("Azimuth", ref azimuth, 0, 360))
             AzimuthDegrees = azimuth;
 
-        const float MaxElevation = 89.9f;
         float elevation = ElevationDegrees;
         if (ImGui.SliderFloat("Elevation", ref elevation, -MaxElevation, MaxElevation))
             ElevationDegrees = elevation;

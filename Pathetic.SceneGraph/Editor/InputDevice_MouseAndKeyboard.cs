@@ -72,8 +72,10 @@ public sealed class InputDevice_MouseAndKeyboard : InputDevice, IDisposable
             Sdl2Window.SdlInstance.GetMouseState(ref x, ref y);
             Sdl2Window.SdlInstance.GetRelativeMouseState(ref dx, ref dy);
 
+            // SDL reports motion with Y growing downward; values are published Y-up to match
+            // the world convention. MousePosition stays raw window pixels, like ImGui.
             MousePosition.Value = new Vector2(x, y);
-            MouseDelta.Value = new Vector2(dx, dy);
+            MouseDelta.Value = new Vector2(dx, -dy);
         }
 
         MouseWheel.Value = _wheelDelta;

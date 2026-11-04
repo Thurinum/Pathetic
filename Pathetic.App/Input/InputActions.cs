@@ -32,6 +32,24 @@ public sealed class InputActions
             ],
         };
 
+        public InputAction_Bool Orbit { get; } = new()
+        {
+            Name = "Orbit",
+            Controls =
+            [
+                new InputValueHandle("Mouse and Keyboard", "MouseLeft"),
+            ],
+        };
+
+        public InputAction_Vector2 LookDelta { get; } = new()
+        {
+            Name = "LookDelta",
+            Controls =
+            [
+                new InputValueHandle("Mouse and Keyboard", "MouseDelta"),
+            ],
+        };
+
         public InputContext Context { get; }
 
         public EditorViewportContext()
@@ -40,7 +58,7 @@ public sealed class InputActions
             {
                 Name = "EditorViewport",
                 Enabled = true,
-                Actions = [Focus, Zoom],
+                Actions = [Focus, Zoom, Orbit, LookDelta],
             };
         }
     }
