@@ -1,12 +1,12 @@
 ﻿namespace Pathetic.Input;
 
-public record InputActionHandle(string ContextName, string ActionName);
-
-public class InputSystem(List<InputDevice> devices, List<InputContext> contexts)
+public class InputSystem(IEnumerable<InputDevice> devices, IEnumerable<InputContext> contexts)
 {
-    private readonly Dictionary<string, InputDevice> _devices = devices.ToDictionary(d => d.Name);
+    private readonly List<InputDevice> _devices = devices.ToList();
+    private readonly List<InputContext> _contexts = contexts.ToList();
+    private readonly Dictionary<string, InputDevice> _devicesByName = devices.ToDictionary(d => d.Name);
 
-    public void Update(float deltaTime)
+    public void Update()
     {
         UpdateDevices();
         UpdateActions();
@@ -14,7 +14,7 @@ public class InputSystem(List<InputDevice> devices, List<InputContext> contexts)
 
     private void UpdateDevices()
     {
-        foreach (InputDevice device in devices)
+        foreach (InputDevice device in _devices)
         {
             device.Update();
         }
@@ -22,7 +22,7 @@ public class InputSystem(List<InputDevice> devices, List<InputContext> contexts)
 
     private void UpdateActions()
     {
-        foreach (InputContext ctx in contexts)
+        foreach (InputContext ctx in _contexts)
         {
             if (!ctx.Enabled)
                 continue;
@@ -51,6 +51,6 @@ public class InputSystem(List<InputDevice> devices, List<InputContext> contexts)
 
     private IInputValue ResolveControl(InputValueHandle hndl)
     {
-        return _devices[hndl.DeviceKey].Controls[hndl.ControlKey];
+        return _devicesByName[hndl.DeviceKey].Controls[hndl.ControlKey];
     }
 }

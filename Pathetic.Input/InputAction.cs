@@ -6,7 +6,7 @@ public class InputAction
     public required List<InputValueHandle> Controls { get; init; }
     
     public event Action? Triggered;
-    public void OnTriggered()
+    internal void OnTriggered()
     {
         Triggered?.Invoke();
     }

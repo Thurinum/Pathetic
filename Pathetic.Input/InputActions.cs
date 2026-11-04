@@ -3,14 +3,12 @@
 //   Schema: InputActions.<Context>.<Action>[.<Member>]
 //   Replace with real generator output once it exists.
 // </auto-generated>
-
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Pathetic.Input;
 
 public static class InputActions
 {
-    [InputActions]
     public static readonly InputContext[] All =
     [
         Gameplay.Context,
@@ -19,22 +17,16 @@ public static class InputActions
     public static class Gameplay
     {
         public const string ContextName = "Gameplay";
-
-        // Actions first: static field initializers run in textual order,
-        // so Context.Actions must not be declared above them.
+        
         public static readonly InputAction Jump = new()
         {
             Name = "Jump",
             Controls =
             [
-                // DeviceKey must match InputDevice.Name exactly; ControlKey must
-                // match a key in that device's Controls dictionary.
                 new InputValueHandle("Mouse and Keyboard", "Space"),
             ],
         };
-
-        public static readonly InputActionHandle JumpHandle = new(ContextName, "Jump");
-
+        
         public static readonly InputContext Context = new()
         {
             Name = ContextName,
@@ -44,15 +36,5 @@ public static class InputActions
                 Jump,
             ],
         };
-    }
-}
-
-public static class InputActionsServiceCollectionExtensions
-{
-    public static IServiceCollection AddInputActions(this IServiceCollection services)
-    {
-        foreach (InputContext context in InputActions.All)
-            services.AddSingleton(context);
-        return services;
     }
 }

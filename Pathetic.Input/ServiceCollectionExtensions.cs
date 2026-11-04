@@ -21,7 +21,12 @@ public static class ServiceCollectionExtensions
             if (inputContexts.Length == 0)
                 throw new ArgumentException("No input contexts given.");
 
-            services.AddSingleton(inputContexts);
+            foreach (InputContext context in inputContexts)
+            {
+                services.AddSingleton<InputContext>(context);
+            }
+
+            services.AddSingleton<InputSystem>();
             return services;
         }
     }

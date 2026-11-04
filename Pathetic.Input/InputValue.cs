@@ -2,17 +2,18 @@
 
 namespace Pathetic.Input;
 
-public record InputValueHandle(string DeviceKey, string ControlKey);
+public readonly record struct InputValueHandle(string DeviceKey, string ControlKey);
 
 public interface IInputValue
 {
-    Type Type { get; }
     bool IsActive { get; }
     bool WasActive { get; }
     bool IsTriggered => IsActive && !WasActive;
+
+    void Commit();
 }
 
-public class InputValue<T> : IInputValue where T : struct
+public sealed class InputValue<T> : IInputValue where T : struct
 {
     static InputValue()
     {
@@ -29,6 +30,8 @@ public class InputValue<T> : IInputValue where T : struct
     public float Threshold { get; set; } = 0.5f;
     public T Value { get; set; }
     public T PreviousValue { get; set; }
+
+    public void Commit() => PreviousValue = Value;
 
     private static bool IsSupported(Type type)
     {

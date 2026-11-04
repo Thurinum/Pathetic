@@ -1,10 +1,11 @@
 ﻿using System.Diagnostics;
+using Pathetic.Input;
 using Pathetic.Renderer;
 using Pathetic.SceneGraph.Components;
 
 namespace Pathetic.SceneGraph.Scenes;
 
-public sealed class SceneLoop(SceneManager sceneService, RenderWindow window, ImGuiHost gui, RenderGraphHost rdg)
+public sealed class SceneLoop(SceneManager sceneService, RenderWindow window, ImGuiHost gui, RenderGraphHost rdg, InputSystem input)
 {
     private long _lastTimestamp;
     private float _deltaTime;
@@ -19,7 +20,7 @@ public sealed class SceneLoop(SceneManager sceneService, RenderWindow window, Im
         
         while (window.Exists)
         {
-            var input = window.PumpEvents(); // todo how to pass input to components
+            var inputSnapshot = window.PumpEvents();
             
             if (!window.Exists)
                 break;
@@ -28,12 +29,13 @@ public sealed class SceneLoop(SceneManager sceneService, RenderWindow window, Im
             {
                 UpdateDeltaTime();
                 sceneService.FlushSetup(scene);
+                input.Update();
                 UpdateComponents(scene);
                 LateUpdateComponents(scene);
             
                 rdg.Render(_deltaTime);
         
-                gui.Begin(_deltaTime, input);
+                gui.Begin(_deltaTime, inputSnapshot);
                 GUIComponents(scene);
                 gui.End();
                 

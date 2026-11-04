@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using Pathetic.Input;
 using Pathetic.SceneGraph;
 using Pathetic.SceneGraph.Components;
 
@@ -13,6 +14,10 @@ public class CameraComponent(CameraProvider provider) : Component
 
     protected override void Setup()
     {
+        InputActions.Gameplay.Jump.Triggered += () =>
+        {
+            throw new InvalidOperationException("sdfsdfasdfsdfsadf");
+        };
         _transform = Parent.GetComponent<Transform>();
     }
 
