@@ -6,14 +6,17 @@ public readonly record struct InputValueHandle(string DeviceKey, string ControlK
 
 public interface IInputValue
 {
-    bool IsActive { get; }
-    bool WasActive { get; }
-    bool IsTriggered => IsActive && !WasActive;
-
+    Type Type { get; }
     void Commit();
 }
 
-public sealed class InputValue<T> : IInputValue where T : struct
+public interface IInputValue<T> : IInputValue where T : struct
+{
+    T Value { get; }
+    T PreviousValue { get; }
+}
+
+public sealed class InputValue<T> : IInputValue<T> where T : struct
 {
     static InputValue()
     {
@@ -24,10 +27,6 @@ public sealed class InputValue<T> : IInputValue where T : struct
     }
 
     public Type Type { get; } = typeof(T);
-    public bool IsActive => Active(Value);
-    public bool WasActive => Active(PreviousValue);
-    
-    public float Threshold { get; set; } = 0.5f;
     public T Value { get; set; }
     public T PreviousValue { get; set; }
 
@@ -39,17 +38,5 @@ public sealed class InputValue<T> : IInputValue where T : struct
                type == typeof(float) ||
                type == typeof(Vector2) ||
                type == typeof(Vector3);
-    }
-
-    private bool Active(T value)
-    {
-        return value switch
-        {
-            bool b => b,
-            float f => Math.Abs(f) > Threshold,
-            Vector2 v => v.LengthSquared() > Threshold * Threshold,
-            Vector3 v => v.LengthSquared() > Threshold * Threshold,
-            _ => throw new ArgumentOutOfRangeException(nameof(value), value, null)
-        };
     }
 }

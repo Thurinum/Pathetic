@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Pathetic.App;
 using Pathetic.App.Components;
 using Pathetic.App.Components.Camera;
+using Pathetic.App.Input;
 using Pathetic.App.RenderPasses;
 using Pathetic.Input;
 using Pathetic.Renderer;
@@ -36,7 +37,11 @@ builder.Services.AddStructuredBuffer<CameraProvider>();
 // builder.Services.AddStructuredBuffer<CirclePrimitive>(ResourceName.Circles, sparseStorage: true);
 
 builder.Services.AddSceneGraph();
-builder.Services.AddInputSystem(InputActions.All);
+
+var inputActions = new InputActions();
+builder.Services.AddSingleton(inputActions);
+builder.Services.AddInputSystem(inputActions.All);
+
 builder.Services.AddSingleton<App>(); 
 
 using var host = builder.Build();   

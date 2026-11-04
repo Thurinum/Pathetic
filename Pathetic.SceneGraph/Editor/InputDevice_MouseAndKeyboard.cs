@@ -9,8 +9,8 @@ namespace Pathetic.SceneGraph.Editor;
 /// <summary>
 /// Mouse and keyboard device fed by the SDL2 event stream of <see cref="RenderWindow"/>.
 /// Keyboard and mouse buttons arrive as edges, so they are latched into held-state sets;
-/// <see cref="InputSystem"/> turns those levels into <see cref="IInputValue.IsTriggered"/>
-/// edges by comparing samples. Mouse motion and wheel are per-frame deltas.
+/// the device publishes those levels as values, and the actions derive active/edge state
+/// from consecutive samples. Mouse motion and wheel are per-frame deltas.
 /// </summary>
 public sealed class InputDevice_MouseAndKeyboard : InputDevice, IDisposable
 {

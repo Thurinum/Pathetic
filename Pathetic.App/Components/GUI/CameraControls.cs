@@ -1,13 +1,17 @@
 using System.Numerics;
 using ImGuiNET;
 using Pathetic.App.Components.Camera;
+using Pathetic.App.Input;
 using Pathetic.SceneGraph;
 using Pathetic.SceneGraph.Components;
 
 namespace Pathetic.App.Components.GUI;
 
-public class CameraControls : Component
+public class CameraControls(InputActions inputActions) : Component
 {
+    private const float MinDistance = 0.1f;
+    private const float MaxDistance = 100.0f;
+
     private Transform _transform = null!;
     private CameraComponent _camera = null!;
     
@@ -16,6 +20,7 @@ public class CameraControls : Component
     public float AzimuthDegrees { get; set; }
     public float ElevationDegrees { get; set; }
     public float Speed { get; set; }
+    public float ZoomSpeed { get; set; } = 0.15f;
 
     protected override void Setup()
     {
@@ -25,6 +30,12 @@ public class CameraControls : Component
 
     protected override void Update(float deltaTime)
     {
+        float zoom = inputActions.EditorViewport.Zoom.Value;
+        if (zoom != 0.0f)
+        {
+            Distance = Math.Clamp(Distance * MathF.Exp(-ZoomSpeed * zoom), MinDistance, MaxDistance);
+        }
+
         AzimuthDegrees += Speed * deltaTime;
         
         float a = float.DegreesToRadians(AzimuthDegrees);
