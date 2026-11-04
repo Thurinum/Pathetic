@@ -50,6 +50,15 @@ public sealed class InputActions
             ],
         };
 
+        public InputAction_Vector3 Sticks { get; } = new()
+        {
+            Name = "Sticks",
+            Controls =
+            [
+                new InputValueHandle("Xbox Controller", "Sticks"),
+            ],
+        };
+
         public InputContext Context { get; }
 
         public EditorViewportContext()
@@ -58,7 +67,7 @@ public sealed class InputActions
             {
                 Name = "EditorViewport",
                 Enabled = true,
-                Actions = [Focus, Zoom, Orbit, LookDelta],
+                Actions = [Focus, Zoom, Orbit, LookDelta, Sticks],
             };
         }
     }

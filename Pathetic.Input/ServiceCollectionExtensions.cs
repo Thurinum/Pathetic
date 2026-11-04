@@ -8,15 +8,18 @@ public static class ServiceCollectionExtensions
     {
         public IServiceCollection AddInputSystem(InputContext[] inputContexts)
         {
-            var devices = AppDomain.CurrentDomain
+            Type[] devices = AppDomain.CurrentDomain
                 .GetAssemblies()
                 .SelectMany(asm => asm.GetTypes())
-                .Where(t => t.IsSubclassOf(typeof(InputDevice)));
+                .Where(t => t.IsSubclassOf(typeof(InputDevice)) && !t.IsAbstract)
+                .ToArray();
 
-            foreach (var device in devices)
+            foreach (Type device in devices)
             {
                 services.AddSingleton(typeof(InputDevice), device);
             }
+
+            Console.WriteLine($"Discovered {devices.Length} input devices: {string.Join(", ", devices.Select(t => t.Name))}");
 
             if (inputContexts.Length == 0)
                 throw new ArgumentException("No input contexts given.");

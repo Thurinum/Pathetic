@@ -91,3 +91,11 @@ public sealed class InputAction_Vector2 : InputAction<Vector2>
     protected override bool IsActive(Vector2 value) => value.LengthSquared() > Threshold * Threshold;
     protected override Vector2 Combine(Vector2 total, Vector2 value) => total + value;
 }
+
+public sealed class InputAction_Vector3 : InputAction<Vector3>
+{
+    public float Threshold { get; set; } = 0.5f;
+
+    protected override bool IsActive(Vector3 value) => value.LengthSquared() > Threshold * Threshold;
+    protected override Vector3 Combine(Vector3 total, Vector3 value) => total + value;
+}

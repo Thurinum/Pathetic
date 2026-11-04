@@ -52,7 +52,7 @@ public sealed class InputDevice_MouseAndKeyboard : InputDevice, IDisposable
         Controls["MouseWheel"] = MouseWheel;
     }
 
-    protected override void Poll()
+    protected override void Poll(float deltaTime)
     {
         Attach();
 

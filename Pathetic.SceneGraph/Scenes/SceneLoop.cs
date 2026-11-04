@@ -29,7 +29,7 @@ public sealed class SceneLoop(SceneManager sceneService, RenderWindow window, Im
             {
                 UpdateDeltaTime();
                 sceneService.FlushSetup(scene);
-                input.Update();
+                input.Update(_deltaTime);
                 UpdateComponents(scene);
                 LateUpdateComponents(scene);
             

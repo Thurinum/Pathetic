@@ -27,17 +27,17 @@ public class InputSystem
         }
     }
 
-    public void Update()
+    public void Update(float deltaTime)
     {
-        UpdateDevices();
+        UpdateDevices(deltaTime);
         UpdateActions();
     }
 
-    private void UpdateDevices()
+    private void UpdateDevices(float deltaTime)
     {
         foreach (InputDevice device in _devices)
         {
-            device.Update();
+            device.Update(deltaTime);
         }
     }
 

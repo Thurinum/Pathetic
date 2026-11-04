@@ -2,6 +2,7 @@
 
     <PropertyGroup>
         <RootNamespace>Pathetic.SceneGraph</RootNamespace>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
