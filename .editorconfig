@@ -1,5 +1,4 @@
 [*.cs]
-dotnet_diagnostic.IDE0005.severity = warning
 
 ; CS1591 : Missing XML comment for publicly visible type or member 'xxx'
 dotnet_diagnostic.CS1591.severity = none
@@ -10,4 +9,8 @@ dotnet_diagnostic.CA1822.severity = silent
 ; CA1805: Member 'xxx' is explicitly initialized to its default value
 dotnet_diagnostic.CA1805.severity = none
 
+; CA1848 – Use the LoggerMessage delegates.
 dotnet_diagnostic.CA1848.severity = silent
+
+; CA1707 – Identifiers should not contain underscores.
+dotnet_diagnostic.CA1707.severity = none
