@@ -32,8 +32,13 @@ public HitResult TraceBvh(Ray ray)
 
     HitResult bestHit = HitResult.Miss();
     float bestT = 1e30;
+    
+    // Check if there is an intersection with the BVH at all
+    BvhIntersection rootIntersection = bvhNodes[BvhNode.Root].Intersects(ray, 1e-4, bestT);
+    if (!rootIntersection.Hit)
+        return bestHit;
 
-    uint stack[1024];
+    uint stack[32];
     uint stackSize = 0;
     stack[stackSize++] = BvhNode.Root;
 
@@ -41,9 +46,6 @@ public HitResult TraceBvh(Ray ray)
     {
         uint nodeIndex = stack[--stackSize];
         BvhNode node = bvhNodes[nodeIndex];
-
-        if (!node.Intersects(ray, 1e-4, bestT))
-            continue;
 
         if (node.PrimitiveCount > 0)
         {
@@ -64,7 +66,7 @@ public HitResult TraceBvh(Ray ray)
                         break;
                 }
 
-                if (hit.IsHit())
+                if (hit.IsHit() && hit.T < bestT)
                 {
                     bestT = hit.T;
                     bestHit = hit;
@@ -75,8 +77,24 @@ public HitResult TraceBvh(Ray ray)
             continue;
         }
 
-        stack[stackSize++] = node.Left;
-        stack[stackSize++] = node.Right;
+        BvhIntersection leftIntersection = bvhNodes[node.Left].Intersects(ray, 1e-4, bestT);
+        BvhIntersection rightIntersection = bvhNodes[node.Right].Intersects(ray, 1e-4, bestT);
+
+        if (leftIntersection.Hit && !rightIntersection.Hit)
+        {
+            stack[stackSize++] = node.Left;
+        }
+        else if (!leftIntersection.Hit && rightIntersection.Hit)
+        {
+            stack[stackSize++] = node.Right;
+        }
+        else if (leftIntersection.Hit && rightIntersection.Hit)
+        {
+            // Put nearest intersection on the stack last
+            bool leftIsNearer = leftIntersection.Near < rightIntersection.Near;
+            stack[stackSize++] = leftIsNearer ? node.Right : node.Left;
+            stack[stackSize++] = leftIsNearer ? node.Left : node.Right;
+        }
     }
 
     return bestHit;
@@ -90,8 +108,13 @@ float3 Trace(Ray ray, inout Rng rng)
     for (uint bounce = 0; bounce <= params.MaxBounces; ++bounce)
     {
         HitResult bestHit = TraceBvh(ray);
+        
+        if (bestHit.Primitive == PrimitiveType.Plane)
+        {
+            return float3(0.0, 1.0, 0.0);
+        }
 
-        if (!bestHit.IsHit() || bestHit.Primitive != PrimitiveType.Sphere)
+        if (!bestHit.IsHit())
         {
             light += weight * Sky(ray.Direction);
             break;

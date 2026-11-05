@@ -3,6 +3,13 @@
 import Camera;
 import Primitives;
 
+public struct BvhIntersection
+{
+    public bool Hit;
+    public float Near;
+    public float Far;
+};
+
 public struct BvhNode
 {
     float3 Min;
@@ -13,8 +20,7 @@ public struct BvhNode
     public uint PrimitiveCount;
 
     public static const uint Root = 0;
-
-    public bool Intersects(Ray ray, float tMin, float tMax)
+    public BvhIntersection Intersects(Ray ray, float tMin, float tMax)
     {
         float3 inverseDirection = 1.0f / ray.Direction;
         float3 travel0 = (this.Min - ray.Origin) * inverseDirection;
@@ -23,10 +29,14 @@ public struct BvhNode
         float3 near = min(travel0, travel1);
         float3 far = max(travel0, travel1);
 
-        float nearT = max(tMin, max(near.x, max(near.y, near.z)));
-        float farT = min(tMax, min(far.x, min(far.y, far.z)));
+        float hitNear = max(tMin, max(near.x, max(near.y, near.z)));
+        float hitFar = min(tMax, min(far.x, min(far.y, far.z)));
 
-        return farT >= nearT;
+        BvhIntersection result;
+        result.Hit = hitFar >= hitNear;
+        result.Near = hitNear;
+        result.Far = hitFar;
+        return result;
     }
 };
 

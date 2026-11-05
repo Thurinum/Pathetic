@@ -4,7 +4,7 @@ namespace Pathetic.Renderer.Bvh;
 
 public sealed class BvhBuilder
 {
-    private const int MaxLeafSize = 4;
+    private const int MaxLeafSize = 3;
 
     public BvhNode Build(List<BvhPrimitiveRef> primitives)
     {
