@@ -55,7 +55,8 @@ public sealed class RenderGraphFactory(
             }
         }
 
-        resources.Allocate(device, framebuffer.Width, framebuffer.Height);
+        var target = framebuffer.ColorTargets[0].Target; // don't use framebuffer.Width, it's the requested not actual size
+        resources.Allocate(device, target.Width, target.Height);
     }
 
     private static void BindPassResources(GraphicsDevice device, List<PassEntry> passes, ResourceTable resources)

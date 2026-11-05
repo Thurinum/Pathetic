@@ -6,7 +6,7 @@ using Pathetic.Renderer.Resources;
 namespace Pathetic.App.RenderPasses;
 
 public sealed class TemporalAccumulationPass(
-    IOptions<TemporalAccumulationOptions> options,
+    ConvergenceController convergence,
     IOptions<TonemappingOptions> tonemapping) : RenderPass
 {
     private struct Params
@@ -14,6 +14,7 @@ public sealed class TemporalAccumulationPass(
         public uint Reset;
         public uint Tonemapper;
         public float Exposure;
+        public uint MaxFrames;
     }
 
     public override string ShaderModule => "TemporalAccumulation";
@@ -32,13 +33,14 @@ public sealed class TemporalAccumulationPass(
 
     public override void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
     {
-        bool reset = !options.Value.Enabled || ctx.Resources.SceneRevision != SceneChange.None;
+        ConvergencePlan plan = convergence.GetPlan(ctx.FrameIndex, ctx.Resources.SceneRevision);
 
         ctx.Cmd.UpdateBuffer(buffer, 0, new Params
         {
-            Reset = reset ? 1u : 0u,
+            Reset = plan.ResetAccumulation ? 1u : 0u,
             Tonemapper = (uint)tonemapping.Value.Tonemapper,
-            Exposure = tonemapping.Value.Exposure
+            Exposure = tonemapping.Value.Exposure,
+            MaxFrames = plan.MaxFrames
         });
     }
 }

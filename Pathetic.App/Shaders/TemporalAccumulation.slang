@@ -6,6 +6,7 @@ struct Params
     uint Reset; 
     uint Tonemapper;
     float Exposure;
+    uint MaxFrames;
 }
 
 RWTexture2D<float4> color;
@@ -26,10 +27,13 @@ void main(uint3 dispatchThreadId : SV_DispatchThreadID)
     float3 estimate = pathTracerColor.Load(int3(pixel, 0)).rgb;
 
     float4 accum = (params.Reset != 0) ? float4(0.0) : accumImage[pixel];
-    accum += float4(estimate, 1.0);
-    accumImage[pixel] = accum;
+    if (params.MaxFrames == 0 || uint(accum.a) < params.MaxFrames)
+    {
+        accum += float4(estimate, 1.0);
+        accumImage[pixel] = accum;
+    }
     
-    float3 hdr = accum.rgb / accum.a;
+    float3 hdr = accum.rgb / max(accum.a, 1.0);
     hdr *= exp2(params.Exposure);
     float3 ldr = Tonemap(hdr, (Tonemapper)params.Tonemapper);
     color[pixel] = float4(LinearToSRGB(ldr), 1.0);

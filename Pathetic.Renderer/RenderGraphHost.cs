@@ -28,7 +28,7 @@ public sealed class RenderGraphHost(RenderWindow window, IOptions<RenderGraphSpe
 
     private void OnWindowResized()
     {
-        Graph.Resize(window.Device, (uint)window.Width, (uint)window.Height);
+        Graph.Resize(window.Device, window.FramebufferWidth, window.FramebufferHeight);
     }
 
     public void Dispose()

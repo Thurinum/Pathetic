@@ -9,6 +9,9 @@ public sealed record PathTracerOptions : IConfig
     
     [Range(1, 4096)] 
     public uint SamplesPerPixel { get; init; } = 4;
+
+    [Range(1, 4096)]
+    public uint MovingSamplesPerPixel { get; set; } = 4;
     
     [Range(1, 67)]
     public uint MaxBounces { get; init; } = 8;
