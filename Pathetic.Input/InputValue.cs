@@ -11,7 +11,7 @@ public readonly record struct InputValueHandle(string DeviceKey, string ControlK
             throw new InvalidOperationException($"Unknown device '{DeviceKey}'. Known devices: {string.Join(", ", devices.Keys)}.");
         }
 
-        if (!device.Controls.TryGetValue(ControlKey, out IInputValue? value))
+        if (!device.Snapshot.TryGetValue(ControlKey, out IInputValue? value))
         {
             throw new InvalidOperationException($"Unknown control '{ControlKey}' on device '{DeviceKey}'.");
         }

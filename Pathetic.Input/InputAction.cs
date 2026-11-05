@@ -37,7 +37,7 @@ public abstract class InputAction<T> : InputAction where T : struct
             bindings[i] = new InputBinding<T>
             {
                 Source = source,
-                Modifiers = [.. spec.Modifiers.Select(m => m.Resolve<bool>(devices))],
+                Chords = [.. spec.Chords.Select(m => m.Resolve<bool>(devices))],
                 Processors = [.. spec.Processors]
             };
         }
@@ -73,19 +73,19 @@ public abstract class InputAction<T> : InputAction where T : struct
 
         foreach (InputBinding<T> binding in _bindings)
         {
-            if (binding.Modifiers.Any(modifier => !modifier.Value))
+            if (binding.Chords.Any(c => !c.Value))
             {
                 binding.Previous = default;
                 continue;
             }
 
-            object bindingValue = binding.Source.Value;
+            object processedValue = binding.Source.Value;
             foreach (IInputProcessor processor in binding.Processors)
             {
-                bindingValue = processor.Process(bindingValue, deltaTime);
+                processedValue = processor.Process(processedValue, deltaTime);
             }
 
-            T typedValue = (T)bindingValue;
+            T typedValue = (T)processedValue;
             value = Combine(value, typedValue);
             isActive |= IsActive(typedValue);
             wasActive |= IsActive(binding.Previous);

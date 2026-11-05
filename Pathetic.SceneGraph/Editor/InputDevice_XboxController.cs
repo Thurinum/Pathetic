@@ -27,7 +27,7 @@ public sealed unsafe partial class InputDevice_XboxController : InputDevice, IDi
     private bool _scanLogged;
 
     public override string Name => "Xbox Controller";
-    public override Dictionary<string, IInputValue> Controls { get; } = [];
+    public override Dictionary<string, IInputValue> Snapshot { get; } = [];
 
     /// <summary>
     /// Raw left stick axes, -1..1, Y pointing up.
@@ -43,8 +43,8 @@ public sealed unsafe partial class InputDevice_XboxController : InputDevice, IDi
     {
         _logger = logger;
 
-        Controls["LeftStick"] = LeftStick;
-        Controls["RightStick"] = RightStick;
+        Snapshot["LeftStick"] = LeftStick;
+        Snapshot["RightStick"] = RightStick;
     }
 
     protected override void Poll(float deltaTime)
