@@ -23,6 +23,8 @@ AddOptions<PathTracerOptions>();
 AddOptions<TemporalAccumulationOptions>();
 AddOptions<TonemappingOptions>();
 
+builder.Services.AddSingleton<ConvergenceController>();
+
 builder.Services.AddRenderer(graph => graph
     // .AddPass<CirclesPass>()
     .AddPass<PathTracerPass>()

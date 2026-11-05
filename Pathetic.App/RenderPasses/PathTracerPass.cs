@@ -6,7 +6,9 @@ using Pathetic.Renderer.Resources;
 
 namespace Pathetic.App.RenderPasses;
 
-public sealed class PathTracerPass(IOptions<PathTracerOptions> options) : RenderPass
+public sealed class PathTracerPass(
+    IOptions<PathTracerOptions> options,
+    ConvergenceController convergence) : RenderPass
 {
     [StructLayout(LayoutKind.Sequential)]
     private struct Params
@@ -34,6 +36,8 @@ public sealed class PathTracerPass(IOptions<PathTracerOptions> options) : Render
 
     public override void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
     {
+        Enabled = convergence.ShouldRunPathTracer(ctx.FrameIndex, ctx.Resources.SceneRevision);
+
         Params @params = new()
         {
             PlaneCount = ctx.Resources.GetElementCount(ResourceName.Planes),

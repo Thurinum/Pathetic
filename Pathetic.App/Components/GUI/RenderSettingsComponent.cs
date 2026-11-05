@@ -27,6 +27,13 @@ public class RenderSettingsComponent(
         if (ImGui.Checkbox("Temporal Accumulation", ref enabled))
             temporalAccumulation.Value.Enabled = enabled;
 
+        int sampleBudget = (int)Math.Clamp(temporalAccumulation.Value.SampleBudget, 0u, 1_000_000u);
+        if (ImGui.DragInt("Sample Budget", ref sampleBudget, 16.0f, 0, 1_000_000, sampleBudget == 0 ? "∞" : "%d"))
+            temporalAccumulation.Value.SampleBudget = (uint)sampleBudget;
+
+        if (ImGui.IsItemHovered())
+            ImGui.SetTooltip("0 = auto (unlimited)");
+
         int tonemapper = Math.Max(0, Array.FindIndex(Tonemappers, t => t.Value == tonemapping.Value.Tonemapper));
         if (ImGui.Combo("Tonemapper", ref tonemapper, TonemapperLabels, TonemapperLabels.Length))
             tonemapping.Value.Tonemapper = Tonemappers[tonemapper].Value;
