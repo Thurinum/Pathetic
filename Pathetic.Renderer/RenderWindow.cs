@@ -16,6 +16,8 @@ public sealed partial class RenderWindow(IOptions<RendererOptions> options, ILog
     public bool Exists => _window?.Exists ?? false;
     public int Width => _window?.Width ?? 0;
     public int Height => _window?.Height ?? 0;
+    public uint FramebufferWidth => _device?.SwapchainFramebuffer.ColorTargets[0].Target.Width ?? 0;
+    public uint FramebufferHeight => _device?.SwapchainFramebuffer.ColorTargets[0].Target.Height ?? 0;
     public GraphicsDevice Device => _device ?? throw new InvalidOperationException("RenderWindow is not initialized.");
     public CommandList CommandList => _cmd ?? throw new InvalidOperationException("RenderWindow is not initialized.");
     public event Action? Resized;

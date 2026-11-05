@@ -32,7 +32,7 @@ public sealed class ImGuiHost(RenderWindow window) : IDisposable
 
     private void OnWindowResized()
     {
-        _imgui?.WindowResized(window.Width, window.Height);
+        _imgui?.WindowResized((int)window.FramebufferWidth, (int)window.FramebufferHeight);
     }
 
     public void Dispose()
