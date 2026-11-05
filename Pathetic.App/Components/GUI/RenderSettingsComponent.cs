@@ -6,6 +6,7 @@ using Pathetic.SceneGraph.Components;
 namespace Pathetic.App.Components.GUI;
 
 public class RenderSettingsComponent(
+    IOptions<PathTracerOptions> pathTracer,
     IOptions<TemporalAccumulationOptions> temporalAccumulation,
     IOptions<TonemappingOptions> tonemapping) : Component
 {
@@ -13,7 +14,6 @@ public class RenderSettingsComponent(
     [
         (Tonemapper.None, "None"),
         (Tonemapper.Reinhard, "Reinhard"),
-        (Tonemapper.Aces, "ACES"),
         (Tonemapper.Agx, "AgX"),
     ];
 
@@ -33,6 +33,13 @@ public class RenderSettingsComponent(
 
         if (ImGui.IsItemHovered())
             ImGui.SetTooltip("0 = auto (unlimited)");
+
+        int movingSpp = (int)Math.Clamp(pathTracer.Value.MovingSamplesPerPixel, 1u, 4096u);
+        if (ImGui.DragInt("Moving SPP", ref movingSpp, 1.0f, 1, 4096))
+            pathTracer.Value.MovingSamplesPerPixel = (uint)movingSpp;
+
+        if (ImGui.IsItemHovered())
+            ImGui.SetTooltip("Samples per pixel while the camera or scene is changing");
 
         int tonemapper = Math.Max(0, Array.FindIndex(Tonemappers, t => t.Value == tonemapping.Value.Tonemapper));
         if (ImGui.Combo("Tonemapper", ref tonemapper, TonemapperLabels, TonemapperLabels.Length))

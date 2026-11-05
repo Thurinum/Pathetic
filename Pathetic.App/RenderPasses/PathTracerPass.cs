@@ -36,13 +36,14 @@ public sealed class PathTracerPass(
 
     public override void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
     {
-        Enabled = convergence.ShouldRunPathTracer(ctx.FrameIndex, ctx.Resources.SceneRevision);
+        ConvergencePlan plan = convergence.GetPlan(ctx.FrameIndex, ctx.Resources.SceneRevision);
+        Enabled = plan.RunPathTracer;
 
         Params @params = new()
         {
             PlaneCount = ctx.Resources.GetElementCount(ResourceName.Planes),
             SphereCount = ctx.Resources.GetElementCount(ResourceName.Spheres),
-            SamplesPerPixel = options.Value.SamplesPerPixel,
+            SamplesPerPixel = plan.SamplesPerPixel,
             MaxBounces = options.Value.MaxBounces,
         };
         ctx.Cmd.UpdateBuffer(buffer, 0, @params);
