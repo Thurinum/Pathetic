@@ -11,7 +11,7 @@ public sealed class BvhBufferUploader<T>(
     Func<SceneBvh, T[]> selector) : IResourceUploader, IStructuredBufferSpec
     where T : unmanaged, IEquatable<T>
 {
-    private readonly StructuredBuffer<T> _buffer = new(name, resizable: true, dynamic: true, capacity: 256, chunkSize: 64);
+    private readonly StructuredBuffer<T> _buffer = new(name, resizable: true, dynamic: true, capacity: 1024, chunkSize: 64);
     private uint _lastVersion;
 
     public string Name => _buffer.Name;
