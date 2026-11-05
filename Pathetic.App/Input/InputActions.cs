@@ -17,45 +17,43 @@ public sealed class InputActions
         public InputAction_Bool Focus { get; } = new()
         {
             Name = "Focus",
-            Controls =
+            Bindings =
             [
-                new InputValueHandle("Mouse and Keyboard", "F"),
+                new InputBindingSpec(Handle("Mouse and Keyboard", "F"), [], []),
+            ],
+        };
+
+        public InputAction_Vector2 Orbit { get; } = new()
+        {
+            Name = "Orbit",
+            Bindings =
+            [
+                new InputBindingSpec(
+                    Handle("Mouse and Keyboard", "MouseDelta"),
+                    [Handle("Mouse and Keyboard", "MouseLeft")],
+                    [new ScaleVector2(0.25f)]),
+
+                new InputBindingSpec(
+                    Handle("Xbox Controller", "LeftStick"),
+                    [],
+                    [new RateVector2(120.0f)]),
             ],
         };
 
         public InputAction_Float Zoom { get; } = new()
         {
             Name = "Zoom",
-            Controls =
+            Bindings =
             [
-                new InputValueHandle("Mouse and Keyboard", "MouseWheel"),
-            ],
-        };
+                new InputBindingSpec(
+                    Handle("Mouse and Keyboard", "MouseWheel"),
+                    [],
+                    [new ScaleFloat(0.15f)]),
 
-        public InputAction_Bool Orbit { get; } = new()
-        {
-            Name = "Orbit",
-            Controls =
-            [
-                new InputValueHandle("Mouse and Keyboard", "MouseLeft"),
-            ],
-        };
-
-        public InputAction_Vector2 LookDelta { get; } = new()
-        {
-            Name = "LookDelta",
-            Controls =
-            [
-                new InputValueHandle("Mouse and Keyboard", "MouseDelta"),
-            ],
-        };
-
-        public InputAction_Vector3 Sticks { get; } = new()
-        {
-            Name = "Sticks",
-            Controls =
-            [
-                new InputValueHandle("Xbox Controller", "Sticks"),
+                new InputBindingSpec(
+                    Handle("Xbox Controller", "RightStick"),
+                    [],
+                    [new SwizzleY(), new RateFloat(1.5f)]),
             ],
         };
 
@@ -67,8 +65,10 @@ public sealed class InputActions
             {
                 Name = "EditorViewport",
                 Enabled = true,
-                Actions = [Focus, Zoom, Orbit, LookDelta, Sticks],
+                Actions = [Focus, Orbit, Zoom],
             };
         }
+
+        private static InputValueHandle Handle(string device, string control) => new(device, control);
     }
 }

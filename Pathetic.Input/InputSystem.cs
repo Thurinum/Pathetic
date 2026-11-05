@@ -30,7 +30,7 @@ public class InputSystem
     public void Update(float deltaTime)
     {
         UpdateDevices(deltaTime);
-        UpdateActions();
+        UpdateActions(deltaTime);
     }
 
     private void UpdateDevices(float deltaTime)
@@ -41,7 +41,7 @@ public class InputSystem
         }
     }
 
-    private void UpdateActions()
+    private void UpdateActions(float deltaTime)
     {
         foreach (InputContext ctx in _contexts)
         {
@@ -50,7 +50,7 @@ public class InputSystem
             
             foreach (InputAction action in ctx.Actions)
             {
-                action.Evaluate();
+                action.Evaluate(deltaTime);
             }
         }
     }

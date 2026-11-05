@@ -21,10 +21,6 @@ public class CameraControls(InputActions inputActions) : Component
     public float AzimuthDegrees { get; set; }
     public float ElevationDegrees { get; set; }
     public float Speed { get; set; }
-    public float ZoomSpeed { get; set; } = 0.15f;
-    public float OrbitSensitivity { get; set; } = 0.25f;
-    public float StickOrbitSpeed { get; set; } = 120.0f;
-    public float StickZoomSpeed { get; set; } = 1.5f;
 
     protected override void Setup()
     {
@@ -34,34 +30,12 @@ public class CameraControls(InputActions inputActions) : Component
 
     protected override void Update(float deltaTime)
     {
+        Vector2 orbit = inputActions.EditorViewport.Orbit.Value;
+        AzimuthDegrees -= orbit.X;
+        ElevationDegrees = Math.Clamp(ElevationDegrees - orbit.Y, -MaxElevation, MaxElevation);
+
         float zoom = inputActions.EditorViewport.Zoom.Value;
-        if (zoom != 0.0f)
-        {
-            Distance = Math.Clamp(Distance * MathF.Exp(-ZoomSpeed * zoom), MinDistance, MaxDistance);
-        }
-
-        inputActions.EditorViewport.Focus.Triggered += () =>
-        {
-            throw new InvalidOperationException("sdfsdfsd");
-        };
-        
-        if (inputActions.EditorViewport.Orbit.Value)
-        {
-            Vector2 delta = inputActions.EditorViewport.LookDelta.Value;
-
-            AzimuthDegrees -= delta.X * OrbitSensitivity;
-            ElevationDegrees = Math.Clamp(ElevationDegrees - delta.Y * OrbitSensitivity, -MaxElevation, MaxElevation);
-        }
-
-        // Sticks are already scaled by deltaTime in the device, so they are per-frame deltas.
-        Vector3 sticks = inputActions.EditorViewport.Sticks.Value;
-        if (sticks != Vector3.Zero)
-        {
-            AzimuthDegrees -= sticks.X * StickOrbitSpeed;
-            ElevationDegrees = Math.Clamp(
-                ElevationDegrees - sticks.Y * StickOrbitSpeed, -MaxElevation, MaxElevation);
-            Distance = Math.Clamp(Distance * MathF.Exp(-sticks.Z * StickZoomSpeed), MinDistance, MaxDistance);
-        }
+        Distance = Math.Clamp(Distance * MathF.Exp(-zoom), MinDistance, MaxDistance);
 
         AzimuthDegrees += Speed * deltaTime;
         
