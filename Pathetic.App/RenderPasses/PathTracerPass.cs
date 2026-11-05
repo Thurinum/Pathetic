@@ -17,6 +17,7 @@ public sealed class PathTracerPass(
         public uint SphereCount;
         public uint SamplesPerPixel;
         public uint MaxBounces;
+        public uint BvhNodeCount;
     }
 
     public override string ShaderModule => "PathTracer";
@@ -32,6 +33,8 @@ public sealed class PathTracerPass(
         ResourceName.Camera,
         ResourceName.Planes,
         ResourceName.Spheres,
+        ResourceName.BvhNodes,
+        ResourceName.BvhPrimitiveRefs,
     ];
 
     public override void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
@@ -45,6 +48,7 @@ public sealed class PathTracerPass(
             SphereCount = ctx.Resources.GetElementCount(ResourceName.Spheres),
             SamplesPerPixel = plan.SamplesPerPixel,
             MaxBounces = options.Value.MaxBounces,
+            BvhNodeCount = ctx.Resources.GetElementCount(ResourceName.BvhNodes),
         };
         ctx.Cmd.UpdateBuffer(buffer, 0, @params);
     }

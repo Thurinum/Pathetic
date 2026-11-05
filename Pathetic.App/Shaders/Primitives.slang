@@ -1,5 +1,11 @@
 ﻿module Primitives;
 
+public enum PrimitiveType {
+    Plane = 0u,
+    Sphere = 1u,
+    None = 1000u,
+}
+
 public struct Sphere
 {
     public float3 Center;
@@ -30,6 +36,7 @@ public struct HitResult
     public float3 NormalExt;
     public float2 UV;
     public uint Index;
+    public PrimitiveType Primitive;
     
     public bool IsHit() { return T > 0; }
     
@@ -41,6 +48,7 @@ public struct HitResult
         h.NormalExt = 0;
         h.UV = 0;
         h.Index = 0;
+        h.Primitive = PrimitiveType.None;
         return h;
     }
 }
@@ -74,7 +82,7 @@ public HitResult IntersectSphere(float3 origin, float3 dir, float3 center, float
     if (dot(n, dir) > 0)
         n = -n;
         
-    HitResult result = { t, n, nExt, uv, 0 };
+    HitResult result = { t, n, nExt, uv, 0, PrimitiveType.Sphere };
     return result; 
 }
 
@@ -97,6 +105,6 @@ public HitResult IntersectPlane(float3 origin, float3 dir, Plane p, float tMin, 
 
     float2 uv = float2(a, b) * 0.5 + 0.5; // [-1, 1] to [0, 1]
 
-    HitResult hit = { t, n, n, uv, 0 };
+    HitResult hit = { t, n, n, uv, 0, PrimitiveType.Plane };
     return hit;
 }
