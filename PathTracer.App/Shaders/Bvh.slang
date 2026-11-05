@@ -3,6 +3,13 @@
 import Environment;
 import Primitives;
 
+public struct BvhIntersection
+{
+    public bool Hit;
+    public float Near;
+    public float Far;
+};
+
 public struct BvhNode
 {
     float3 Min;
@@ -14,7 +21,7 @@ public struct BvhNode
     
     public static const uint Root = 0;
     
-    public bool Intersects(Ray ray, float travelMin, float travelMax)
+    public BvhIntersection Intersects(Ray ray, float travelMin, float travelMax)
     {
         float3 inverseDirection = 1.0f / ray.Direction;
         float3 travel0 = (this.Min - ray.Origin) * inverseDirection;
@@ -23,10 +30,14 @@ public struct BvhNode
         float3 near = min(travel0, travel1);
         float3 far = max(travel0, travel1);
 
-        float travelMin = max(travelMin, max(near.x, max(near.y, near.z)));
-        float travelMax = min(travelMax, min(far.x, min(far.y, far.z)));
+        float hitNear = max(travelMin, max(near.x, max(near.y, near.z)));
+        float hitFar = min(travelMax, min(far.x, min(far.y, far.z)));
 
-        return travelMax >= travelMin;
+        BvhIntersection result;
+        result.Hit = hitFar >= hitNear;
+        result.Near = hitNear;
+        result.Far = hitFar;
+        return result;
     }
 };
 
@@ -35,4 +46,3 @@ public struct BvhPrimitiveRef
     public PrimitiveType Type;
     public uint Index;
 };
-
