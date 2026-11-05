@@ -6,12 +6,14 @@ public struct Sphere
     public float Radius;
     public uint Albedo;   // packed RgbaByte
     public uint Emission; // packed RgbaByte
+    public float EmissionStrength;
+    public float _Pad;
 }
 
-// Unpacks a packed RgbaByte into its 0..255 components (order-independent of /255 below).
+// Unpacks a packed RgbaByte into normalized 0..1 components.
 public float3 UnpackRgb(uint packed)
 {
-    return float3(float(packed & 0xFFu), float((packed >> 8) & 0xFFu), float((packed >> 16) & 0xFFu));
+    return float3(float(packed & 0xFFu), float((packed >> 8) & 0xFFu), float((packed >> 16) & 0xFFu)) / 255.0f;
 }
 
 public struct Plane 

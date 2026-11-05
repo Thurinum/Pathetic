@@ -13,6 +13,7 @@ public record struct SpherePrimitive
     [FieldOffset(12)] public float Radius;
     [FieldOffset(16)] public RgbaByte Albedo;
     [FieldOffset(20)] public RgbaByte Emission;
+    [FieldOffset(24)] public float EmissionStrength;
 }
 
 public class SphereComponent(SparseSet<SpherePrimitive> primitives) : RendererBase<SpherePrimitive>(primitives)
@@ -20,6 +21,7 @@ public class SphereComponent(SparseSet<SpherePrimitive> primitives) : RendererBa
     public float Radius { get; set; } = 1.0f;
     public RgbaByte Albedo { get; set; } = new(128, 128, 128, 255);
     public RgbaByte Emission { get; set; }
+    public float EmissionStrength { get; set; } = 1.0f;
 
     protected override SpherePrimitive BuildPrimitive()
     {
@@ -28,7 +30,8 @@ public class SphereComponent(SparseSet<SpherePrimitive> primitives) : RendererBa
             Center = Parent.Transform.Position,
             Radius = Radius,
             Albedo = Albedo,
-            Emission = Emission
+            Emission = Emission,
+            EmissionStrength = EmissionStrength
         };
     }
 }
