@@ -84,12 +84,10 @@ public sealed class StructuredBuffer<T>
                 c++;
             
             int startIdx = startChunkIdx * _chunkSize;
-            if (startIdx >= Count)
+            if (startIdx > Count)
                 break;
             
             int endIdx = Math.Min(c * _chunkSize, Count);
-            if (endIdx <= startIdx)
-                continue;
 
             var data = _values.AsSpan(startIdx, endIdx - startIdx);
             ctx.Cmd.UpdateBuffer(buffer, (uint)startIdx * Stride, data);
@@ -107,16 +105,6 @@ public sealed class StructuredBuffer<T>
         MarkDirty(index);
 
         return index;
-    }
-
-    public void SetAll(ReadOnlySpan<T> values)
-    {
-        EnsureCapacity(values.Length);
-        values.CopyTo(_values);
-        Count = values.Length;
-        DirtyChanges |= SceneChange.Structure | SceneChange.Content;
-        Revision++;
-        MarkAllDirty();
     }
 
     public void UpdateAt(int index, in T value)

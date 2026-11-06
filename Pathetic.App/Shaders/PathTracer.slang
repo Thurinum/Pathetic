@@ -22,8 +22,8 @@ ConstantBuffer<Camera> camera;
 StructuredBuffer<Plane> planes;
 StructuredBuffer<Sphere> spheres;
 ConstantBuffer<Params> params;
-StructuredBuffer<BvhNode> bvhNodes;
-StructuredBuffer<BvhPrimitiveRef> bvhPrimitiveRefs;
+StructuredBuffer<BvhNode, ScalarDataLayout> bvhNodes;
+StructuredBuffer<BvhPrimitiveRef, ScalarDataLayout> bvhPrimitiveRefs;
 
 public HitResult TraceBvh(Ray ray)
 {

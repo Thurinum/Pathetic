@@ -9,8 +9,6 @@ public sealed class SparseSet<T>(StructuredBuffer<T> buffer) where T : unmanaged
     private int[] _denseIdxToHandleIdx = new int[InitialSize];
     private readonly Stack<int> _freeHandles = new();
 
-    public StructuredBuffer<T> Buffer => buffer;
-
     public Handle Add(in T value)
     {
         int denseIdx = buffer.Add(value);

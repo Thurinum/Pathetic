@@ -72,7 +72,7 @@ public class CameraControls(InputActions inputActions) : Component
             ElevationDegrees = elevation;
         
         float distance = Distance;
-        if (ImGui.SliderFloat("Distance", ref distance, 1, MaxDistance))
+        if (ImGui.SliderFloat("Distance", ref distance, 1, 10))
             Distance = distance;
         
         float speed = Speed;
