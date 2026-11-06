@@ -25,7 +25,7 @@ public sealed class InputDevice_MouseAndKeyboard : InputDevice, IDisposable
     private bool _disposed;
 
     public override string Name => "Mouse and Keyboard";
-    public override Dictionary<string, IInputValue> Controls { get; } = [];
+    public override Dictionary<string, IInputValue> Snapshot { get; } = [];
 
     public InputValue<Vector2> MousePosition { get; } = new();
     public InputValue<Vector2> MouseDelta { get; } = new();
@@ -47,9 +47,9 @@ public sealed class InputDevice_MouseAndKeyboard : InputDevice, IDisposable
             _buttons[button] = Register($"Mouse{button}", new InputValue<bool>());
         }
 
-        Controls["MousePosition"] = MousePosition;
-        Controls["MouseDelta"] = MouseDelta;
-        Controls["MouseWheel"] = MouseWheel;
+        Snapshot["MousePosition"] = MousePosition;
+        Snapshot["MouseDelta"] = MouseDelta;
+        Snapshot["MouseWheel"] = MouseWheel;
     }
 
     protected override void Poll(float deltaTime)
@@ -112,7 +112,7 @@ public sealed class InputDevice_MouseAndKeyboard : InputDevice, IDisposable
 
     private InputValue<T> Register<T>(string name, InputValue<T> value) where T : struct
     {
-        Controls[name] = value;
+        Snapshot[name] = value;
         return value;
     }
 

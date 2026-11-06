@@ -3,11 +3,11 @@
 public abstract class InputDevice
 {
     public abstract string Name { get; }
-    public abstract Dictionary<string, IInputValue> Controls { get; }
+    public abstract Dictionary<string, IInputValue> Snapshot { get; }
 
     public void Update(float deltaTime)
     {
-        foreach (IInputValue control in Controls.Values)
+        foreach (IInputValue control in Snapshot.Values)
         {
             control.Commit();
         }

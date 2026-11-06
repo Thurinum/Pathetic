@@ -27,34 +27,37 @@ public sealed unsafe partial class InputDevice_XboxController : InputDevice, IDi
     private bool _scanLogged;
 
     public override string Name => "Xbox Controller";
-    public override Dictionary<string, IInputValue> Controls { get; } = [];
+    public override Dictionary<string, IInputValue> Snapshot { get; } = [];
 
     /// <summary>
-    /// Packed stick state for this frame: X/Y from the left stick, Z from the right stick's Y.
-    /// Already multiplied by deltaTime, so consumers use it as a per-frame delta.
+    /// Raw left stick axes, -1..1, Y pointing up.
     /// </summary>
-    public InputValue<Vector3> Sticks { get; } = new();
+    public InputValue<Vector2> LeftStick { get; } = new();
+
+    /// <summary>
+    /// Raw right stick axes, -1..1, Y pointing up.
+    /// </summary>
+    public InputValue<Vector2> RightStick { get; } = new();
 
     public InputDevice_XboxController(ILogger<InputDevice_XboxController> logger)
     {
         _logger = logger;
 
-        Controls["Sticks"] = Sticks;
+        Snapshot["LeftStick"] = LeftStick;
+        Snapshot["RightStick"] = RightStick;
     }
 
     protected override void Poll(float deltaTime)
     {
         if (!EnsureOpen())
         {
-            Sticks.Value = Vector3.Zero;
+            LeftStick.Value = Vector2.Zero;
+            RightStick.Value = Vector2.Zero;
             return;
         }
 
-        Vector2 left = ReadStick(GameControllerAxis.Leftx, GameControllerAxis.Lefty);
-        Vector2 right = ReadStick(GameControllerAxis.Rightx, GameControllerAxis.Righty);
-
-        // Rates become per-frame deltas here, so no consumer has to multiply by deltaTime.
-        Sticks.Value = new Vector3(left.X, left.Y, right.Y) * deltaTime;
+        LeftStick.Value = ReadStick(GameControllerAxis.Leftx, GameControllerAxis.Lefty);
+        RightStick.Value = ReadStick(GameControllerAxis.Rightx, GameControllerAxis.Righty);
     }
 
     private Vector2 ReadStick(GameControllerAxis xAxis, GameControllerAxis yAxis)

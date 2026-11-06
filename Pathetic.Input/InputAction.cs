@@ -5,18 +5,18 @@ namespace Pathetic.Input;
 public abstract class InputAction
 {
     public required string Name { get; init; }
-    public required List<InputValueHandle> Controls { get; init; }
+    public required List<InputBindingSpec> Bindings { get; init; }
     
     public event Action? Triggered;
     protected void OnTriggered() => Triggered?.Invoke();
 
     internal abstract void Bind(IReadOnlyDictionary<string, InputDevice> devices);
-    internal abstract void Evaluate();
+    internal abstract void Evaluate(float deltaTime);
 }
 
 public abstract class InputAction<T> : InputAction where T : struct
 {
-    private IInputValue<T>[] _controls = [];
+    private InputBinding<T>[] _bindings = [];
 
     public T Value { get; private set; }
 
@@ -25,39 +25,71 @@ public abstract class InputAction<T> : InputAction where T : struct
 
     internal override void Bind(IReadOnlyDictionary<string, InputDevice> devices)
     {
-        var controls = new IInputValue<T>[Controls.Count];
+        var bindings = new InputBinding<T>[Bindings.Count];
 
-        for (int i = 0; i < Controls.Count; i++)
+        for (int i = 0; i < Bindings.Count; i++)
         {
-            InputValueHandle handle = Controls[i];
+            InputBindingSpec spec = Bindings[i];
 
-            if (!devices.TryGetValue(handle.DeviceKey, out InputDevice? device))
+            var source = spec.Source.Resolve(devices);
+            ValidateProcessors(source, spec, i);
+
+            bindings[i] = new InputBinding<T>
             {
-                throw new InvalidOperationException($"Unknown device '{handle.DeviceKey}'. Known devices: {string.Join(", ", devices.Keys)}.");
-            }
-
-            if (!device.Controls.TryGetValue(handle.ControlKey, out IInputValue? value))
-            {
-                throw new InvalidOperationException($"Unknown control '{handle.ControlKey}' on device '{handle.DeviceKey}'.");
-            }
-
-            controls[i] = value as IInputValue<T> ?? throw new InvalidOperationException($"Control '{handle.ControlKey}' on device '{handle.DeviceKey}' is {value.Type}, but '{Name}' is {typeof(T)}.");
+                Source = source,
+                Chords = [.. spec.Chords.Select(m => m.Resolve<bool>(devices))],
+                Processors = [.. spec.Processors]
+            };
         }
 
-        _controls = controls;
+        _bindings = bindings;
     }
 
-    internal override void Evaluate()
+    private void ValidateProcessors(IInputValue source, InputBindingSpec spec, int i)
+    {
+        var type = source.Type;
+            
+        foreach (var processor in spec.Processors)
+        {
+            if (processor.InputType != type)
+            {
+                throw new InvalidOperationException($"Action '{Name}' ({typeof(T).Name}) binding {i}: processor '{processor.Name}' expects {processor.InputType.Name}, but the previous step is {type.Name}.");
+            }
+
+            type = processor.OutputType;
+        }
+
+        if (type != typeof(T))
+        {
+            throw new InvalidOperationException($"Action '{Name}' ({typeof(T).Name}) binding {i} produces {type.Name}.");
+        }
+    }
+
+    internal override void Evaluate(float deltaTime)
     {
         bool isActive = false;
         bool wasActive = false;
         T value = default;
 
-        foreach (IInputValue<T> control in _controls)
+        foreach (InputBinding<T> binding in _bindings)
         {
-            value = Combine(value, control.Value);
-            isActive |= IsActive(control.Value);
-            wasActive |= IsActive(control.PreviousValue);
+            if (binding.Chords.Any(c => !c.Value))
+            {
+                binding.Previous = default;
+                continue;
+            }
+
+            object processedValue = binding.Source.Value;
+            foreach (IInputProcessor processor in binding.Processors)
+            {
+                processedValue = processor.Process(processedValue, deltaTime);
+            }
+
+            T typedValue = (T)processedValue;
+            value = Combine(value, typedValue);
+            isActive |= IsActive(typedValue);
+            wasActive |= IsActive(binding.Previous);
+            binding.Previous = typedValue;
         }
 
         Value = value;

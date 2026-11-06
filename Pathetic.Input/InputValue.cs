@@ -2,17 +2,40 @@
 
 namespace Pathetic.Input;
 
-public readonly record struct InputValueHandle(string DeviceKey, string ControlKey);
+public readonly record struct InputValueHandle(string DeviceKey, string ControlKey)
+{
+    public IInputValue Resolve(IReadOnlyDictionary<string, InputDevice> devices)
+    {
+        if (!devices.TryGetValue(DeviceKey, out InputDevice? device))
+        {
+            throw new InvalidOperationException($"Unknown device '{DeviceKey}'. Known devices: {string.Join(", ", devices.Keys)}.");
+        }
+
+        if (!device.Snapshot.TryGetValue(ControlKey, out IInputValue? value))
+        {
+            throw new InvalidOperationException($"Unknown control '{ControlKey}' on device '{DeviceKey}'.");
+        }
+
+        return value;
+    }
+
+    public IInputValue<T> Resolve<T>(IReadOnlyDictionary<string, InputDevice> devices) where T : struct
+    {
+        return Resolve(devices) as IInputValue<T> ?? throw new InvalidOperationException($"Control '{ControlKey}' on device '{DeviceKey}' is not of type '{typeof(T).Name}'.");
+    }
+}
 
 public interface IInputValue
 {
     Type Type { get; }
+    object Value { get; }
     void Commit();
 }
 
-public interface IInputValue<T> : IInputValue where T : struct
+public interface IInputValue<out T> : IInputValue where T : struct
 {
-    T Value { get; }
+    object IInputValue.Value => Value;
+    new T Value { get; }
     T PreviousValue { get; }
 }
 
