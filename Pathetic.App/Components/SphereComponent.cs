@@ -6,7 +6,7 @@ using Pathetic.SceneGraph;
 
 namespace Pathetic.App.Components;
 
-[StructLayout(LayoutKind.Explicit, Size = 32)]
+[StructLayout(LayoutKind.Explicit, Size = 28)]
 public record struct SpherePrimitive
 {
     [FieldOffset(00)] public Vector3 Center;

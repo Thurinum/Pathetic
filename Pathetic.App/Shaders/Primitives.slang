@@ -13,7 +13,6 @@ public struct Sphere
     public uint Albedo;   // packed RgbaByte
     public uint Emission; // packed RgbaByte
     public float EmissionStrength;
-    public float _Pad;
 }
 
 // Unpacks a packed RgbaByte into normalized 0..1 components.

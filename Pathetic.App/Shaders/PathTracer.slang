@@ -19,8 +19,8 @@ struct Params
 
 RWTexture2D<float4> pathTracerColor;
 ConstantBuffer<Camera> camera;
-StructuredBuffer<Plane> planes;
-StructuredBuffer<Sphere> spheres;
+StructuredBuffer<Plane, ScalarDataLayout> planes;
+StructuredBuffer<Sphere, ScalarDataLayout> spheres;
 ConstantBuffer<Params> params;
 StructuredBuffer<BvhNode, ScalarDataLayout> bvhNodes;
 StructuredBuffer<BvhPrimitiveRef, ScalarDataLayout> bvhPrimitiveRefs;
