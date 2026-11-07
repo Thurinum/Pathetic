@@ -19,7 +19,15 @@ public sealed class InputActions
             Name = "Focus",
             Bindings =
             [
-                new InputBindingSpec(Handle("Mouse and Keyboard", "F"), [], []),
+                new InputBindingSpec(Handle("Mouse and Keyboard",
+                        "F"),
+                    [
+                    ],
+                    [
+                    ]),
+            ],
+            Processors =
+            [
             ],
         };
 
@@ -29,14 +37,27 @@ public sealed class InputActions
             Bindings =
             [
                 new InputBindingSpec(
-                    Handle("Mouse and Keyboard", "MouseDelta"),
-                    [Handle("Mouse and Keyboard", "MouseLeft")],
-                    [new ScaleVector2(0.25f)]),
+                    Handle("Mouse and Keyboard",
+                        "MouseDelta"),
+                    [
+                        Handle("Mouse and Keyboard",
+                            "MouseLeft")
+                    ],
+                    [
+                        new ScaleVector2(0.25f)
+                    ]),
 
                 new InputBindingSpec(
-                    Handle("Xbox Controller", "LeftStick"),
-                    [],
-                    [new RateVector2(120.0f)]),
+                    Handle("Xbox Controller",
+                        "LeftStick"),
+                    [
+                    ],
+                    [
+                        new RateVector2(120.0f)
+                    ]),
+            ],
+            Processors =
+            [
             ],
         };
 
@@ -46,14 +67,26 @@ public sealed class InputActions
             Bindings =
             [
                 new InputBindingSpec(
-                    Handle("Mouse and Keyboard", "MouseWheel"),
-                    [],
-                    [new ScaleFloat(0.15f)]),
+                    Handle("Mouse and Keyboard",
+                        "MouseWheel"),
+                    [
+                    ],
+                    [
+                        new ScaleFloat(0.15f)
+                    ]),
 
                 new InputBindingSpec(
-                    Handle("Xbox Controller", "RightStick"),
-                    [],
-                    [new SwizzleY(), new RateFloat(1.5f)]),
+                    Handle("Xbox Controller",
+                        "RightStick"),
+                    [
+                    ],
+                    [
+                        new SwizzleY(),
+                        new RateFloat(1.5f)
+                    ]),
+            ],
+            Processors =
+            [
             ],
         };
 

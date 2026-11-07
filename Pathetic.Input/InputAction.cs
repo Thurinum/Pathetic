@@ -6,6 +6,7 @@ public abstract class InputAction
 {
     public required string Name { get; init; }
     public required List<InputBindingSpec> Bindings { get; init; }
+    public required IInputProcessor[] Processors { get; init; }
 
     public event Action? Pressed;
     public event Action? Held;
@@ -29,6 +30,8 @@ public abstract class InputAction<T> : InputAction where T : struct
 
     internal override void Bind(IReadOnlyDictionary<string, InputDevice> devices)
     {
+        ValidateProcessorChain(Processors, typeof(T), bindingIndex: null);
+
         var bindings = new InputBinding<T>[Bindings.Count];
 
         for (int i = 0; i < Bindings.Count; i++)
@@ -36,7 +39,7 @@ public abstract class InputAction<T> : InputAction where T : struct
             InputBindingSpec spec = Bindings[i];
 
             var source = spec.Source.Resolve(devices);
-            ValidateProcessors(source, spec, i);
+            ValidateProcessorChain(spec.Processors, source.Type, i);
 
             bindings[i] = new InputBinding<T>
             {
@@ -49,15 +52,17 @@ public abstract class InputAction<T> : InputAction where T : struct
         _bindings = bindings;
     }
 
-    private void ValidateProcessors(IInputValue source, InputBindingSpec spec, int i)
+    private void ValidateProcessorChain(IReadOnlyList<IInputProcessor> processors, Type type, int? bindingIndex)
     {
-        var type = source.Type;
-            
-        foreach (var processor in spec.Processors)
+        string context = bindingIndex.HasValue
+            ? $"Action '{Name}' ({typeof(T).Name}) binding {bindingIndex.Value}"
+            : $"Action '{Name}' ({typeof(T).Name})";
+
+        foreach (IInputProcessor processor in processors)
         {
             if (processor.InputType != type)
             {
-                throw new InvalidOperationException($"Action '{Name}' ({typeof(T).Name}) binding {i}: processor '{processor.Name}' expects {processor.InputType.Name}, but the previous step is {type.Name}.");
+                throw new InvalidOperationException($"{context}: processor '{processor.Name}' expects {processor.InputType.Name}, but the previous step is {type.Name}.");
             }
 
             type = processor.OutputType;
@@ -65,7 +70,7 @@ public abstract class InputAction<T> : InputAction where T : struct
 
         if (type != typeof(T))
         {
-            throw new InvalidOperationException($"Action '{Name}' ({typeof(T).Name}) binding {i} produces {type.Name}.");
+            throw new InvalidOperationException($"{context} produces {type.Name}.");
         }
     }
 
@@ -99,6 +104,11 @@ public abstract class InputAction<T> : InputAction where T : struct
             }
 
             value = Combine(value, (T)processedValue);
+        }
+
+        foreach (var processor in Processors)
+        {
+            value = (T)processor.Process(value, deltaTime);
         }
 
         Value = value;
