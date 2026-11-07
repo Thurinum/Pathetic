@@ -47,7 +47,7 @@ public sealed unsafe partial class InputDevice_XboxController : InputDevice, IDi
         Snapshot["RightStick"] = RightStick;
     }
 
-    protected override void Poll(float deltaTime)
+    public override void Update(float deltaTime)
     {
         if (!EnsureOpen())
         {

@@ -29,14 +29,12 @@ public interface IInputValue
 {
     Type Type { get; }
     object Value { get; }
-    void Commit();
 }
 
 public interface IInputValue<out T> : IInputValue where T : struct
 {
     object IInputValue.Value => Value;
     new T Value { get; }
-    T PreviousValue { get; }
 }
 
 public sealed class InputValue<T> : IInputValue<T> where T : struct
@@ -51,9 +49,6 @@ public sealed class InputValue<T> : IInputValue<T> where T : struct
 
     public Type Type { get; } = typeof(T);
     public T Value { get; set; }
-    public T PreviousValue { get; set; }
-
-    public void Commit() => PreviousValue = Value;
 
     private static bool IsSupported(Type type)
     {

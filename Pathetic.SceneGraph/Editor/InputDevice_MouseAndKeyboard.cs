@@ -52,7 +52,7 @@ public sealed class InputDevice_MouseAndKeyboard : InputDevice, IDisposable
         Snapshot["MouseWheel"] = MouseWheel;
     }
 
-    protected override void Poll(float deltaTime)
+    public override void Update(float deltaTime)
     {
         Attach();
 
