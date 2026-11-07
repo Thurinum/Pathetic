@@ -1,6 +1,6 @@
 ﻿namespace Pathetic.Input;
 
-public class InputSystem
+public sealed class InputSystem
 {
     private readonly List<InputDevice> _devices;
     private readonly List<InputContext> _contexts;
@@ -45,12 +45,9 @@ public class InputSystem
     {
         foreach (InputContext ctx in _contexts)
         {
-            if (!ctx.Enabled)
-                continue;
-            
             foreach (InputAction action in ctx.Actions)
             {
-                action.Evaluate(deltaTime);
+                action.Evaluate(deltaTime, ctx.Enabled);
             }
         }
     }

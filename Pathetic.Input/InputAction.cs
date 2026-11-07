@@ -11,7 +11,7 @@ public abstract class InputAction
     protected void OnTriggered() => Triggered?.Invoke();
 
     internal abstract void Bind(IReadOnlyDictionary<string, InputDevice> devices);
-    internal abstract void Evaluate(float deltaTime);
+    internal abstract void Evaluate(float deltaTime, bool enabled);
 }
 
 public abstract class InputAction<T> : InputAction where T : struct
@@ -65,19 +65,21 @@ public abstract class InputAction<T> : InputAction where T : struct
         }
     }
 
-    internal override void Evaluate(float deltaTime)
+    internal override void Evaluate(float deltaTime, bool enabled)
     {
-        bool isActive = false;
-        bool wasActive = false;
+        if (!enabled)
+        {
+            Value = default;
+            return;
+        }
+        
+        T previousValue = Value;
         T value = default;
 
         foreach (InputBinding<T> binding in _bindings)
         {
             if (binding.Chords.Any(c => !c.Value))
-            {
-                binding.Previous = default;
                 continue;
-            }
 
             object processedValue = binding.Source.Value;
             foreach (IInputProcessor processor in binding.Processors)
@@ -85,16 +87,12 @@ public abstract class InputAction<T> : InputAction where T : struct
                 processedValue = processor.Process(processedValue, deltaTime);
             }
 
-            T typedValue = (T)processedValue;
-            value = Combine(value, typedValue);
-            isActive |= IsActive(typedValue);
-            wasActive |= IsActive(binding.Previous);
-            binding.Previous = typedValue;
+            value = Combine(value, (T)processedValue);
         }
 
         Value = value;
 
-        if (isActive && !wasActive)
+        if (IsActive(Value) && !IsActive(previousValue))
         {
             OnTriggered();
         }
