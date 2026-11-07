@@ -1,11 +1,10 @@
 using System.Numerics;
 using ImGuiNET;
-using Pathetic.App.Components.Camera;
 using Pathetic.App.Input;
 using Pathetic.SceneGraph;
 using Pathetic.SceneGraph.Components;
 
-namespace Pathetic.App.Components.GUI;
+namespace Pathetic.App.Components.Camera;
 
 public class CameraControls(InputActions inputActions) : Component
 {
@@ -30,6 +29,8 @@ public class CameraControls(InputActions inputActions) : Component
 
     protected override void Update(float deltaTime)
     {
+        inputActions.EditorViewport.Context.Enabled = !ImGui.GetIO().WantCaptureMouse;
+            
         Vector2 orbit = inputActions.EditorViewport.Orbit.Value;
         AzimuthDegrees -= orbit.X;
         ElevationDegrees = Math.Clamp(ElevationDegrees - orbit.Y, -MaxElevation, MaxElevation);
