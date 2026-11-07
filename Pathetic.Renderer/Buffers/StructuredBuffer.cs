@@ -19,6 +19,8 @@ public sealed class StructuredBuffer<T>
     public bool IsDynamic { get; }
     public IReadOnlyList<IResourceSpec> Resources => [this];
     public SceneChange DirtyChanges { get; private set; }
+    public uint Revision { get; private set; }
+    public ReadOnlySpan<T> Values => _values.AsSpan(0, Count);
 
     private T[] _values;
     private int Capacity => _values.Length;
@@ -99,6 +101,7 @@ public sealed class StructuredBuffer<T>
         
         _values[index] = value;
         DirtyChanges |= SceneChange.Structure | SceneChange.Content;
+        Revision++;
         MarkDirty(index);
 
         return index;
@@ -114,6 +117,7 @@ public sealed class StructuredBuffer<T>
 
         _values[index] = value;
         DirtyChanges |= SceneChange.Content;
+        Revision++;
         MarkDirty(index);
     }
 
@@ -131,6 +135,7 @@ public sealed class StructuredBuffer<T>
 
         MarkDirty(index);
         DirtyChanges |= SceneChange.Structure;
+        Revision++;
         Count--;
     }
     
