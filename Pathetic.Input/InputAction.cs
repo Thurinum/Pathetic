@@ -8,12 +8,14 @@ public abstract class InputAction
     public required List<InputBindingSpec> Bindings { get; init; }
     public required IInputProcessor[] Processors { get; init; }
 
-    public event Action? Pressed;
-    public event Action? Held;
-    public event Action? Released;
-    protected void OnPressed() => Pressed?.Invoke();
-    protected void OnHeld() => Held?.Invoke();
-    protected void OnReleased() => Released?.Invoke();
+    public event Action? Initiated;
+    public event Action? Triggered;
+    public event Action? Completed;
+    public event Action? Cancelled;
+    protected void OnInitiated() => Initiated?.Invoke();
+    protected void OnTriggered() => Triggered?.Invoke();
+    protected void OnCompleted() => Completed?.Invoke();
+    protected void OnCancelled() => Cancelled?.Invoke();
 
     internal abstract void Bind(IReadOnlyDictionary<string, InputDevice> devices);
     internal abstract void Evaluate(float deltaTime, bool enabled);
@@ -84,7 +86,7 @@ public abstract class InputAction<T> : InputAction where T : struct
             
             if (IsActive(previousValue))
             {
-                OnReleased();
+                OnCancelled();
             }
             
             return;
@@ -118,16 +120,16 @@ public abstract class InputAction<T> : InputAction where T : struct
         
         if (!wasActive && isActive)
         {
-            OnPressed();
+            OnInitiated();
         }
         else if (wasActive && !isActive)
         {
-            OnReleased();
+            OnCompleted();
         }
         
         if (isActive)
         {
-            OnHeld();
+            OnTriggered();
         }
     }
 }
