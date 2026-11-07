@@ -6,9 +6,13 @@ public abstract class InputAction
 {
     public required string Name { get; init; }
     public required List<InputBindingSpec> Bindings { get; init; }
-    
-    public event Action? Triggered;
-    protected void OnTriggered() => Triggered?.Invoke();
+
+    public event Action? Pressed;
+    public event Action? Held;
+    public event Action? Released;
+    protected void OnPressed() => Pressed?.Invoke();
+    protected void OnHeld() => Held?.Invoke();
+    protected void OnReleased() => Released?.Invoke();
 
     internal abstract void Bind(IReadOnlyDictionary<string, InputDevice> devices);
     internal abstract void Evaluate(float deltaTime, bool enabled);
@@ -67,13 +71,20 @@ public abstract class InputAction<T> : InputAction where T : struct
 
     internal override void Evaluate(float deltaTime, bool enabled)
     {
+        T previousValue = Value;
+        
         if (!enabled)
         {
             Value = default;
+            
+            if (IsActive(previousValue))
+            {
+                OnReleased();
+            }
+            
             return;
         }
         
-        T previousValue = Value;
         T value = default;
 
         foreach (InputBinding<T> binding in _bindings)
@@ -92,9 +103,21 @@ public abstract class InputAction<T> : InputAction where T : struct
 
         Value = value;
 
-        if (IsActive(Value) && !IsActive(previousValue))
+        bool wasActive = IsActive(previousValue);
+        bool isActive = IsActive(Value);
+        
+        if (!wasActive && isActive)
         {
-            OnTriggered();
+            OnPressed();
+        }
+        else if (wasActive && !isActive)
+        {
+            OnReleased();
+        }
+        
+        if (isActive)
+        {
+            OnHeld();
         }
     }
 }
