@@ -2,13 +2,16 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Pathetic.App;
+using Pathetic.App.Bvh;
 using Pathetic.App.Components;
 using Pathetic.App.Components.Camera;
 using Pathetic.App.Input;
 using Pathetic.App.RenderPasses;
 using Pathetic.Input;
 using Pathetic.Renderer;
+using Pathetic.Renderer.Bvh;
 using Pathetic.Renderer.DI;
+using Pathetic.Renderer.Resources;
 using Pathetic.SceneGraph.DI;
 
 var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
@@ -37,6 +40,18 @@ builder.Services.AddStructuredBuffer<SpherePrimitive>(ResourceName.Spheres, spar
 builder.Services.AddStructuredBuffer<PlanePrimitive>(ResourceName.Planes, sparseStorage: true);
 builder.Services.AddStructuredBuffer<CameraProvider>();
 // builder.Services.AddStructuredBuffer<CirclePrimitive>(ResourceName.Circles, sparseStorage: true);
+
+builder.Services.AddSingleton<SceneBvh>();
+builder.Services.AddSingleton(sp => new BvhBufferUploader<GpuBvhNode>(
+    ResourceName.BvhNodes,
+    sp.GetRequiredService<SceneBvh>(),
+    scene => scene.Nodes));
+builder.Services.AddSingleton<IResourceUploader>(sp => sp.GetRequiredService<BvhBufferUploader<GpuBvhNode>>());
+builder.Services.AddSingleton(sp => new BvhBufferUploader<GpuBvhPrimitiveRef>(
+    ResourceName.BvhPrimitiveRefs,
+    sp.GetRequiredService<SceneBvh>(),
+    scene => scene.PrimitiveRefs));
+builder.Services.AddSingleton<IResourceUploader>(sp => sp.GetRequiredService<BvhBufferUploader<GpuBvhPrimitiveRef>>());
 
 builder.Services.AddSceneGraph();
 

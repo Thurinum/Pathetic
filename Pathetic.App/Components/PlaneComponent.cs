@@ -5,12 +5,12 @@ using Pathetic.SceneGraph;
 
 namespace Pathetic.App.Components;
 
-[StructLayout(LayoutKind.Explicit, Size = 48)]
+[StructLayout(LayoutKind.Explicit, Size = 36)]
 public record struct PlanePrimitive
 {
     [FieldOffset(00)] public Vector3 Point;
-    [FieldOffset(16)] public Vector3 ExtentX;
-    [FieldOffset(32)] public Vector3 ExtentY;
+    [FieldOffset(12)] public Vector3 ExtentX;
+    [FieldOffset(24)] public Vector3 ExtentY;
 }   
 
 public class PlaneComponent(SparseSet<PlanePrimitive> primitives) : RendererBase<PlanePrimitive>(primitives)

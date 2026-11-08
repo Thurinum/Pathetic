@@ -12,5 +12,7 @@ public static class ResourceName
     public const string Camera = "camera";
     public const string Spheres = "spheres";
     public const string Planes = "planes";
+    public const string BvhNodes = "bvhNodes";
+    public const string BvhPrimitiveRefs = "bvhPrimitiveRefs";
     public const string Circles = "circlePrimitives";
 }
