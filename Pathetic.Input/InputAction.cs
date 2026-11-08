@@ -26,8 +26,9 @@ public abstract class InputAction<T> : InputAction where T : struct
     private InputBinding<T>[] _bindings = [];
 
     public T Value { get; private set; }
+    public required IInputTrigger<T>[] Triggers { get; init; }
 
-    protected abstract bool IsActive(T value);
+    protected abstract bool MeetsThreshold(T value);
     protected abstract T Combine(T total, T value);
 
     internal override void Bind(IReadOnlyDictionary<string, InputDevice> devices)
@@ -84,14 +85,45 @@ public abstract class InputAction<T> : InputAction where T : struct
         {
             Value = default;
             
-            if (IsActive(previousValue))
+            if (MeetsThreshold(previousValue))
             {
                 OnCancelled();
+                ResetTriggers();
             }
             
             return;
         }
         
+        T value = CombineBindings(deltaTime);
+
+        foreach (var processor in Processors)
+        {
+            value = (T)processor.Process(value, deltaTime);
+        }
+
+        Value = value;
+        
+        bool wasInitiated = MeetsThreshold(previousValue);
+        bool isInitiated = MeetsThreshold(Value);
+        if (!wasInitiated && isInitiated)
+        {
+            OnInitiated();
+        }
+        else if (wasInitiated && !isInitiated)
+        {
+            TryTrigger(deltaTime, isCompleted: true);
+            OnCompleted();
+            ResetTriggers();
+        }
+        
+        if (isInitiated)
+        {
+            TryTrigger(deltaTime, isCompleted: false);
+        }
+    }
+
+    private T CombineBindings(float deltaTime)
+    {
         T value = default;
 
         foreach (InputBinding<T> binding in _bindings)
@@ -108,28 +140,31 @@ public abstract class InputAction<T> : InputAction where T : struct
             value = Combine(value, (T)processedValue);
         }
 
-        foreach (var processor in Processors)
+        return value;
+    }
+
+    private void TryTrigger(float deltaTime, bool isCompleted)
+    {
+        bool canTrigger = true;
+        
+        foreach (IInputTrigger<T> trigger in Triggers)
         {
-            value = (T)processor.Process(value, deltaTime);
+            canTrigger &= isCompleted 
+                ? trigger.CanComplete(Value, deltaTime) 
+                : trigger.CanTrigger(Value, deltaTime);
         }
 
-        Value = value;
-
-        bool wasActive = IsActive(previousValue);
-        bool isActive = IsActive(Value);
-        
-        if (!wasActive && isActive)
-        {
-            OnInitiated();
-        }
-        else if (wasActive && !isActive)
-        {
-            OnCompleted();
-        }
-        
-        if (isActive)
+        if (canTrigger)
         {
             OnTriggered();
+        }
+    }
+
+    private void ResetTriggers()
+    {
+        foreach (var trigger in Triggers)
+        {
+            trigger.Reset();
         }
     }
 }
@@ -137,7 +172,7 @@ public abstract class InputAction<T> : InputAction where T : struct
 // ReSharper disable InconsistentNaming
 public sealed class InputAction_Bool : InputAction<bool>
 {
-    protected override bool IsActive(bool value) => value;
+    protected override bool MeetsThreshold(bool value) => value;
     protected override bool Combine(bool total, bool value) => total | value;
 }
 
@@ -145,7 +180,7 @@ public sealed class InputAction_Float : InputAction<float>
 {
     public float Threshold { get; set; } = 0.5f;
 
-    protected override bool IsActive(float value) => MathF.Abs(value) > Threshold;
+    protected override bool MeetsThreshold(float value) => MathF.Abs(value) > Threshold;
     protected override float Combine(float total, float value) => total + value;
 }
 
@@ -153,7 +188,7 @@ public sealed class InputAction_Vector2 : InputAction<Vector2>
 {
     public float Threshold { get; set; } = 0.5f;
 
-    protected override bool IsActive(Vector2 value) => value.LengthSquared() > Threshold * Threshold;
+    protected override bool MeetsThreshold(Vector2 value) => value.LengthSquared() > Threshold * Threshold;
     protected override Vector2 Combine(Vector2 total, Vector2 value) => total + value;
 }
 
@@ -161,6 +196,6 @@ public sealed class InputAction_Vector3 : InputAction<Vector3>
 {
     public float Threshold { get; set; } = 0.5f;
 
-    protected override bool IsActive(Vector3 value) => value.LengthSquared() > Threshold * Threshold;
+    protected override bool MeetsThreshold(Vector3 value) => value.LengthSquared() > Threshold * Threshold;
     protected override Vector3 Combine(Vector3 total, Vector3 value) => total + value;
 }

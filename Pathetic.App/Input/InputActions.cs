@@ -29,6 +29,9 @@ public sealed class InputActions
             Processors =
             [
             ],
+            Triggers =
+            [
+            ],
         };
 
         public InputAction_Vector2 Orbit { get; } = new()
@@ -59,6 +62,9 @@ public sealed class InputActions
             Processors =
             [
             ],
+            Triggers =
+            [
+            ],
         };
 
         public InputAction_Float Zoom { get; } = new()
@@ -86,6 +92,9 @@ public sealed class InputActions
                     ]),
             ],
             Processors =
+            [
+            ],
+            Triggers =
             [
             ],
         };
