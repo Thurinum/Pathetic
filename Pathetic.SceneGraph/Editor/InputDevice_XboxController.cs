@@ -8,8 +8,9 @@ namespace Pathetic.SceneGraph.Editor;
 
 /// <summary>
 /// Xbox-compatible game controller polled through SDL2's game controller API.
-/// Sticks are normalized to -1..1, Y pointing up, with a radial deadzone.
-/// Opens the first controller it finds and reopens after a disconnect.
+/// Sticks are normalized to -1..1, Y pointing up; dead zones are applied per binding with
+/// <see cref="DeadzoneVector2"/> so they stay configurable. Opens the first controller it finds
+/// and reopens after a disconnect.
 /// </summary>
 public sealed unsafe partial class InputDevice_XboxController : InputDevice, IDisposable
 {
@@ -18,7 +19,6 @@ public sealed unsafe partial class InputDevice_XboxController : InputDevice, IDi
     private const uint GameControllerSubsystem = 0x00002000;
 
     private const float AxisMax = 32767.0f;
-    private const float Deadzone = 0.15f;
 
     private readonly ILogger<InputDevice_XboxController> _logger;
 
@@ -62,11 +62,9 @@ public sealed unsafe partial class InputDevice_XboxController : InputDevice, IDi
 
     private Vector2 ReadStick(GameControllerAxis xAxis, GameControllerAxis yAxis)
     {
-        Vector2 value = new(
+        return new Vector2(
             Normalize(Sdl2Window.SdlInstance.GameControllerGetAxis(_controller, xAxis)),
             -Normalize(Sdl2Window.SdlInstance.GameControllerGetAxis(_controller, yAxis)));
-
-        return value.LengthSquared() < Deadzone * Deadzone ? Vector2.Zero : value;
     }
 
     private static float Normalize(short value) => Math.Clamp(value / AxisMax, -1.0f, 1.0f);

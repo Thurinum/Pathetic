@@ -56,6 +56,7 @@ public sealed class InputActions
                     [
                     ],
                     [
+                        new DeadzoneVector2(0.15f),
                         new RateVector2(120.0f)
                     ]),
             ],
@@ -87,6 +88,7 @@ public sealed class InputActions
                     [
                     ],
                     [
+                        new DeadzoneVector2(0.15f),
                         new SwizzleY(),
                         new RateFloat(1.5f)
                     ]),
