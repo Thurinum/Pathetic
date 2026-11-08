@@ -23,7 +23,7 @@ public abstract class InputAction
 
 public abstract class InputAction<T> : InputAction where T : struct
 {
-    private InputBinding<T>[] _bindings = [];
+    private InputBinding[] _bindings = [];
 
     public T Value { get; private set; }
     public required IInputTrigger<T>[] Triggers { get; init; }
@@ -35,7 +35,7 @@ public abstract class InputAction<T> : InputAction where T : struct
     {
         ValidateProcessorChain(Processors, typeof(T), bindingIndex: null);
 
-        var bindings = new InputBinding<T>[Bindings.Count];
+        var bindings = new InputBinding[Bindings.Count];
 
         for (int i = 0; i < Bindings.Count; i++)
         {
@@ -44,7 +44,7 @@ public abstract class InputAction<T> : InputAction where T : struct
             var source = spec.Source.Resolve(devices);
             ValidateProcessorChain(spec.Processors, source.Type, i);
 
-            bindings[i] = new InputBinding<T>
+            bindings[i] = new InputBinding
             {
                 Source = source,
                 Chords = [.. spec.Chords.Select(m => m.Resolve<bool>(devices))],
@@ -126,7 +126,7 @@ public abstract class InputAction<T> : InputAction where T : struct
     {
         T value = default;
 
-        foreach (InputBinding<T> binding in _bindings)
+        foreach (InputBinding binding in _bindings)
         {
             if (binding.Chords.Any(c => !c.Value))
                 continue;
@@ -167,35 +167,4 @@ public abstract class InputAction<T> : InputAction where T : struct
             trigger.Reset();
         }
     }
-}
-
-// ReSharper disable InconsistentNaming
-public sealed class InputAction_Bool : InputAction<bool>
-{
-    protected override bool MeetsThreshold(bool value) => value;
-    protected override bool Combine(bool total, bool value) => total | value;
-}
-
-public sealed class InputAction_Float : InputAction<float>
-{
-    public float Threshold { get; set; } = 0.5f;
-
-    protected override bool MeetsThreshold(float value) => MathF.Abs(value) > Threshold;
-    protected override float Combine(float total, float value) => total + value;
-}
-
-public sealed class InputAction_Vector2 : InputAction<Vector2>
-{
-    public float Threshold { get; set; } = 0.5f;
-
-    protected override bool MeetsThreshold(Vector2 value) => value.LengthSquared() > Threshold * Threshold;
-    protected override Vector2 Combine(Vector2 total, Vector2 value) => total + value;
-}
-
-public sealed class InputAction_Vector3 : InputAction<Vector3>
-{
-    public float Threshold { get; set; } = 0.5f;
-
-    protected override bool MeetsThreshold(Vector3 value) => value.LengthSquared() > Threshold * Threshold;
-    protected override Vector3 Combine(Vector3 total, Vector3 value) => total + value;
 }

@@ -5,7 +5,7 @@ public sealed record InputBindingSpec(
     IReadOnlyList<InputValueHandle> Chords,
     IReadOnlyList<IInputProcessor> Processors);
     
-public sealed class InputBinding<T> where T : struct
+public sealed class InputBinding
 {
     public required IInputValue Source { get; init; }
     public required IInputValue<bool>[] Chords { get; init; }
