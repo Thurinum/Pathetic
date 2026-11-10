@@ -48,6 +48,7 @@ public static class ServiceCollectionExtensions
             services.AddSingleton<RenderGraphPipelineFactory>();
             services.AddSingleton<RenderGraphFactory>();
             services.AddSingleton<RenderWindow>();
+            services.AddSingleton(typeof(GpuReadback<>));
             services.AddSingleton<ImGuiHost>();
             services.AddSingleton<RenderGraphHost>();
             
