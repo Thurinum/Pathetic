@@ -18,6 +18,9 @@ public class App(SceneLoop loop, SceneManager sceneManager)
         sceneManager.CreateObject(scene, "fpsCounter")
             .AddComponent<FPSCounter>();
 
+        sceneManager.CreateObject(scene, "primaryRayTest")
+            .AddComponent<TestComponent>();
+
         sceneManager.CreateObject(scene, "youssefAimePasTemporalAccumFix")
             .AddComponent<RenderSettingsComponent>();
 

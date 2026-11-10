@@ -29,15 +29,18 @@ AddOptions<TemporalAccumulationOptions>();
 AddOptions<TonemappingOptions>();
 
 builder.Services.AddSingleton<ConvergenceController>();
+builder.Services.AddSingleton<Ray>();
 
 builder.Services.AddRenderer(graph => graph
     // .AddPass<CirclesPass>()
     .AddPass<PathTracerPass>()
     .AddPass<TemporalAccumulationPass>()
+    .AddPass<PrimaryRayPass>()
     .Present(ResourceName.PresentColor));
 
 builder.Services.AddStructuredBuffer<SpherePrimitive>(ResourceName.Spheres, sparseStorage: true);
 builder.Services.AddStructuredBuffer<PlanePrimitive>(ResourceName.Planes, sparseStorage: true);
+builder.Services.AddWritableBuffer<PrimaryHit>(ResourceName.PrimaryHits);
 builder.Services.AddStructuredBuffer<CameraProvider>();
 // builder.Services.AddStructuredBuffer<CirclePrimitive>(ResourceName.Circles, sparseStorage: true);
 

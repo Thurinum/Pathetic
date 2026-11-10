@@ -40,6 +40,13 @@ public static class ServiceCollectionExtensions
             if (sparseStorage)
                 services.AddSingleton(new SparseSet<T>(buffer));
         }
+
+        public void AddWritableBuffer<T>(string name, uint elementCount = 1) where T : unmanaged
+        {
+            services.AddSingleton(sp => new WritableBufferSpec<T>(
+                name, elementCount, sp.GetRequiredService<GpuReadback<T>>()));
+            services.AddSingleton<IResourceUploader>(sp => sp.GetRequiredService<WritableBufferSpec<T>>());
+        }
         
         public IServiceCollection AddRenderer(Action<RenderGraphSpecBuilder> configureGraph)
         {

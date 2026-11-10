@@ -5,10 +5,7 @@ using Pathetic.Renderer.Resources;
 
 namespace Pathetic.App.Bvh;
 
-public sealed class BvhBufferUploader<T>(
-    string name,
-    SceneBvh sceneBvh,
-    Func<SceneBvh, T[]> selector) : IResourceUploader, IStructuredBufferSpec
+public sealed class BvhBufferUploader<T>(string name, SceneBvh sceneBvh, Func<SceneBvh, T[]> selector) : IStructuredBufferSpec
     where T : unmanaged
 {
     private T[] _data = [];
