@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-using System.Numerics;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Pathetic.App.Components.Camera;
 using Pathetic.App.Input;
 using Pathetic.App.RenderPasses;

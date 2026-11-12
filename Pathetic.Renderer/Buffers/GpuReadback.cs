@@ -7,14 +7,12 @@ namespace Pathetic.Renderer.Buffers;
 public sealed class GpuReadback<T>(RenderWindow window) : IDisposable where T : unmanaged
 {
     private static readonly uint SizeInBytes = (uint)Unsafe.SizeOf<T>();
-
-    private DeviceBuffer? _source;
     private DeviceBuffer? _staging;
     private bool _pending;
     private bool _disposed;
     
-    public DeviceBuffer Source => _source ?? throw new InvalidOperationException($"{nameof(GpuReadback<>)} has no source buffer; call {nameof(Bind)} first.");
-    
+    public DeviceBuffer Source { get => field ?? throw new InvalidOperationException($"{nameof(GpuReadback<>)} has no source buffer; call {nameof(Bind)} first."); private set; }
+
     public void Bind(DeviceBuffer source)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -22,7 +20,7 @@ public sealed class GpuReadback<T>(RenderWindow window) : IDisposable where T : 
         if (source.SizeInBytes < SizeInBytes)
             throw new ArgumentException($"{source.SizeInBytes} bytes is too small for a {typeof(T).Name}.", nameof(source));
 
-        _source = source;
+        Source = source;
     }
     
     public void RecordCopy(CommandList cmd)

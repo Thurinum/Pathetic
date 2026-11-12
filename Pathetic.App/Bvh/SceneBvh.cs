@@ -11,21 +11,18 @@ public sealed class SceneBvh(
 {
     private const uint PlaneType = 0;
     private const uint SphereType = 1;
-
-    private GpuBvhNode[] _nodes = [];
-    private GpuBvhPrimitiveRef[] _primitiveRefs = [];
     private uint _sphereRevision;
     private uint _planeRevision;
-    private bool _built;
 
     public uint Version { get; private set; }
-    public GpuBvhNode[] Nodes => _nodes;
-    public GpuBvhPrimitiveRef[] PrimitiveRefs => _primitiveRefs;
+    public GpuBvhNode[] Nodes { get; private set; } = [];
+    public GpuBvhPrimitiveRef[] PrimitiveRefs { get; private set; } = [];
 
-    public bool IsDirty =>
-        !_built
+    public bool IsDirty { get =>
+        !field
         || _sphereRevision != spheres.Revision
-        || _planeRevision != planes.Revision;
+        || _planeRevision != planes.Revision; private set;
+    }
 
     public void Rebuild()
     {
@@ -42,11 +39,11 @@ public sealed class SceneBvh(
             Flatten(root, nodes, primitiveRefs);
         }
 
-        _nodes = nodes.ToArray();
-        _primitiveRefs = primitiveRefs.ToArray();
+        Nodes = nodes.ToArray();
+        PrimitiveRefs = primitiveRefs.ToArray();
         _sphereRevision = spheres.Revision;
         _planeRevision = planes.Revision;
-        _built = true;
+        IsDirty = true;
         Version++;
     }
 

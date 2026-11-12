@@ -28,7 +28,7 @@ public sealed class ConvergenceController(
         bool firstFrame = _lastFrameIndex is null;
         _lastFrameIndex = frameIndex;
 
-        var taa = temporalAccumulation.Value;
+        TemporalAccumulationOptions taa = temporalAccumulation.Value;
         bool taaEnabled = taa.Enabled;
         bool isMoving = sceneRevision != SceneChange.None;
         bool resetAccumulation = firstFrame || !taaEnabled || isMoving || _wasMoving || !_wasTaaEnabled;
