@@ -2,8 +2,8 @@
 
 namespace Pathetic.App.RenderPasses;
 
-public sealed class Ray
+public struct Ray(Vector3 origin, Vector3 direction)
 {
-    public Vector3 Origin { get; set; } = Vector3.Zero;
-    public Vector3 Direction { get; set; } = -Vector3.UnitZ;
+    public Vector3 Origin { get; set; } = origin;
+    public Vector3 Direction { get; set; } = direction;
 }

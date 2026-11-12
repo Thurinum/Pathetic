@@ -140,6 +140,7 @@ public sealed class InputActions
             ],
             Triggers =
             [
+                new Press<bool>()
             ],
         };
 

@@ -29,7 +29,7 @@ AddOptions<TemporalAccumulationOptions>();
 AddOptions<TonemappingOptions>();
 
 builder.Services.AddSingleton<ConvergenceController>();
-builder.Services.AddSingleton<Ray>();
+builder.Services.AddSingleton<RaycastService>();
 
 builder.Services.AddRenderer(graph => graph
     // .AddPass<CirclesPass>()

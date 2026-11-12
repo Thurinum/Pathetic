@@ -17,12 +17,12 @@ public class App(SceneLoop loop, SceneManager sceneManager)
 
         sceneManager.CreateObject(scene, "fpsCounter")
             .AddComponent<FPSCounter>();
-
-        sceneManager.CreateObject(scene, "primaryRayTest")
-            .AddComponent<TestComponent>();
-
-        sceneManager.CreateObject(scene, "youssefAimePasTemporalAccumFix")
+        
+        sceneManager.CreateObject(scene, "renderSettings")
             .AddComponent<RenderSettingsComponent>();
+        
+        sceneManager.CreateObject(scene, "editor")
+            .AddComponent<EditorSelection>();
 
         AddSphere(scene, new Vector3(2.0f, -100.5f, 0.0f), 100.0f, Rgb(0.6f, 0.6f, 0.6f));
         AddSphere(scene, new Vector3(2.0f, 0.2f, 0.0f), 0.7f, Rgb(0.9f, 0.6f, 0.2f));

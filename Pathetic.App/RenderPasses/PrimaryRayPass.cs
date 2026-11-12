@@ -5,7 +5,7 @@ using Pathetic.Renderer.Resources;
 
 namespace Pathetic.App.RenderPasses;
 
-public sealed class PrimaryRayPass(Ray request, GpuReadback<PrimaryHit> readback) : RenderPass
+public sealed class PrimaryRayPass(RaycastService service, GpuReadback<PrimaryHit> readback) : RenderPass
 {
     public override string ShaderModule => "PrimaryRay";
 
@@ -24,6 +24,10 @@ public sealed class PrimaryRayPass(Ray request, GpuReadback<PrimaryHit> readback
 
     public override void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
     {
+        // Publish the previous frame's hit before arming this frame's copy.
+        service.Poll();
+
+        Ray request = service.Request;
         PrimaryRayParams data = new()
         {
             Origin = request.Origin,
@@ -36,6 +40,9 @@ public sealed class PrimaryRayPass(Ray request, GpuReadback<PrimaryHit> readback
 
     protected override void PostExecute(RenderContext ctx, PassRenderState state)
     {
+        if (!service.AwaitingResult)
+            return;
+
         readback.RecordCopy(ctx.Cmd);
     }
 }
