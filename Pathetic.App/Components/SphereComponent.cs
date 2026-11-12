@@ -16,7 +16,8 @@ public record struct SpherePrimitive
     [FieldOffset(24)] public float EmissionStrength;
 }
 
-public class SphereComponent(SparseSet<SpherePrimitive> primitives) : RendererBase<SpherePrimitive>(primitives)
+public class SphereComponent(SparseSet<SpherePrimitive> primitives, PrimitiveRegistry registry)
+    : RendererBase<SpherePrimitive>(primitives, registry)
 {
     public float Radius { get; set; } = 1.0f;
     public RgbaByte Albedo { get; set; } = new(128, 128, 128, 255);

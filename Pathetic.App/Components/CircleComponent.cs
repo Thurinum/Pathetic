@@ -14,7 +14,8 @@ public record struct CirclePrimitive
     public float Pad;
 }
 
-public class CircleComponent(SparseSet<CirclePrimitive> primitives) : RendererBase<CirclePrimitive>(primitives)
+public class CircleComponent(SparseSet<CirclePrimitive> primitives, PrimitiveRegistry registry)
+    : RendererBase<CirclePrimitive>(primitives, registry)
 {
     public float Radius { get; set; }
     private Transform _transform = null!;
