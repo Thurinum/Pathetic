@@ -42,11 +42,11 @@ builder.Services.AddStructuredBuffer<CameraProvider>();
 // builder.Services.AddStructuredBuffer<CirclePrimitive>(ResourceName.Circles, sparseStorage: true);
 
 builder.Services.AddSingleton<SceneBvh>();
-builder.Services.AddSingleton(sp => new BvhBufferUploader<GpuBvhNode>(
+builder.Services.AddSingleton(sp => new BvhBufferUploader<GpuBvh8Node>(
     ResourceName.BvhNodes,
     sp.GetRequiredService<SceneBvh>(),
     scene => scene.Nodes));
-builder.Services.AddSingleton<IResourceUploader>(sp => sp.GetRequiredService<BvhBufferUploader<GpuBvhNode>>());
+builder.Services.AddSingleton<IResourceUploader>(sp => sp.GetRequiredService<BvhBufferUploader<GpuBvh8Node>>());
 builder.Services.AddSingleton(sp => new BvhBufferUploader<GpuBvhPrimitiveRef>(
     ResourceName.BvhPrimitiveRefs,
     sp.GetRequiredService<SceneBvh>(),

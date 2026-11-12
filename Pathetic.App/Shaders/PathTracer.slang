@@ -32,26 +32,58 @@ public HitResult TraceBvh(Ray ray)
 
     HitResult bestHit = HitResult.Miss();
     float bestT = 1e30;
+    float3 inverseDirection = 1.0 / ray.Direction;
     
-    // Check if there is an intersection with the BVH at all
-    BvhIntersection rootIntersection = bvhNodes[BvhNode.Root].Intersects(ray, 1e-4, bestT);
-    if (!rootIntersection.Hit)
-        return bestHit;
-
-    uint stack[32];
+    uint nodeStack[64];
+    uint pendingMaskStack[64];
     uint stackSize = 0;
-    stack[stackSize++] = BvhNode.Root;
+    uint nodeIndex = BvhNode.Root;
+    uint activeMask = 0xff;
+    bool processAllChildren = true;
 
-    while (stackSize > 0)
+    while (true)
     {
-        uint nodeIndex = stack[--stackSize];
         BvhNode node = bvhNodes[nodeIndex];
+        uint nearestInternal = 0;
+        uint nearestSlot = 0;
+        float nearestT = bestT;
+        uint pendingMask = 0;
 
-        if (node.PrimitiveCount > 0)
+        for (uint child = 0; child < node.ChildCount; ++child)
         {
-            for (uint i = 0; i < node.PrimitiveCount; ++i)
+            if (!processAllChildren && (activeMask & (1u << child)) == 0)
+                continue;
+
+            BvhIntersection intersection = node.IntersectsChild(ray, inverseDirection, child, 1e-4, bestT);
+            if (!intersection.Hit)
+                continue;
+
+            uint childRef = node.GetChildRef(child);
+            if ((childRef & 0x80000000) != 0)
             {
-                BvhPrimitiveRef primitive = bvhPrimitiveRefs[node.FirstPrimitive + i];
+                if (nearestInternal == 0 || intersection.Near < nearestT)
+                {
+                    if (nearestInternal != 0)
+                        pendingMask |= 1u << nearestSlot;
+                    nearestInternal = childRef;
+                    nearestSlot = child;
+                    nearestT = intersection.Near;
+                }
+                else
+                {
+                    pendingMask |= 1u << child;
+                }
+                continue;
+            }
+
+            if (!processAllChildren)
+                continue;
+
+            uint firstPrimitive = childRef & 0x1fffffff;
+            uint primitiveCount = ((childRef >> 29) & 3) + 1;
+            for (uint i = 0; i < primitiveCount; ++i)
+            {
+                BvhPrimitiveRef primitive = bvhPrimitiveRefs[firstPrimitive + i];
 
                 HitResult hit = HitResult.Miss();
                 switch (primitive.Type)
@@ -73,28 +105,29 @@ public HitResult TraceBvh(Ray ray)
                     bestHit.Index = primitive.Index;
                 }
             }
+        }
 
+        if (nearestInternal != 0)
+        {
+            if (pendingMask != 0)
+            {
+                nodeStack[stackSize] = nodeIndex;
+                pendingMaskStack[stackSize] = pendingMask;
+                stackSize++;
+            }
+            nodeIndex = nearestInternal & 0x7fffffff;
+            activeMask = 0xff;
+            processAllChildren = true;
             continue;
         }
 
-        BvhIntersection leftIntersection = bvhNodes[node.Left].Intersects(ray, 1e-4, bestT);
-        BvhIntersection rightIntersection = bvhNodes[node.Right].Intersects(ray, 1e-4, bestT);
+        if (stackSize == 0)
+            break;
 
-        if (leftIntersection.Hit && !rightIntersection.Hit)
-        {
-            stack[stackSize++] = node.Left;
-        }
-        else if (!leftIntersection.Hit && rightIntersection.Hit)
-        {
-            stack[stackSize++] = node.Right;
-        }
-        else if (leftIntersection.Hit && rightIntersection.Hit)
-        {
-            // Put nearest intersection on the stack last
-            bool leftIsNearer = leftIntersection.Near < rightIntersection.Near;
-            stack[stackSize++] = leftIsNearer ? node.Right : node.Left;
-            stack[stackSize++] = leftIsNearer ? node.Left : node.Right;
-        }
+        stackSize--;
+        nodeIndex = nodeStack[stackSize];
+        activeMask = pendingMaskStack[stackSize];
+        processAllChildren = false;
     }
 
     return bestHit;
