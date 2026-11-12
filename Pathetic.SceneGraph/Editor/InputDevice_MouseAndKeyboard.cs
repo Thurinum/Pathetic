@@ -20,6 +20,8 @@ public sealed class InputDevice_MouseAndKeyboard : InputDevice, IDisposable
     private readonly HashSet<Key> _keysDown = [];
     private readonly HashSet<MouseButton> _buttonsDown = [];
 
+    private readonly InputValue<Vector2> _mousePosition01 = new();
+
     private Sdl2Window? _window;
     private float _wheelDelta;
     private bool _disposed;
@@ -30,6 +32,25 @@ public sealed class InputDevice_MouseAndKeyboard : InputDevice, IDisposable
     public InputValue<Vector2> MousePosition { get; } = new();
     public InputValue<Vector2> MouseDelta { get; } = new();
     public InputValue<float> MouseWheel { get; } = new();
+
+    /// <summary>
+    /// Mouse position in the renderer's 2D space: normalized to [0, 1] over the window,
+    /// with the origin at the top-left corner and Y growing downward, so it matches the
+    /// <c>screenUV</c> used to build primary rays and <c>Circle.Position01</c>.
+    /// Not clamped: positions outside the window fall outside [0, 1].
+    /// </summary>
+    public Vector2 MousePosition01
+    {
+        get
+        {
+            Vector2 size = new(_renderWindow.Width, _renderWindow.Height);
+
+            if (size.X <= 0 || size.Y <= 0)
+                return Vector2.Zero;
+
+            return MousePosition.Value / size;
+        }
+    }
 
     public InputDevice_MouseAndKeyboard(RenderWindow renderWindow)
     {
@@ -50,6 +71,7 @@ public sealed class InputDevice_MouseAndKeyboard : InputDevice, IDisposable
         Snapshot["MousePosition"] = MousePosition;
         Snapshot["MouseDelta"] = MouseDelta;
         Snapshot["MouseWheel"] = MouseWheel;
+        Snapshot["MousePosition01"] = _mousePosition01;
     }
 
     public override void Update(float deltaTime)
@@ -80,6 +102,8 @@ public sealed class InputDevice_MouseAndKeyboard : InputDevice, IDisposable
 
         MouseWheel.Value = _wheelDelta;
         _wheelDelta = 0f;
+
+        _mousePosition01.Value = MousePosition01;
     }
 
     private void Attach()
