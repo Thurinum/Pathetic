@@ -5,7 +5,7 @@ using Pathetic.Renderer.Resources;
 
 namespace Pathetic.App.RenderPasses;
 
-public sealed class PrimaryRayPass(RaycastService service, GpuReadback<PrimaryHit> readback) : RenderPass
+public sealed class PrimaryRayPass(RaycastService service, GpuReadback<HitResult> readback) : RenderPass
 {
     public override string ShaderModule => "PrimaryRay";
 

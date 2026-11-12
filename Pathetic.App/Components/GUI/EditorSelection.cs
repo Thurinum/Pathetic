@@ -21,8 +21,9 @@ public class EditorSelection(InputActions input, RaycastService raycast, CameraP
         raycast.Raycast(ray);
     }
 
-    private void Select(PrimaryHit obj)
+    private void Select(HitResult hit)
     {
-        Logger.LogInformation("Hit {Obj}", obj.Index);  
+
+        Logger.LogInformation("Hit {Obj}", hit.Index);  
     }
 }

@@ -4,14 +4,14 @@ using Pathetic.Renderer.Buffers;
 
 namespace Pathetic.App;
 
-public sealed class RaycastService(GpuReadback<PrimaryHit> readback)
+public sealed class RaycastService(GpuReadback<HitResult> readback)
 {
     private Ray _request = new(Vector3.Zero, -Vector3.UnitZ);
         
     internal Ray Request => _request;
     internal bool AwaitingResult { get; private set; }
     
-    public event Action<PrimaryHit>? ResultReceived;
+    public event Action<HitResult>? ResultReceived;
 
     public void Raycast(Ray ray)
     {
@@ -24,7 +24,7 @@ public sealed class RaycastService(GpuReadback<PrimaryHit> readback)
     {
         readback.Wait();
 
-        if (!readback.TryRead(out PrimaryHit hit))
+        if (!readback.TryRead(out HitResult hit))
             return;
 
         AwaitingResult = false;

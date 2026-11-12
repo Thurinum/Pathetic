@@ -40,7 +40,7 @@ builder.Services.AddRenderer(graph => graph
 
 builder.Services.AddStructuredBuffer<SpherePrimitive>(ResourceName.Spheres, sparseStorage: true);
 builder.Services.AddStructuredBuffer<PlanePrimitive>(ResourceName.Planes, sparseStorage: true);
-builder.Services.AddWritableBuffer<PrimaryHit>(ResourceName.PrimaryHits);
+builder.Services.AddWritableBuffer<HitResult>(ResourceName.PrimaryHits);
 builder.Services.AddStructuredBuffer<CameraProvider>();
 // builder.Services.AddStructuredBuffer<CirclePrimitive>(ResourceName.Circles, sparseStorage: true);
 

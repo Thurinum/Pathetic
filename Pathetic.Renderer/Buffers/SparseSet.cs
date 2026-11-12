@@ -9,6 +9,20 @@ public sealed class SparseSet<T>(StructuredBuffer<T> buffer) where T : unmanaged
     private int[] _denseIdxToHandleIdx = new int[InitialSize];
     private readonly Stack<int> _freeHandles = new();
 
+    public Handle Get(int denseIdx)
+    {
+        if (denseIdx < 0 || denseIdx >= buffer.Count)
+            return Handle.Invalid;
+
+        int hndlIdx = _denseIdxToHandleIdx[denseIdx];
+        return new Handle(hndlIdx, _versions[hndlIdx]);
+    }
+    
+    public bool IsValid(Handle handle)
+    {
+        return handle.IsValid && handle.Version == _versions[handle.Index];
+    }
+
     public Handle Add(in T value)
     {
         int denseIdx = buffer.Add(value);
@@ -51,11 +65,6 @@ public sealed class SparseSet<T>(StructuredBuffer<T> buffer) where T : unmanaged
         _versions[handle.Index]++;
         _freeHandles.Push(handle.Index);
         handle = Handle.Invalid;
-    }
-
-    public bool IsValid(Handle handle)
-    {
-        return handle.IsValid && handle.Version == _versions[handle.Index];
     }
 
     private void EnsureCapacity(int handleCount)

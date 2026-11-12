@@ -17,7 +17,7 @@ public struct PrimaryRayParams
 
 /// <summary>Mirrors the RWStructuredBuffer element in PrimaryRay.slang.</summary>
 [StructLayout(LayoutKind.Sequential, Size = 16)]
-public struct PrimaryHit
+public struct HitResult
 {
     public float T;
     public uint Primitive;
