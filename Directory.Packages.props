@@ -15,6 +15,7 @@
     <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.12" />
     <PackageVersion Include="NeoVeldrid" Version="1.2.1" />
     <PackageVersion Include="NeoVeldrid.ImageSharp" Version="1.2.1" />
+    <PackageVersion Include="SixLabors.ImageSharp" Version="3.2.0" /> <!-- Pinned because of vulnerability -->
     <PackageVersion Include="NeoVeldrid.ImGui" Version="1.2.1" />
     <PackageVersion Include="NeoVeldrid.SPIRV" Version="1.2.1" />
     <PackageVersion Include="NeoVeldrid.StartupUtilities" Version="1.2.1" />
