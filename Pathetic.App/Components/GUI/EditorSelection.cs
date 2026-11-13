@@ -12,9 +12,10 @@ namespace Pathetic.App.Components.GUI;
 public class EditorSelection(InputActions input, RaycastService raycast, CameraProvider camera,
     PrimitiveRegistry registry,
     SparseSet<SpherePrimitive> spheres,
-    SparseSet<PlanePrimitive> planes) : Component
+    SparseSet<PlanePrimitive> planes,
+    SnapshotBuffer<SelectionEntry> selections) : Component
 {
-    private HashSet<Component> _selectionSet = [];
+    private readonly Dictionary<Component, SelectionEntry> _selectionSet = [];
     private bool _isToggle = false;
     
     protected override void Setup()
@@ -34,7 +35,7 @@ public class EditorSelection(InputActions input, RaycastService raycast, CameraP
     private int _selectedItem = 0;
     protected override void GUI()
     {
-        string[] names = [.. _selectionSet.Select(s => s.GetType().Name)];
+        string[] names = [.. _selectionSet.Keys.Select(s => s.GetType().Name)];
         ImGui.ListBox("Selections", ref _selectedItem, names, _selectionSet.Count);
     }
 
@@ -43,6 +44,7 @@ public class EditorSelection(InputActions input, RaycastService raycast, CameraP
         if (!hit.IsHit)
         {
             _selectionSet.Clear();
+            Upload();
             return;
         }
 
@@ -51,16 +53,19 @@ public class EditorSelection(InputActions input, RaycastService raycast, CameraP
         Handle handle = isSphere ? spheres.Get((int)hit.Index) : planes.Get((int)hit.Index);
         Component obj = registry.OwnerOf(primitiveType, handle)!;
 
-        if (_isToggle)
+        if (_isToggle && _selectionSet.Remove(obj))
         {
-            if (!_selectionSet.Remove(obj))
-            {
-                _selectionSet.Add(obj);
-            }
+            Upload();
+            return;
         }
-        else
+
+        _selectionSet[obj] = new SelectionEntry
         {
-            _selectionSet.Add(obj);
-        }
+            Primitive = hit.Primitive,
+            Index = hit.Index
+        };
+        Upload();
     }
+
+    private void Upload() => selections.Set([.. _selectionSet.Values]);
 }
