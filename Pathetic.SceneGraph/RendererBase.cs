@@ -11,7 +11,7 @@ public abstract class RendererBase<T>(SparseSet<T> primitives, PrimitiveRegistry
     protected override void Setup()
     {
         _handle = primitives.Add(BuildPrimitive());
-        registry.Register(_handle, this);
+        registry.Register(typeof(T), _handle, this);
     }
 
     protected override void LateUpdate(float deltaTime)
@@ -26,7 +26,7 @@ public abstract class RendererBase<T>(SparseSet<T> primitives, PrimitiveRegistry
     {
         if (_handle.IsValid)
         {
-            registry.Unregister(_handle);
+            registry.Unregister(typeof(T), _handle);
             primitives.Remove(ref _handle);
         }
     }

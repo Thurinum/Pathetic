@@ -5,10 +5,11 @@ namespace Pathetic.SceneGraph;
 
 public sealed class PrimitiveRegistry
 {
-    private readonly Dictionary<Handle, Component> _owners = [];
-    public void Register(Handle handle, Component owner) => _owners[handle] = owner;
+    private readonly Dictionary<(Type PrimitiveType, Handle Handle), Component> _owners = [];
 
-    public void Unregister(Handle handle) => _owners.Remove(handle);
+    public void Register(Type primitiveType, Handle handle, Component owner) => _owners[(primitiveType, handle)] = owner;
 
-    public Component? OwnerOf(Handle handle) => _owners.GetValueOrDefault(handle);
+    public void Unregister(Type primitiveType, Handle handle) => _owners.Remove((primitiveType, handle));
+
+    public Component? OwnerOf(Type primitiveType, Handle handle) => _owners.GetValueOrDefault((primitiveType, handle));
 }
