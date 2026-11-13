@@ -44,7 +44,7 @@ public sealed class InputActions
                         "MouseDelta"),
                     [
                         Handle("Mouse and Keyboard",
-                            "MouseLeft")
+                            "MouseMiddle")
                     ],
                     [
                         new ScaleVector2(0.25f)

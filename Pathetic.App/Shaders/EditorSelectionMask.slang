@@ -33,11 +33,11 @@ void main(uint3 dispatchThreadId : SV_DispatchThreadID)
         return;
 
     float2 screen = (float2(pixel) + 0.5) / float2(frameSize);
-    float aspect = float(frameSize.x) / float(frameSize.y);
-    float viewX = (2.0 * screen.x - 1.0) * aspect * camera.TanHalfFov;
-    float viewY = (1.0 - 2.0 * screen.y) * camera.TanHalfFov;
-    float3 direction = normalize(camera.Forward + viewX * camera.Right + viewY * camera.Up);
+    float3 direction = normalize(BuildViewPlaneDirection(camera, screen, frameSize));
 
+    const uint INDEX_NONE = ~0u;
+    uint bestIdx = INDEX_NONE;
+    float bestT = 1e30;
     for (uint i = 0; i < params.Count; ++i)
     {
         Selection selection = selections[i];
@@ -54,9 +54,15 @@ void main(uint3 dispatchThreadId : SV_DispatchThreadID)
             hit = IntersectPlane(camera.Origin, direction, plane, 1e-4, 1e30);
         }
 
-        if (hit.IsHit())
+        if (hit.IsHit() && hit.T < bestT)
         {
-            color[pixel] = float4(SelectionColor(i), 1.0);
+            bestT = hit.T;
+            bestIdx = i;
+        }
+        
+        if (bestIdx != INDEX_NONE)
+        {
+            color[pixel] = float4(float3(bestIdx), 1.0);
         }
     }
 }

@@ -22,15 +22,20 @@ public struct Ray
     public float3 Direction;
 }
 
-public Ray BuildPrimaryRay(Camera camera, inout Rng rng, uint2 pixel, uint2 frameSize, float2 jitter)
+public float3 BuildViewPlaneDirection(Camera camera, float2 screenUV, uint2 frameSize)
 {
     float aspect = frameSize.x / (float)frameSize.y;
-    float2 screenUV  = (float2(pixel) + jitter) / float2(frameSize);
     float viewPlaneX = (2.0 * screenUV.x - 1.0) * aspect * camera.TanHalfFov;
     float viewPlaneY = (1.0 - 2.0 * screenUV.y) * camera.TanHalfFov;
-    
+
     // camera space -> world space (lineair combination, orthonormal basis)
-    float3 eyeToImagePlane = camera.Forward + viewPlaneX * camera.Right + viewPlaneY * camera.Up;
+    return camera.Forward + viewPlaneX * camera.Right + viewPlaneY * camera.Up;
+}
+
+public Ray BuildPrimaryRay(Camera camera, inout Rng rng, uint2 pixel, uint2 frameSize, float2 jitter)
+{
+    float2 screenUV  = (float2(pixel) + jitter) / float2(frameSize);
+    float3 eyeToImagePlane = BuildViewPlaneDirection(camera, screenUV, frameSize);
     
     // le thin layer dof
     float3 focusPoint = camera.Origin + camera.FocusDistance * eyeToImagePlane;

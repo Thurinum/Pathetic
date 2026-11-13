@@ -53,10 +53,17 @@ public class EditorSelection(InputActions input, RaycastService raycast, CameraP
         Handle handle = isSphere ? spheres.Get((int)hit.Index) : planes.Get((int)hit.Index);
         Component obj = registry.OwnerOf(primitiveType, handle)!;
 
-        if (_isToggle && _selectionSet.Remove(obj))
+        if (_isToggle)
         {
-            Upload();
-            return;
+            if (_selectionSet.Remove(obj))
+            {
+                Upload();
+                return;
+            }
+        }
+        else
+        {
+            _selectionSet.Clear();
         }
 
         _selectionSet[obj] = new SelectionEntry
