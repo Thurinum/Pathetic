@@ -24,6 +24,7 @@ public sealed class EditorSelectionMaskPass : RenderPass
 
     public override IReadOnlyList<IResourceSpec> Resources { get; } =
     [
+        new TextureSpec(ResourceName.SelectionMask, PixelFormat.R32_UInt, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
         UniformBufferSpec.Of<Params>(ResourceName.Params),
     ];
 

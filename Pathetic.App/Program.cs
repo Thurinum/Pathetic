@@ -37,6 +37,7 @@ builder.Services.AddRenderer(graph => graph
     .AddPass<TemporalAccumulationPass>()
     .AddPass<PrimaryRayPass>()
     .AddPass<EditorSelectionMaskPass>()
+    .AddPass<EditorSelectionOutlinePass>()
     .Present(ResourceName.PresentColor));
 
 builder.Services.AddStructuredBuffer<SpherePrimitive>(ResourceName.Spheres, sparseStorage: true);

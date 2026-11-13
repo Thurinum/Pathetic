@@ -14,19 +14,21 @@ struct Selection
     uint Index;
 }
 
-RWTexture2D<float4> color;
+RWTexture2D<uint> selectionMask;
 ConstantBuffer<Params> params;
 ConstantBuffer<Camera> camera;
 StructuredBuffer<Selection> selections;
 StructuredBuffer<Plane, ScalarDataLayout> planes;
 StructuredBuffer<Sphere, ScalarDataLayout> spheres;
 
+static const uint INDEX_NONE = ~0u;
+
 [shader("compute")]
 [numthreads(8, 8, 1)]
 void main(uint3 dispatchThreadId : SV_DispatchThreadID)
 {
     uint2 frameSize;
-    color.GetDimensions(frameSize.x, frameSize.y);
+    selectionMask.GetDimensions(frameSize.x, frameSize.y);
 
     uint2 pixel = dispatchThreadId.xy;
     if (any(pixel >= frameSize))
@@ -35,7 +37,6 @@ void main(uint3 dispatchThreadId : SV_DispatchThreadID)
     float2 screen = (float2(pixel) + 0.5) / float2(frameSize);
     float3 direction = normalize(BuildViewPlaneDirection(camera, screen, frameSize));
 
-    const uint INDEX_NONE = ~0u;
     uint bestIdx = INDEX_NONE;
     float bestT = 1e30;
     for (uint i = 0; i < params.Count; ++i)
@@ -59,10 +60,7 @@ void main(uint3 dispatchThreadId : SV_DispatchThreadID)
             bestT = hit.T;
             bestIdx = i;
         }
-        
-        if (bestIdx != INDEX_NONE)
-        {
-            color[pixel] = float4(float3(bestIdx), 1.0);
-        }
     }
+
+    selectionMask[pixel] = bestIdx == INDEX_NONE ? 0u : bestIdx + 1u;
 }
