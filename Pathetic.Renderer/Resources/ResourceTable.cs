@@ -49,6 +49,7 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
                 UniformBufferSpec s => CreateUniformBuffer(device, s),
                 TextureSpec s => CreateTexture(device, s, width, height),
                 SamplerSpec s => CreateSampler(device, s),
+                RwBufferSpec s => CreateRwBuffer(device, s),
                 IStructuredBufferSpec s => CreateBuffer(device, s, entry, Math.Max(s.InitialCapacity, s.ElementCount)),
                 _ => throw new UnreachableException($"Unknown resource spec {entry.Spec.GetType().Name}")
             };
@@ -222,6 +223,12 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
         return device.ResourceFactory.CreateBuffer(bufferDesc);
     }
     
+    private static DeviceBuffer CreateRwBuffer(GraphicsDevice device, RwBufferSpec spec)
+    {
+        var bufferDesc = new BufferDescription(spec.SizeInBytes, BufferUsage.StructuredBufferReadWrite, spec.Stride);
+        return device.ResourceFactory.CreateBuffer(bufferDesc);
+    }
+
     private static Texture CreateTexture(GraphicsDevice device, TextureSpec spec, uint framebufferWidth, uint framebufferHeight)
     {
         UIntVector2 size = spec.SizePolicy switch
