@@ -58,6 +58,7 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
         _lastHeight = height;
     }
     
+    [Profile]
     public IReadOnlySet<string> Upload(GraphicsDevice device, RenderContext ctx)
     {
         _reallocated.Clear();
