@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.InteropServices;
 using Pathetic.App.Components;
 using Pathetic.Renderer.Bvh;
 using Pathetic.Renderer.Buffers;
@@ -11,6 +12,10 @@ public sealed class SceneBvh(
 {
     private const uint PlaneType = 0;
     private const uint SphereType = 1;
+    private const int RootIndex = 0;
+    private const int QualityDecimals = 2;
+    private const float TraversalCost = 1f;
+    private const float IntersectionCost = 1f;
 
     private GpuBvhNode[] _nodes = [];
     private GpuBvhPrimitiveRef[] _primitiveRefs = [];
@@ -22,11 +27,33 @@ public sealed class SceneBvh(
     public GpuBvhNode[] Nodes => _nodes;
     public GpuBvhPrimitiveRef[] PrimitiveRefs => _primitiveRefs;
 
+    [ProfileTag("bvh.nodes")]
+    public int NodeCount => _nodes.Length;
+
+    [ProfileTag("bvh.node_bytes")]
+    public int NodeBytes => MemoryMarshal.AsBytes(_nodes.AsSpan()).Length;
+
+    [ProfileTag("bvh.primitive_refs")]
+    public int PrimitiveRefCount => _primitiveRefs.Length;
+
+    [ProfileTag("bvh.depth")]
+    public int Depth => _nodes.Length == 0 ? 0 : DepthOf(RootIndex);
+
+    [ProfileTag("bvh.leaves")]
+    public int LeafCount => _nodes.Count(IsLeaf);
+
+    [ProfileTag("bvh.avg_leaf_size")]
+    public float AverageLeafSize => LeafCount == 0 ? 0 : MathF.Round((float)_primitiveRefs.Length / LeafCount, QualityDecimals);
+
+    [ProfileTag("bvh.sah_cost")]
+    public float SahCost => _nodes.Length == 0 ? 0 : MathF.Round(_nodes.Sum(NodeCost) / SurfaceArea(_nodes[RootIndex]), QualityDecimals);
+
     public bool IsDirty =>
         !_built
         || _sphereRevision != spheres.Revision
         || _planeRevision != planes.Revision;
 
+    [Profile]
     public void Rebuild()
     {
         List<BvhPrimitiveRef> references = [];
@@ -48,6 +75,19 @@ public sealed class SceneBvh(
         _planeRevision = planes.Revision;
         _built = true;
         Version++;
+    }
+
+    private static bool IsLeaf(GpuBvhNode node) => node.PrimitiveCount > 0;
+
+    private static float SurfaceArea(GpuBvhNode node) => new AxisAlignedBoundingBox(node.Min, node.Max).SurfaceArea;
+
+    private static float NodeCost(GpuBvhNode node) =>
+        SurfaceArea(node) * (IsLeaf(node) ? IntersectionCost * node.PrimitiveCount : TraversalCost);
+
+    private int DepthOf(int nodeIndex)
+    {
+        GpuBvhNode node = _nodes[nodeIndex];
+        return IsLeaf(node) ? 1 : 1 + Math.Max(DepthOf((int)node.Left), DepthOf((int)node.Right));
     }
 
     private void AppendSpheres(List<BvhPrimitiveRef> references)
