@@ -14,9 +14,5 @@
       <ProjectReference Include="..\Pathetic.Input\Pathetic.Input.csproj" />
       <ProjectReference Include="..\Pathetic.Renderer\Pathetic.Renderer.csproj" />
     </ItemGroup>
-
-    <ItemGroup>
-      <Compile Remove="Components\Renderer\IPrimitiveOwnerRegistry.cs" />
-    </ItemGroup>
-
+    
 </Project>
