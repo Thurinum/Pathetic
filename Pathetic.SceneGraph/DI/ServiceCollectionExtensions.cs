@@ -11,7 +11,6 @@ public static class ServiceCollectionExtensions
         public IServiceCollection AddSceneGraph()
         {
             services.AddSingleton<ComponentFactory>();
-            services.AddSingleton<PrimitiveRegistry>();
             services.AddSingleton<SceneManager>();
             services.AddSingleton<SceneLoop>();
             return services;

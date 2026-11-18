@@ -13,8 +13,7 @@ public record struct PlanePrimitive
     [FieldOffset(24)] public Vector3 ExtentY;
 }   
 
-public class PlaneComponent(SparseSet<PlanePrimitive> primitives, PrimitiveRegistry registry)
-    : RendererBase<PlanePrimitive>(primitives, registry)
+public class PlaneComponent(SparseSet<PlanePrimitive> primitives) : RendererBase<PlanePrimitive>(primitives)
 {
     private Transform _transform = null!;
 

@@ -3,7 +3,7 @@ using Pathetic.SceneGraph.Components;
 
 namespace Pathetic.SceneGraph;
 
-public abstract class RendererBase<T>(SparseSet<T> primitives, PrimitiveRegistry registry)
+public abstract class RendererBase<T>(SparseSet<T> primitives)
     : Component where T : unmanaged, IEquatable<T>
 {
     private Handle _handle = Handle.Invalid;
@@ -11,7 +11,7 @@ public abstract class RendererBase<T>(SparseSet<T> primitives, PrimitiveRegistry
     protected override void Setup()
     {
         _handle = primitives.Add(BuildPrimitive());
-        registry.Register(typeof(T), _handle, this);
+        primitives.SetOwner(_handle, this);
     }
 
     protected override void LateUpdate(float deltaTime)
@@ -26,7 +26,6 @@ public abstract class RendererBase<T>(SparseSet<T> primitives, PrimitiveRegistry
     {
         if (_handle.IsValid)
         {
-            registry.Unregister(typeof(T), _handle);
             primitives.Remove(ref _handle);
         }
     }
