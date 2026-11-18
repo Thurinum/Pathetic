@@ -3,9 +3,9 @@ using System.Runtime.InteropServices;
 
 namespace Pathetic.App.RenderPasses;
 
-/// <summary>Mirrors the constant buffer in PrimaryRay.slang.</summary>
+/// <summary>Mirrors the constant buffer in Raycast.slang.</summary>
 [StructLayout(LayoutKind.Sequential)]
-public struct PrimaryRayParams
+public struct RaycastParams
 {
     public Vector3 Origin;    // 0
     public float _Pad0;       // 12
@@ -15,7 +15,7 @@ public struct PrimaryRayParams
     public uint SphereCount;  // 36
 }
 
-/// <summary>Mirrors the RWStructuredBuffer element in PrimaryRay.slang.</summary>
+/// <summary>Mirrors the RWStructuredBuffer element in Raycast.slang.</summary>
 [StructLayout(LayoutKind.Sequential, Size = 16)]
 public struct HitResult
 {

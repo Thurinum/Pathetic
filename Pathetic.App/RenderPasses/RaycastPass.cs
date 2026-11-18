@@ -5,13 +5,13 @@ using Pathetic.Renderer.Resources;
 
 namespace Pathetic.App.RenderPasses;
 
-public sealed class PrimaryRayPass(RaycastService service, GpuReadback<HitResult> readback) : RenderPass
+public sealed class RaycastPass(RaycastService service, GpuReadback<HitResult> readback) : RenderPass
 {
-    public override string ShaderModule => "PrimaryRay";
+    public override string ShaderModule => "Raycast";
 
     public override IReadOnlyList<IResourceSpec> Resources { get; } =
     [
-        UniformBufferSpec.Of<PrimaryRayParams>(ResourceName.PrimaryRayParams)
+        UniformBufferSpec.Of<RaycastParams>(ResourceName.RaycastParams)
     ];
 
     public override IReadOnlyList<string> Inputs { get; } =
@@ -28,7 +28,7 @@ public sealed class PrimaryRayPass(RaycastService service, GpuReadback<HitResult
         service.Poll();
 
         Ray request = service.Request;
-        PrimaryRayParams data = new()
+        RaycastParams data = new()
         {
             Origin = request.Origin,
             Direction = request.Direction,

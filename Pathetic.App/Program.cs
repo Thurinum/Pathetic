@@ -35,7 +35,7 @@ builder.Services.AddRenderer(graph => graph
     // .AddPass<CirclesPass>()
     .AddPass<PathTracerPass>()
     .AddPass<TemporalAccumulationPass>()
-    .AddPass<PrimaryRayPass>()
+    .AddPass<RaycastPass>()
     .AddPass<EditorSelectionMaskPass>()
     .AddPass<EditorSelectionOutlinePass>()
     .Present(ResourceName.PresentColor));
@@ -43,7 +43,7 @@ builder.Services.AddRenderer(graph => graph
 builder.Services.AddStructuredBuffer<SpherePrimitive>(ResourceName.Spheres, sparseStorage: true);
 builder.Services.AddStructuredBuffer<PlanePrimitive>(ResourceName.Planes, sparseStorage: true);
 builder.Services.AddSnapshotBuffer<SelectionEntry>(ResourceName.Selections);
-builder.Services.AddWritableBuffer<HitResult>(ResourceName.PrimaryHits);
+builder.Services.AddWritableBuffer<HitResult>(ResourceName.RaycastHits);
 builder.Services.AddStructuredBuffer<CameraProvider>();
 // builder.Services.AddStructuredBuffer<CirclePrimitive>(ResourceName.Circles, sparseStorage: true);
 
