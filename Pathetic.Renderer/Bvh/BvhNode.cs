@@ -5,7 +5,6 @@ namespace Pathetic.Renderer.Bvh;
 
 #region CPU
 public readonly record struct BvhPrimitiveRef(
-    uint Type,
     uint Index,
     AxisAlignedBoundingBox Bounds);
 
@@ -30,10 +29,9 @@ public struct GpuBvhNode
     [FieldOffset(36)] public uint PrimitiveCount;
 }
 
-[StructLayout(LayoutKind.Explicit, Size = 8)]
+[StructLayout(LayoutKind.Explicit, Size = 4)]
 public struct GpuBvhPrimitiveRef
 {
-    [FieldOffset(0)] public uint Type;
-    [FieldOffset(4)] public uint Index;
+    [FieldOffset(0)] public uint Index;
 }
 #endregion

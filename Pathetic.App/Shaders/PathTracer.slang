@@ -1,6 +1,7 @@
 module PathTracer;
 
 import Primitives;
+import Materials;
 import Camera;
 import Random;
 import Accumulation;
@@ -10,8 +11,7 @@ import Bvh;
 
 struct Params
 {
-    uint PlaneCount;
-    uint SphereCount;
+    uint PrimitiveCount;
     uint SamplesPerPixel;
     uint MaxBounces;
     uint BvhNodeCount;
@@ -19,14 +19,16 @@ struct Params
 
 RWTexture2D<float4> pathTracerColor;
 ConstantBuffer<Camera> camera;
-StructuredBuffer<Plane, ScalarDataLayout> planes;
-StructuredBuffer<Sphere, ScalarDataLayout> spheres;
+StructuredBuffer<Primitive, ScalarDataLayout> primitives;
+StructuredBuffer<Material, ScalarDataLayout> materials;
 ConstantBuffer<Params> params;
 StructuredBuffer<BvhNode, ScalarDataLayout> bvhNodes;
 StructuredBuffer<BvhPrimitiveRef, ScalarDataLayout> bvhPrimitiveRefs;
 
-public HitResult TraceBvh(Ray ray)
+public HitResult TraceBvh(Ray ray, out Primitive hitPrimitive)
 {
+    hitPrimitive = { PrimitiveType.Plane, float3(0.0), 0, 0 };
+
     if (params.BvhNodeCount == 0)
         return HitResult.Miss();
 
@@ -52,25 +54,16 @@ public HitResult TraceBvh(Ray ray)
             for (uint i = 0; i < node.PrimitiveCount; ++i)
             {
                 BvhPrimitiveRef primitive = bvhPrimitiveRefs[node.FirstPrimitive + i];
+                Primitive candidate = primitives[primitive.Index];
 
-                HitResult hit = HitResult.Miss();
-                switch (primitive.Type)
-                {
-                    case PrimitiveType.Plane:
-                        Plane plane = planes[primitive.Index];
-                        hit = IntersectPlane(ray.Origin, ray.Direction, plane, 1e-4, bestT);
-                        break;
-                    case PrimitiveType.Sphere:
-                        Sphere sphere = spheres[primitive.Index];
-                        hit = IntersectSphere(ray.Origin, ray.Direction, sphere.Center, sphere.Radius, 1e-4, bestT);
-                        break;
-                }
+                HitResult hit = IntersectPrimitive(ray.Origin, ray.Direction, candidate, 1e-4, bestT);
 
                 if (hit.IsHit() && hit.T < bestT)
                 {
                     bestT = hit.T;
                     bestHit = hit;
                     bestHit.Index = primitive.Index;
+                    hitPrimitive = candidate;
                 }
             }
 
@@ -107,12 +100,8 @@ float3 Trace(Ray ray, inout Rng rng)
 
     for (uint bounce = 0; bounce <= params.MaxBounces; ++bounce)
     {
-        HitResult bestHit = TraceBvh(ray);
-        
-        if (bestHit.Primitive == PrimitiveType.Plane)
-        {
-            return float3(0.0, 1.0, 0.0);
-        }
+        Primitive hitPrimitive;
+        HitResult bestHit = TraceBvh(ray, hitPrimitive);
 
         if (!bestHit.IsHit())
         {
@@ -120,10 +109,11 @@ float3 Trace(Ray ray, inout Rng rng)
             break;
         }
 
-        float3 albedo = UnpackRgb(spheres[bestHit.Index].Albedo);
+        Material material = materials[hitPrimitive.MaterialId];
+        float3 albedo = UnpackRgb(material.Albedo);
 
         if (dot(bestHit.NormalExt, -ray.Direction) > 0.0)
-            light += weight * UnpackRgb(spheres[bestHit.Index].Emission) * spheres[bestHit.Index].EmissionStrength;
+            light += weight * UnpackRgb(material.Emission) * material.EmissionStrength;
 
         if (bounce == params.MaxBounces || all(albedo == 0.0))
             break;

@@ -13,8 +13,7 @@ public sealed class PathTracerPass(
     [StructLayout(LayoutKind.Sequential)]
     private struct Params
     {
-        public uint PlaneCount;
-        public uint SphereCount;
+        public uint PrimitiveCount;
         public uint SamplesPerPixel;
         public uint MaxBounces;
         public uint BvhNodeCount;
@@ -31,8 +30,10 @@ public sealed class PathTracerPass(
     public override IReadOnlyList<string> Inputs { get; } =
     [
         ResourceName.Camera,
-        ResourceName.Planes,
-        ResourceName.Spheres,
+        ResourceName.Primitives,
+        ResourceName.Materials,
+        ResourceName.SphereData,
+        ResourceName.PlaneData,
         ResourceName.BvhNodes,
         ResourceName.BvhPrimitiveRefs,
     ];
@@ -44,8 +45,7 @@ public sealed class PathTracerPass(
 
         Params @params = new()
         {
-            PlaneCount = ctx.Resources.GetElementCount(ResourceName.Planes),
-            SphereCount = ctx.Resources.GetElementCount(ResourceName.Spheres),
+            PrimitiveCount = ctx.Resources.GetElementCount(ResourceName.Primitives),
             SamplesPerPixel = plan.SamplesPerPixel,
             MaxBounces = options.Value.MaxBounces,
             BvhNodeCount = ctx.Resources.GetElementCount(ResourceName.BvhNodes),

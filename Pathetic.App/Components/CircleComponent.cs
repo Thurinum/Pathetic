@@ -1,36 +1,65 @@
-﻿using System.Numerics;
-using System.Runtime.InteropServices;
+using System.Numerics;
 using Pathetic.Renderer.Buffers;
 using Pathetic.Renderer.Utils;
-using Pathetic.SceneGraph;
+using Pathetic.SceneGraph.Components;
 
 namespace Pathetic.App.Components;
 
-[StructLayout(LayoutKind.Sequential)]
-public record struct CirclePrimitive
+public class CircleComponent(
+    SparseSet<Primitive> primitives,
+    GpuPool<SphereData> spheres,
+    MaterialLibrary materials) : Component
 {
-    public Vector2 Position01;
-    public float Radius;
-    public float Pad;
-}
+    private Handle _handle = Handle.Invalid;
+    private uint _dataIdx = GpuPool<SphereData>.InvalidIndex;
 
-public class CircleComponent(SparseSet<CirclePrimitive> primitives) : RendererBase<CirclePrimitive>(primitives)
-{
     public float Radius { get; set; }
-    private Transform _transform = null!;
+    public Material Material { get; set; } = Material.Default;
 
     protected override void Setup()
     {
-        _transform = Parent.GetComponent<Transform>();
-        base.Setup();
+        SphereData data = BuildPayload();
+        _dataIdx = spheres.Add(data);
+        _handle = primitives.Add(BuildPrimitive(data));
     }
 
-    protected override CirclePrimitive BuildPrimitive()
+    protected override void LateUpdate(float deltaTime)
     {
-        return new CirclePrimitive
+        if (!_handle.IsValid)
+            return;
+
+        SphereData data = BuildPayload();
+        spheres.Update(_dataIdx, data);
+        primitives.Update(_handle, BuildPrimitive(data));
+    }
+
+    protected override void Cleanup()
+    {
+        if (_handle.IsValid)
+            primitives.Remove(ref _handle);
+
+        if (_dataIdx == GpuPool<SphereData>.InvalidIndex)
+            return;
+
+        spheres.Remove(_dataIdx);
+        _dataIdx = GpuPool<SphereData>.InvalidIndex;
+    }
+
+    private SphereData BuildPayload() => new() { Radius = Radius };
+
+    private Primitive BuildPrimitive(SphereData data)
+    {
+        Vector3 center = new(Parent.Transform.Position.XY, 0.0f);
+        Vector3 extent = new(data.Radius);
+
+        return new Primitive
         {
-            Position01 = _transform.Position.XY,
-            Radius = Radius
+            Type = PrimitiveType.Circle,
+            Center = center,
+            MaterialId = materials.GetOrAdd(Material),
+            DataIdx = _dataIdx,
+            Min = center - extent,
+            Max = center + extent
         };
     }
 }

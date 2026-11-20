@@ -79,9 +79,12 @@ public class App(SceneLoop loop, SceneManager sceneManager)
 
         var sphere = obj.AddComponent<SphereComponent>();
         sphere.Radius = radius;
-        sphere.Albedo = albedo;
-        sphere.Emission = emission;
-        sphere.EmissionStrength = emissionStrength;
+        sphere.Material = new Material
+        {
+            Albedo = albedo,
+            Emission = emission,
+            EmissionStrength = emissionStrength
+        };
     }
     
     private void AddCircle(Scene scene, float r, float x, float y)

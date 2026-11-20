@@ -36,10 +36,12 @@ builder.Services.AddRenderer(graph => graph
     .AddPass<TemporalAccumulationPass>()
     .Present(ResourceName.PresentColor));
 
-builder.Services.AddStructuredBuffer<SpherePrimitive>(ResourceName.Spheres, sparseStorage: true);
-builder.Services.AddStructuredBuffer<PlanePrimitive>(ResourceName.Planes, sparseStorage: true);
+builder.Services.AddStructuredBuffer<Primitive>(ResourceName.Primitives, sparseStorage: true);
+builder.Services.AddStructuredBuffer<Material>(ResourceName.Materials);
+builder.Services.AddSingleton<MaterialLibrary>();
+builder.Services.AddGpuPool<SphereData>(ResourceName.SphereData);
+builder.Services.AddGpuPool<PlaneData>(ResourceName.PlaneData);
 builder.Services.AddStructuredBuffer<CameraProvider>();
-// builder.Services.AddStructuredBuffer<CirclePrimitive>(ResourceName.Circles, sparseStorage: true);
 
 builder.Services.AddSingleton<SceneBvh>();
 builder.Services.AddSingleton(sp => new BvhBufferUploader<GpuBvhNode>(
