@@ -27,8 +27,8 @@ public sealed class SceneBvh(StructuredBuffer<Primitive> primitives)
 
         if (references.Count > 0)
         {
-            BvhNode root = new BvhBuilder().Build(references);
-            Flatten(root, nodes, primitiveRefs);
+            BvhNode root = BvhBuilder.Build(references);
+            root.Flatten(nodes, primitiveRefs);
         }
 
         _nodes = nodes.ToArray();
@@ -49,47 +49,5 @@ public sealed class SceneBvh(StructuredBuffer<Primitive> primitives)
 
             references.Add(new BvhPrimitiveRef(i, new AxisAlignedBoundingBox(primitive.Min, primitive.Max)));
         }
-    }
-
-    private uint Flatten(
-        BvhNode node,
-        List<GpuBvhNode> nodes,
-        List<GpuBvhPrimitiveRef> primitiveRefs)
-    {
-        uint nodeIndex = (uint)nodes.Count;
-        nodes.Add(default);
-
-        GpuBvhNode gpuNode = new()
-        {
-            Min = node.Bounds.Min,
-            Max = node.Bounds.Max,
-            Left = uint.MaxValue,
-            Right = uint.MaxValue
-        };
-
-        if (node.Primitives is not null)
-        {
-            gpuNode.FirstPrimitive = (uint)primitiveRefs.Count;
-            gpuNode.PrimitiveCount = (uint)node.Primitives.Count;
-
-            primitiveRefs.AddRange(node.Primitives
-                .OrderBy(primitive => primitives.Values[(int)primitive.Index].Type)
-                .Select(primitive => new GpuBvhPrimitiveRef
-                {
-                    Index = primitive.Index
-                }));
-        }
-        else
-        {
-            if (node.Left is null || node.Right is null)
-                throw new InvalidOperationException("Internal BVH nodes must have two children.");
-
-            gpuNode.Left = Flatten(node.Left, nodes, primitiveRefs);
-            gpuNode.Right = Flatten(node.Right, nodes, primitiveRefs);
-            gpuNode.PrimitiveCount = 0;
-        }
-
-        nodes[(int)nodeIndex] = gpuNode;
-        return nodeIndex;
     }
 }
