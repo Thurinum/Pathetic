@@ -41,6 +41,8 @@ builder.Services.AddStructuredBuffer<Material>(ResourceName.Materials);
 builder.Services.AddSingleton<MaterialLibrary>();
 builder.Services.AddGpuPool<SphereData>(ResourceName.SphereData);
 builder.Services.AddGpuPool<PlaneData>(ResourceName.PlaneData);
+builder.Services.AddGpuPool<MeshData>(ResourceName.MeshData);
+builder.Services.AddStructuredBuffer<MeshTriangle>(ResourceName.MeshTriangles);
 builder.Services.AddStructuredBuffer<CameraProvider>();
 
 builder.Services.AddSingleton<SceneBvh>();

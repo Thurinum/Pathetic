@@ -7,7 +7,8 @@ public enum PrimitiveType : uint
 {
     Plane = 0,
     Sphere = 1,
-    Circle = 2
+    Circle = 2,
+    Mesh = 3
 }
 
 [StructLayout(LayoutKind.Explicit, Size = 48)]
@@ -32,4 +33,19 @@ public record struct PlaneData
 {
     public Vector3 HalfExtentX;
     public Vector3 HalfExtentY;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+public record struct MeshData
+{
+    public uint StartTriangleIdx;
+    public uint TriangleCount;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+public record struct MeshTriangle
+{
+    public Vector3 V0;
+    public Vector3 V1;
+    public Vector3 V2;
 }

@@ -25,6 +25,7 @@ public class App(SceneLoop loop, SceneManager sceneManager)
         AddSphere(scene, new Vector3(2.0f, 0.2f, 0.0f), 0.7f, Rgb(0.9f, 0.6f, 0.2f));
         AddSphere(scene, new Vector3(1.3f, -0.3f, 0.9f), 0.2f, Rgb(0.2f, 0.6f, 0.9f));
         AddSphere(scene, new Vector3(-0.2f, 1.0f, 0.0f), 0.7f, Rgb(0.0f, 0.0f, 0.0f), Rgb(1.0f, 0.8f, 0.6f), 15.0f);
+        AddMesh(scene, new Vector3(0.5f, -0.5f, 1.5f), 1.0f, Rgb(0.8f, 0.8f, 0.8f));
         
         var camera = sceneManager.CreateObject(scene, "camera");
         camera.AddComponent<CameraComponent>();
@@ -60,6 +61,51 @@ public class App(SceneLoop loop, SceneManager sceneManager)
         plane.Height = 2f;
 
         // obj.AddComponent<RandomMover>();
+    }
+
+    private void AddMesh(Scene scene, Vector3 position, float size, RgbaByte albedo)
+    {
+        var obj = sceneManager.CreateObject(scene, "mesh");
+        obj.Transform.Position = position;
+
+        var mesh = obj.AddComponent<MeshComponent>();
+        mesh.Triangles = Cube(size);
+        mesh.Material = new Material { Albedo = albedo };
+    }
+
+    private static MeshTriangle[] Cube(float size)
+    {
+        float h = size * 0.5f;
+
+        Vector3[] corners =
+        [
+            new(-h, -h, -h), new(h, -h, -h), new(h, h, -h), new(-h, h, -h),
+            new(-h, -h, h), new(h, -h, h), new(h, h, h), new(-h, h, h)
+        ];
+
+        int[] faces =
+        [
+            4, 5, 6, 4, 6, 7,
+            1, 0, 3, 1, 3, 2,
+            0, 4, 7, 0, 7, 3,
+            5, 1, 2, 5, 2, 6,
+            3, 7, 6, 3, 6, 2,
+            0, 1, 5, 0, 5, 4
+        ];
+
+        var triangles = new MeshTriangle[faces.Length / 3];
+
+        for (int i = 0; i < triangles.Length; i++)
+        {
+            triangles[i] = new MeshTriangle
+            {
+                V0 = corners[faces[i * 3]],
+                V1 = corners[faces[i * 3 + 1]],
+                V2 = corners[faces[i * 3 + 2]]
+            };
+        }
+
+        return triangles;
     }
 
     private static RgbaByte Rgb(float r, float g, float b) =>

@@ -4,6 +4,7 @@ public enum PrimitiveType {
     Plane = 0u,
     Sphere = 1u,
     Circle = 2u,
+    Mesh = 3u,
 }
 
 public struct Primitive
@@ -27,8 +28,23 @@ public struct PlaneData
     public float3 HalfExtentY;
 }
 
+public struct MeshData
+{
+    public uint StartTriangleIdx;
+    public uint TriangleCount;
+}
+
+public struct MeshTriangle
+{
+    public float3 V0;
+    public float3 V1;
+    public float3 V2;
+}
+
 StructuredBuffer<SphereData, ScalarDataLayout> sphereData;
 StructuredBuffer<PlaneData, ScalarDataLayout> planeData;
+StructuredBuffer<MeshData, ScalarDataLayout> meshData;
+StructuredBuffer<MeshTriangle, ScalarDataLayout> meshTriangles;
 
 // Unpacks a packed RgbaByte into normalized 0..1 components.
 public float3 UnpackRgb(uint packed)
@@ -113,6 +129,57 @@ public HitResult IntersectPlane(float3 origin, float3 dir, Primitive p, PlaneDat
     return hit;
 }
 
+public HitResult IntersectTriangle(float3 origin, float3 dir, MeshTriangle tri, float tMin, float tMax)
+{
+    float3 edge1 = tri.V1 - tri.V0;
+    float3 edge2 = tri.V2 - tri.V0;
+    float3 p = cross(dir, edge2);
+    float det = dot(edge1, p);
+    if (abs(det) < 1e-8)
+        return HitResult.Miss();
+
+    float invDet = 1.0 / det;
+    float3 s = origin - tri.V0;
+    float u = dot(s, p) * invDet;
+    if (u < 0.0 || u > 1.0)
+        return HitResult.Miss();
+
+    float3 q = cross(s, edge1);
+    float v = dot(dir, q) * invDet;
+    if (v < 0.0 || u + v > 1.0)
+        return HitResult.Miss();
+
+    float t = dot(edge2, q) * invDet;
+    if (t <= tMin || t >= tMax)
+        return HitResult.Miss();
+
+    float3 n = normalize(cross(edge1, edge2));
+    float3 nExt = n;
+    if (dot(n, dir) > 0)
+        n = -n;
+
+    HitResult result = { t, n, nExt, float2(u, v), 0 };
+    return result;
+}
+
+public HitResult IntersectMesh(float3 origin, float3 dir, Primitive p, MeshData d, float tMin, float tMax)
+{
+    HitResult best = HitResult.Miss();
+    float closest = tMax;
+
+    for (uint i = 0; i < d.TriangleCount; ++i)
+    {
+        HitResult hit = IntersectTriangle(origin, dir, meshTriangles[d.StartTriangleIdx + i], tMin, closest);
+        if (hit.IsHit())
+        {
+            closest = hit.T;
+            best = hit;
+        }
+    }
+
+    return best;
+}
+
 public HitResult IntersectPrimitive(float3 origin, float3 dir, Primitive p, float tMin, float tMax)
 {
     switch (p.Type)
@@ -121,6 +188,8 @@ public HitResult IntersectPrimitive(float3 origin, float3 dir, Primitive p, floa
             return IntersectPlane(origin, dir, p, planeData[p.DataIdx], tMin, tMax);
         case PrimitiveType.Sphere:
             return IntersectSphere(origin, dir, p, sphereData[p.DataIdx], tMin, tMax);
+        case PrimitiveType.Mesh:
+            return IntersectMesh(origin, dir, p, meshData[p.DataIdx], tMin, tMax);
         default:
             return HitResult.Miss();
     }

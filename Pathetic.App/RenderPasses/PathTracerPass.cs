@@ -34,6 +34,8 @@ public sealed class PathTracerPass(
         ResourceName.Materials,
         ResourceName.SphereData,
         ResourceName.PlaneData,
+        ResourceName.MeshData,
+        ResourceName.MeshTriangles,
         ResourceName.BvhNodes,
         ResourceName.BvhPrimitiveRefs,
     ];
