@@ -1,4 +1,5 @@
 using NeoVeldrid;
+using Pathetic.Profiling.Gpu;
 using Pathetic.Renderer.Resources;
 
 namespace Pathetic.Renderer.Graph;
@@ -6,7 +7,8 @@ namespace Pathetic.Renderer.Graph;
 public sealed class RenderGraphFactory(
     RenderPassFactory passFactory,
     RenderGraphPipelineFactory pipelineFactory,
-    IEnumerable<IResourceUploader> resourceUploaders)
+    IEnumerable<IResourceUploader> resourceUploaders,
+    IGpuTimer gpuTimer)
 {
     internal RenderGraph Create(RenderGraphSpec spec, GraphicsDevice device)
     {
@@ -21,7 +23,7 @@ public sealed class RenderGraphFactory(
         RenderGraphValidator.ValidatePassBindings(passes, resources);
         BindPassResources(device, passes, resources);
 
-        return new RenderGraph(resources, passes, presentTexture);
+        return new RenderGraph(resources, passes, presentTexture, gpuTimer);
     }
 
     private List<PassEntry> CreatePasses(RenderGraphSpec spec, GraphicsDevice device)

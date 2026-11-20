@@ -1,5 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+using Pathetic.Profiling.Gpu;
+using Pathetic.Renderer.Profiling;
 using Pathetic.Renderer.Buffers;
 using Pathetic.Renderer.Graph;
 using Pathetic.Renderer.Resources;
@@ -43,6 +46,10 @@ public static class ServiceCollectionExtensions
         
         public IServiceCollection AddRenderer(Action<RenderGraphSpecBuilder> configureGraph)
         {
+
+            services.TryAddSingleton<IGpuTimer, NullGpuTimer>();
+            services.AddStructuredBuffer<ShaderCounterBuffer>();
+            services.AddSingleton<IShaderCounterReadback>(sp => sp.GetRequiredService<ShaderCounterBuffer>());
             services.AddSingleton<SlangCompiler>();
             services.AddSingleton<RenderPassFactory>();
             services.AddSingleton<RenderGraphPipelineFactory>();

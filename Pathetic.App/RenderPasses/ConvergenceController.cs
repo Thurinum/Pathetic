@@ -20,6 +20,22 @@ public sealed class ConvergenceController(
     private bool _wasTaaEnabled = true;
     private ConvergencePlan _plan;
 
+    [ProfileTag("convergence.spp")]
+    public uint SamplesPerPixel => _plan.SamplesPerPixel;
+
+    [ProfileTag("convergence.frames")]
+    public uint FramesSinceReset => _framesSinceReset;
+
+    [ProfileTag("convergence.max_frames")]
+    public uint MaxFrames => _plan.MaxFrames;
+
+    [ProfileTag("convergence.reset")]
+    public bool IsResetting => _plan.ResetAccumulation;
+
+    [ProfileTag("convergence.path_tracing")]
+    public bool IsPathTracing => _plan.RunPathTracer;
+
+    [Profile]
     public ConvergencePlan GetPlan(uint frameIndex, SceneChange sceneRevision)
     {
         if (_lastFrameIndex == frameIndex)

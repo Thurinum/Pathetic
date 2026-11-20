@@ -14,4 +14,10 @@
       <PackageReference Include="Prowl.Slang" />
     </ItemGroup>
 
+
+    <ItemGroup>
+        <ProjectReference Include="..\Pathetic.Profiling\Pathetic.Profiling.csproj" OutputItemType="Analyzer" />
+        <Using Include="Pathetic.Profiling.Aspects" />
+    </ItemGroup>
+
 </Project>

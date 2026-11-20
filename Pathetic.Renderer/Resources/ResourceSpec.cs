@@ -7,6 +7,7 @@ namespace Pathetic.Renderer.Resources;
 // outputs
 public interface IResourceSpec { string Name { get; } }
 public sealed record TextureSpec(string Name, PixelFormat Format, TextureUsage Usage, TextureSizePolicy SizePolicy) : IResourceSpec;
+public sealed record RwBufferSpec(string Name, uint SizeInBytes, uint Stride) : IResourceSpec;
 public sealed record SamplerSpec(string Name, SamplerDescription Description) : IResourceSpec;
 public sealed record UniformBufferSpec : IResourceSpec
 {

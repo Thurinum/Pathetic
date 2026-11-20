@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Pathetic.App;
@@ -7,7 +7,11 @@ using Pathetic.App.Components;
 using Pathetic.App.Components.Camera;
 using Pathetic.App.Input;
 using Pathetic.App.RenderPasses;
+using Pathetic.App.Scenes;
+using Pathetic.App.Scenes.Catalog;
+using Pathetic.App.Scenes.DI;
 using Pathetic.Input;
+using Pathetic.Profiling.DI;
 using Pathetic.Renderer;
 using Pathetic.Renderer.Bvh;
 using Pathetic.Renderer.DI;
@@ -22,11 +26,13 @@ var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
 
 string iniPath = Path.Combine(AppContext.BaseDirectory, "Pathetic.ini");
 builder.Configuration.AddIniFile(iniPath, optional: false, reloadOnChange: false);
+builder.Configuration.AddCommandLine(args);
 
 AddOptions<RendererOptions>();
 AddOptions<PathTracerOptions>();
 AddOptions<TemporalAccumulationOptions>();
 AddOptions<TonemappingOptions>();
+AddOptions<SceneOptions>();
 
 builder.Services.AddSingleton<ConvergenceController>();
 
@@ -54,6 +60,8 @@ builder.Services.AddSingleton(sp => new BvhBufferUploader<GpuBvhPrimitiveRef>(
 builder.Services.AddSingleton<IResourceUploader>(sp => sp.GetRequiredService<BvhBufferUploader<GpuBvhPrimitiveRef>>());
 
 builder.Services.AddSceneGraph();
+builder.Services.AddScene<DefaultScene>();
+builder.Services.AddProfiling();
 
 var inputActions = new InputActions();
 builder.Services.AddSingleton(inputActions);

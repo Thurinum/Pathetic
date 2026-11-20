@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Pathetic.Input;
 
@@ -10,7 +11,7 @@ public static class ServiceCollectionExtensions
         {
             Type[] devices = AppDomain.CurrentDomain
                 .GetAssemblies()
-                .SelectMany(asm => asm.GetTypes())
+                .SelectMany(GetLoadableTypes)
                 .Where(t => t.IsSubclassOf(typeof(InputDevice)) && !t.IsAbstract)
                 .ToArray();
 
@@ -31,6 +32,18 @@ public static class ServiceCollectionExtensions
 
             services.AddSingleton<InputSystem>();
             return services;
+        }
+    }
+
+    private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
+    {
+        try
+        {
+            return assembly.GetTypes();
+        }
+        catch (ReflectionTypeLoadException e)
+        {
+            return e.Types.OfType<Type>();
         }
     }
 }

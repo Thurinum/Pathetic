@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Options;
 using NeoVeldrid;
+using Pathetic.Profiling;
+using Pathetic.Profiling.Gpu;
 using Pathetic.Renderer.Utils;
 using Prowl.Slang;
 
@@ -17,7 +19,7 @@ public sealed class SlangCompiler
     private readonly Session _session;
     public const string EntryPointName = "main";
 
-    public SlangCompiler(IOptions<RendererOptions> options)
+    public SlangCompiler(IOptions<RendererOptions> options, IOptions<ProfilerOptions> profiler)
     {
         _options = options.Value;
         
@@ -31,12 +33,16 @@ public sealed class SlangCompiler
         SessionDescription sessionDescription = new()
         {
             Targets = [target],
-            SearchPaths = [shadersDirectory, "./"]
+            SearchPaths = [shadersDirectory, "./"],
+            PreprocessorMacros = profiler.Value.Enabled ? [.. ShaderCounterMacros.All.Select(ToMacro)] : null
         };
 
         _session = GlobalSession.CreateSession(sessionDescription);
     }
     
+    private static PreprocessorMacroDescription ToMacro((string Name, string Value) macro) => new() { Name = macro.Name, Value = macro.Value };
+
+    [Profile]
     public ShaderCompilationResult CompileComputeShader(string moduleName)
     {
         Module module = _session.LoadModule(moduleName, out DiagnosticInfo loadDiagnostics);
