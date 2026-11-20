@@ -150,11 +150,16 @@ void main(uint3 dispatchThreadId : SV_DispatchThreadID)
     Rng rng = Rng(pixel, frameState.FrameIndex);
     Accumulator accum = Accumulator();
 
-    for (uint k = 0; k < params.SamplesPerPixel; ++k)
+    uint cellsPerAxis = clamp((uint)floor(sqrt((float)params.SamplesPerPixel)), 1u, 8u);
+    uint sampleCount = cellsPerAxis * cellsPerAxis;
+    uint apertureCells[64];
+    ShuffleCells(apertureCells, sampleCount, rng);
+
+    for (uint sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex)
     {
-        float2 jitter = float2(rng.Next(), rng.Next());
-        float3 C = Trace(BuildPrimaryRay(camera, rng, pixel, frameSize, jitter), rng);
-        accum.Add(C);
+        float2 pixelPoint = StratifiedPoint(sampleIndex, cellsPerAxis, rng);
+        float2 aperturePoint = StratifiedPoint(apertureCells[sampleIndex], cellsPerAxis, rng);
+        accum.Add(Trace(BuildPrimaryRay(camera, pixel, frameSize, pixelPoint, aperturePoint), rng));
     }
 
     pathTracerColor[pixel] = float4(accum.Average(), 1.0);

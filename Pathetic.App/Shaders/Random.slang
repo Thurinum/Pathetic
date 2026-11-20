@@ -57,3 +57,22 @@ public float3 RandomBounceDirection(float3 normal, inout Rng rng)
     return tangent * localDir.x + bitangent * localDir.y + normal * localDir.z;
     
 }
+
+public float2 StratifiedPoint(uint cellIndex, uint cellsPerAxis, inout Rng rng)
+{
+    float2 cell = float2(cellIndex % cellsPerAxis, cellIndex / cellsPerAxis);
+    return (cell + float2(rng.Next(), rng.Next())) / cellsPerAxis;
+}
+
+public void ShuffleCells(out uint cells[64], uint count, inout Rng rng)
+{
+    for (uint index = 0; index < count; ++index)
+        cells[index] = index;
+    for (uint last = count - 1; last > 0; --last)
+    {
+        uint other = min((uint)(rng.Next() * (last + 1)), last);
+        uint swapped = cells[last];
+        cells[last] = cells[other];
+        cells[other] = swapped;
+    }
+}
