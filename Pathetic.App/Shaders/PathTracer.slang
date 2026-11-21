@@ -123,7 +123,7 @@ float3 Trace(Ray ray, inout Rng rng)
     float3 light = 0.0;
     float3 weight = 1.0;
 
-    for (uint bounce = 0; ; ++bounce)
+    for (uint bounce = 0; bounce < params.MaxBounces; ++bounce)
     {
         HitResult bestHit = TraceBvh(ray);
 
