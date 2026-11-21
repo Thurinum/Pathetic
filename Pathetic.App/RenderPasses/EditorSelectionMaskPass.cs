@@ -33,6 +33,8 @@ public sealed class EditorSelectionMaskPass : RenderPass
         ResourceName.Selections,
         ResourceName.Spheres,
         ResourceName.Planes,
+        ResourceName.Triangles,
+        ResourceName.MeshTransforms,
     ];
 
     public override void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)

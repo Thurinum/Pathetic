@@ -11,6 +11,7 @@ namespace Pathetic.App.Components.GUI;
 public class EditorSelection(InputActions input, RaycastService raycast, CameraProvider camera,
     SparseSet<SpherePrimitive> spheres,
     SparseSet<PlanePrimitive> planes,
+    SparseSet<TrianglePrimitive> triangles,
     SnapshotBuffer<SelectionEntry> selections) : Component
 {
     private readonly Dictionary<Component, SelectionEntry> _selectionSet = [];
@@ -47,8 +48,13 @@ public class EditorSelection(InputActions input, RaycastService raycast, CameraP
         }
 
         bool isSphere = hit.Primitive == 1;
-        Handle handle = isSphere ? spheres.Get((int)hit.Index) : planes.Get((int)hit.Index);
-        Component obj = (Component)(isSphere ? spheres.OwnerOf(handle) : planes.OwnerOf(handle))!;
+        bool isTriangle = hit.Primitive == 2;
+        Handle handle = isSphere ? spheres.Get((int)hit.Index)
+            : isTriangle ? triangles.Get((int)hit.Index)
+            : planes.Get((int)hit.Index);
+        Component obj = (Component)(isSphere ? spheres.OwnerOf(handle)
+            : isTriangle ? triangles.OwnerOf(handle)
+            : planes.OwnerOf(handle))!;
 
         if (_isToggle)
         {

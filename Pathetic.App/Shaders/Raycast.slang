@@ -13,6 +13,7 @@ struct Params
     RayRequest Request;
     uint PlaneCount;
     uint SphereCount;
+    uint TriangleCount;
 }
 
 struct RaycastHit
@@ -26,6 +27,7 @@ struct RaycastHit
 ConstantBuffer<Params> raycastParams;
 StructuredBuffer<Plane, ScalarDataLayout> planes;
 StructuredBuffer<Sphere, ScalarDataLayout> spheres;
+StructuredBuffer<Triangle, ScalarDataLayout> triangles;
 RWStructuredBuffer<RaycastHit> raycastHits;
 
 [shader("compute")]
@@ -59,6 +61,17 @@ void main(uint3 dispatchThreadId : SV_DispatchThreadID)
         {
             best.T = hit.T;
             best.Primitive = 1;
+            best.Index = i;
+        }
+    }
+
+    for (uint i = 0; i < raycastParams.TriangleCount; ++i)
+    {
+        HitResult hit = IntersectTriangle(ray.Origin, ray.Direction, triangles[i], 1e-4, best.T);
+        if (hit.IsHit())
+        {
+            best.T = hit.T;
+            best.Primitive = 2;
             best.Index = i;
         }
     }

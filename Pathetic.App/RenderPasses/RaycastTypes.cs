@@ -13,6 +13,7 @@ public struct RaycastParams
     public float _Pad1;       // 28
     public uint PlaneCount;   // 32
     public uint SphereCount;  // 36
+    public uint TriangleCount;
 }
 
 /// <summary>Mirrors the RWStructuredBuffer element in Raycast.slang.</summary>

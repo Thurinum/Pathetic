@@ -20,6 +20,7 @@ ConstantBuffer<Camera> camera;
 StructuredBuffer<Selection> selections;
 StructuredBuffer<Plane, ScalarDataLayout> planes;
 StructuredBuffer<Sphere, ScalarDataLayout> spheres;
+StructuredBuffer<Triangle, ScalarDataLayout> triangles;
 
 static const uint INDEX_NONE = ~0u;
 
@@ -53,6 +54,11 @@ void main(uint3 dispatchThreadId : SV_DispatchThreadID)
         {
             Plane plane = planes[selection.Index];
             hit = IntersectPlane(camera.Origin, direction, plane, 1e-4, 1e30);
+        }
+        else if (selection.Primitive == PrimitiveType.Triangle)
+        {
+            Triangle triangle = triangles[selection.Index];
+            hit = IntersectTriangle(camera.Origin, direction, triangle, 1e-4, 1e30);
         }
 
         if (hit.IsHit() && hit.T < bestT)

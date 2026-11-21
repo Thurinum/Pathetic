@@ -18,6 +18,8 @@ public sealed class RaycastPass(RaycastService service, GpuReadback<HitResult> r
     [
         ResourceName.Planes,
         ResourceName.Spheres,
+        ResourceName.Triangles,
+        ResourceName.MeshTransforms,
     ];
 
     protected override (uint x, uint y) DispatchSize(RenderContext ctx) => (1, 1);
@@ -34,6 +36,7 @@ public sealed class RaycastPass(RaycastService service, GpuReadback<HitResult> r
             Direction = request.Direction,
             PlaneCount = ctx.Resources.GetElementCount(ResourceName.Planes),
             SphereCount = ctx.Resources.GetElementCount(ResourceName.Spheres),
+            TriangleCount = ctx.Resources.GetElementCount(ResourceName.Triangles),
         };
         ctx.Cmd.UpdateBuffer(buffer, 0, data);
     }
