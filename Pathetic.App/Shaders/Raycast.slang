@@ -54,7 +54,7 @@ void main(uint3 dispatchThreadId : SV_DispatchThreadID)
     for (uint i = 0; i < raycastParams.SphereCount; ++i)
     {
         Sphere sphere = spheres[i];
-        HitResult hit = IntersectSphere(ray.Origin, ray.Direction, sphere.Center, sphere.Radius, 1e-4, best.T);
+        HitResult hit = IntersectSphere(ray.Origin, ray.Direction, sphere, 1e-4, best.T);
         if (hit.IsHit())
         {
             best.T = hit.T;

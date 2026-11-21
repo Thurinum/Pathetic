@@ -47,7 +47,7 @@ void main(uint3 dispatchThreadId : SV_DispatchThreadID)
         if (selection.Primitive == PrimitiveType.Sphere)
         {
             Sphere sphere = spheres[selection.Index];
-            hit = IntersectSphere(camera.Origin, direction, sphere.Center, sphere.Radius, 1e-4, 1e30);
+            hit = IntersectSphere(camera.Origin, direction, sphere, 1e-4, 1e30);
         }
         else if (selection.Primitive == PrimitiveType.Plane)
         {
