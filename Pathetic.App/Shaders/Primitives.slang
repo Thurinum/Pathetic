@@ -27,6 +27,9 @@ public struct Triangle
     public float3 V0;
     public float3 V1;
     public float3 V2;
+    public float3 N0;
+    public float3 N1;
+    public float3 N2;
     public uint MaterialId;
 }
 
@@ -41,6 +44,7 @@ public struct HitResult
     public float T;
     public float3 Normal;
     public float3 NormalExt;
+    public float3 NormalInterp;
     public float2 UV;
     public uint Index;
     public uint MaterialId;
@@ -54,6 +58,7 @@ public struct HitResult
         h.T = -1;
         h.Normal = 0;
         h.NormalExt = 0;
+        h.NormalInterp = 0;
         h.UV = 0;
         h.Index = 0;
         h.MaterialId = 0;
@@ -94,6 +99,7 @@ public HitResult IntersectSphere(float3 origin, float3 dir, Sphere p, float tMin
     result.T = t;
     result.Normal = n;
     result.NormalExt = nExt;
+    result.NormalInterp = n;
     result.UV = uv;
     result.Index = 0;
     result.MaterialId = p.MaterialId;
@@ -124,6 +130,7 @@ public HitResult IntersectPlane(float3 origin, float3 dir, Plane p, float tMin, 
     hit.T = t;
     hit.Normal = n;
     hit.NormalExt = n;
+    hit.NormalInterp = n;
     hit.UV = uv;
     hit.Index = 0;
     hit.MaterialId = p.MaterialId;
@@ -156,14 +163,23 @@ public HitResult IntersectTriangle(float3 origin, float3 dir, Triangle tri, floa
         return HitResult.Miss();
 
     float3 n = normalize(cross(edge1, edge2));
+
+    float3 nInterp = (1.0 - u - v) * tri.N0 + u * tri.N1 + v * tri.N2;
+    float nInterpLength = length(nInterp);
+    nInterp = nInterpLength > 1e-8 ? nInterp / nInterpLength : n;
+
     float3 nExt = n;
     if (dot(n, dir) > 0)
         n = -n;
+
+    if (dot(nInterp, n) < 0)
+        nInterp = -nInterp;
 
     HitResult result = {};
     result.T = t;
     result.Normal = n;
     result.NormalExt = nExt;
+    result.NormalInterp = nInterp;
     result.UV = float2(u, v);
     result.Index = 0;
     result.MaterialId = tri.MaterialId;

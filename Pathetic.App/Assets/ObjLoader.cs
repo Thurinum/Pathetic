@@ -79,20 +79,72 @@ public sealed class ObjLoader(ILogger<ObjLoader> logger)
 
     private static unsafe void AppendMesh(Mesh* mesh, Matrix4x4 transform, List<MeshTriangle> output)
     {
+        if (mesh->MNumVertices == 0 || mesh->MNumFaces == 0)
+            return;
+
+        Vector3[] normals = new Vector3[mesh->MNumVertices];
+
+        for (uint i = 0; i < mesh->MNumFaces; i++)
+        {
+            Face face = mesh->MFaces[i];
+            if (face.MNumIndices != 3)
+                continue;
+
+            int a = (int)face.MIndices[0];
+            int b = (int)face.MIndices[1];
+            int c = (int)face.MIndices[2];
+
+            Vector3 normal = Vector3.Cross(
+                mesh->MVertices[b] - mesh->MVertices[a],
+                mesh->MVertices[c] - mesh->MVertices[a]);
+
+            float length = normal.Length();
+            if (length <= 1e-12f)
+                continue;
+
+            normal /= length;
+            normals[a] += normal;
+            normals[b] += normal;
+            normals[c] += normal;
+        }
+
+        for (int i = 0; i < normals.Length; i++)
+        {
+            float length = normals[i].Length();
+            if (length > 1e-12f)
+                normals[i] /= length;
+        }
+
+        Matrix4x4 normalMatrix = Matrix4x4.Invert(transform, out Matrix4x4 inverse)
+            ? Matrix4x4.Transpose(inverse)
+            : Matrix4x4.Identity;
+
         for (uint i = 0; i < mesh->MNumFaces; i++)
         {
             Face face = mesh->MFaces[i];
 
             for (uint j = 2; j < face.MNumIndices; j++)
             {
-                output.Add(new MeshTriangle
-                {
-                    V0 = Vector3.Transform(mesh->MVertices[face.MIndices[0]], transform),
-                    V1 = Vector3.Transform(mesh->MVertices[face.MIndices[j - 1]], transform),
-                    V2 = Vector3.Transform(mesh->MVertices[face.MIndices[j]], transform)
-                });
+                int a = (int)face.MIndices[0];
+                int b = (int)face.MIndices[j - 1];
+                int c = (int)face.MIndices[j];
+
+                output.Add(new MeshTriangle(
+                    Vector3.Transform(mesh->MVertices[a], transform),
+                    Vector3.Transform(mesh->MVertices[b], transform),
+                    Vector3.Transform(mesh->MVertices[c], transform),
+                    TransformNormal(normals[a], normalMatrix),
+                    TransformNormal(normals[b], normalMatrix),
+                    TransformNormal(normals[c], normalMatrix)));
             }
         }
+    }
+
+    private static Vector3 TransformNormal(Vector3 normal, Matrix4x4 normalMatrix)
+    {
+        Vector3 transformed = Vector3.TransformNormal(normal, normalMatrix);
+        float length = transformed.Length();
+        return length > 1e-12f ? transformed / length : Vector3.Zero;
     }
 
     private static unsafe RgbaByte? ReadDiffuse(Assimp assimp, Scene* scene)

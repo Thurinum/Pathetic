@@ -140,8 +140,12 @@ float3 Trace(Ray ray, inout Rng rng)
         if (all(albedo == 0.0))
             break;
 
-        float3 newDirection = RandomBounceDirection(bestHit.Normal, rng);
-        weight *= 2.0 * albedo * dot(bestHit.Normal, newDirection);
+        float3 newDirection = RandomBounceDirection(bestHit.NormalInterp, rng);
+
+        if (dot(newDirection, bestHit.Normal) <= 0.0)
+            break;
+
+        weight *= 2.0 * albedo * dot(bestHit.NormalInterp, newDirection);
         if (all(weight == 0.0))
             break;
 
