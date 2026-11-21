@@ -148,11 +148,8 @@ float3 Trace(Ray ray, inout Rng rng)
             break;
 
         float3 newDirection = RandomBounceDirection(shadingNormal, rng);
+        weight *= albedo;
 
-        if (dot(newDirection, bestHit.Normal) <= 0.0)
-            break;
-
-        weight *= 2.0 * albedo * dot(shadingNormal, newDirection);
         if (all(weight == 0.0))
             break;
 
