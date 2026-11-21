@@ -56,12 +56,6 @@ float3 TransformDirection(float3 v, float3 x, float3 y, float3 z)
     return v.x * x + v.y * y + v.z * z;
 }
 
-// Unpacks a packed RgbaByte into normalized 0..1 components.
-public float3 UnpackRgb(uint packed)
-{
-    return float3(float(packed & 0xFFu), float((packed >> 8) & 0xFFu), float((packed >> 16) & 0xFFu)) / 255.0f;
-}
-
 public struct HitResult 
 {
     public float T;

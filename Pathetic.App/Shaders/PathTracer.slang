@@ -134,7 +134,7 @@ float3 Trace(Ray ray, inout Rng rng)
         }
 
         Material material = materials[bestHit.MaterialId];
-        float3 albedo = UnpackRgb(material.Albedo);
+        float3 albedo = material.Albedo.UnpackRgb();
 
         float3 shadingNormal = params.SmoothShading != 0 ? bestHit.NormalInterp : bestHit.Normal;
 
@@ -142,7 +142,7 @@ float3 Trace(Ray ray, inout Rng rng)
             return 0.5 * (shadingNormal + 1.0);
 
         if (dot(bestHit.NormalExt, -ray.Direction) > 0.0)
-            light += weight * UnpackRgb(material.Emission) * material.EmissionStrength;
+            light += weight * material.Emission.UnpackRgb() * material.EmissionStrength;
 
         if (all(albedo == 0.0))
             break;
