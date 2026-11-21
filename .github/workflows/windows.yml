@@ -1,0 +1,68 @@
+name: Windows build
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      version:
+        description: Version stamped into the executable (e.g. 1.2.3).
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Pathetic (${{ matrix.runtime }})
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runtime: win-x64
+            arch: x64
+          - runtime: win-arm64
+            arch: arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 11.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Build
+        if: matrix.runtime == 'win-x64'
+        run: dotnet build Pathetic.slnx --configuration Release
+
+      - name: Package
+        shell: pwsh
+        run: build/windows/package.ps1 -Version $env:VERSION -Runtime ${{ matrix.runtime }}
+        env:
+          VERSION: ${{ inputs.version || format('0.0.{0}', github.run_number) }}
+
+      - name: Upload app
+        uses: actions/upload-artifact@v7
+        with:
+          name: Pathetic-windows-${{ matrix.arch }}
+          path: artifacts/Pathetic-windows-${{ matrix.arch }}.zip
+          if-no-files-found: error
