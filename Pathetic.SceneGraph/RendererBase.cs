@@ -3,13 +3,15 @@ using Pathetic.SceneGraph.Components;
 
 namespace Pathetic.SceneGraph;
 
-public abstract class RendererBase<T>(SparseSet<T> primitives) : Component where T : unmanaged, IEquatable<T>
+public abstract class RendererBase<T>(SparseSet<T> primitives)
+    : Component where T : unmanaged, IEquatable<T>
 {
     private Handle _handle = Handle.Invalid;
 
     protected override void Setup()
     {
         _handle = primitives.Add(BuildPrimitive());
+        primitives.SetOwner(_handle, this);
     }
 
     protected override void LateUpdate(float deltaTime)

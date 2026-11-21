@@ -32,11 +32,15 @@ AddOptions<CameraOptions>();
 
 builder.Services.AddSingleton<RenderDebugSettings>();
 builder.Services.AddSingleton<ConvergenceController>();
+builder.Services.AddSingleton<RaycastService>();
 
 builder.Services.AddRenderer(graph => graph
     // .AddPass<CirclesPass>()
     .AddPass<PathTracerPass>()
     .AddPass<TemporalAccumulationPass>()
+    .AddPass<RaycastPass>()
+    .AddPass<EditorSelectionMaskPass>()
+    .AddPass<EditorSelectionOutlinePass>()
     .Present(ResourceName.PresentColor));
 
 builder.Services.AddStructuredBuffer<SpherePrimitive>(ResourceName.Spheres, sparseStorage: true);
@@ -47,6 +51,8 @@ builder.Services.AddStructuredBuffer<Material>(ResourceName.Materials);
 builder.Services.AddSingleton<MaterialLibrary>();
 builder.Services.AddSingleton<MeshTransformLibrary>();
 builder.Services.AddSingleton<ObjLoader>();
+builder.Services.AddSnapshotBuffer<SelectionEntry>(ResourceName.Selections);
+builder.Services.AddWritableBuffer<HitResult>(ResourceName.RaycastHits);
 builder.Services.AddStructuredBuffer<CameraProvider>();
 
 builder.Services.AddSingleton<SceneBvh>();

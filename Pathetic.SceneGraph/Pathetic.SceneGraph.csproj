@@ -13,5 +13,5 @@
       <ProjectReference Include="..\Pathetic.Input\Pathetic.Input.csproj" />
       <ProjectReference Include="..\Pathetic.Renderer\Pathetic.Renderer.csproj" />
     </ItemGroup>
-
+    
 </Project>

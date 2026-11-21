@@ -7,7 +7,35 @@ public sealed class SparseSet<T>(StructuredBuffer<T> buffer) where T : unmanaged
     private int[] _versions = new int[InitialSize];
     private int[] _handleIdxToDenseIdx = new int[InitialSize];
     private int[] _denseIdxToHandleIdx = new int[InitialSize];
+    private object?[] _owners = new object?[InitialSize];
     private readonly Stack<int> _freeHandles = new();
+
+    public Handle Get(int denseIdx)
+    {
+        if (denseIdx < 0 || denseIdx >= buffer.Count)
+            return Handle.Invalid;
+
+        int hndlIdx = _denseIdxToHandleIdx[denseIdx];
+        return new Handle(hndlIdx, _versions[hndlIdx]);
+    }
+    
+    public bool IsValid(Handle handle)
+    {
+        return handle.IsValid && handle.Version == _versions[handle.Index];
+    }
+
+    public void SetOwner(Handle handle, object owner)
+    {
+        if (!IsValid(handle))
+            throw new InvalidOperationException("Invalid or outdated handle.");
+
+        _owners[handle.Index] = owner;
+    }
+
+    public object? OwnerOf(Handle handle)
+    {
+        return IsValid(handle) ? _owners[handle.Index] : null;
+    }
 
     public Handle Add(in T value)
     {
@@ -48,14 +76,10 @@ public sealed class SparseSet<T>(StructuredBuffer<T> buffer) where T : unmanaged
         }
 
         _handleIdxToDenseIdx[handle.Index] = -1;
+        _owners[handle.Index] = null;
         _versions[handle.Index]++;
         _freeHandles.Push(handle.Index);
         handle = Handle.Invalid;
-    }
-
-    public bool IsValid(Handle handle)
-    {
-        return handle.IsValid && handle.Version == _versions[handle.Index];
     }
 
     private void EnsureCapacity(int handleCount)
@@ -67,5 +91,6 @@ public sealed class SparseSet<T>(StructuredBuffer<T> buffer) where T : unmanaged
         Array.Resize(ref _versions, newSize);
         Array.Resize(ref _handleIdxToDenseIdx, newSize);
         Array.Resize(ref _denseIdxToHandleIdx, newSize);
+        Array.Resize(ref _owners, newSize);
     }
 }

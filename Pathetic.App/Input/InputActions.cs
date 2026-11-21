@@ -44,7 +44,7 @@ public sealed class InputActions
                         "MouseDelta"),
                     [
                         Handle("Mouse and Keyboard",
-                            "MouseLeft")
+                            "MouseMiddle")
                     ],
                     [
                         new ScaleVector2(0.25f)
@@ -101,6 +101,70 @@ public sealed class InputActions
             ],
         };
 
+        public InputAction_Bool Select { get; } = new()
+        {
+            Name = "Select",
+            Bindings =
+            [
+                new InputBindingSpec(Handle("Mouse and Keyboard",
+                        "MouseLeft"),
+                    [
+                    ],
+                    [
+                    ]),
+            ],
+            Processors =
+            [
+            ],
+            Triggers =
+            [
+                new Press<bool>()
+            ],
+        };
+
+        public InputAction_Bool ToggleSelect { get; } = new()
+        {
+            Name = "ToggleSelect",
+            Bindings =
+            [
+                new InputBindingSpec(Handle("Mouse and Keyboard",
+                        "MouseLeft"),
+                    [
+                        Handle("Mouse and Keyboard",
+                            "ShiftLeft")
+                    ],
+                    [
+                    ]),
+            ],
+            Processors =
+            [
+            ],
+            Triggers =
+            [
+                new Press<bool>()
+            ],
+        };
+
+        public InputAction_Vector2 MousePosition { get; } = new()
+        {
+            Name = "MousePosition",
+            Bindings =
+            [
+                new InputBindingSpec(Handle("Mouse and Keyboard",
+                        "MousePosition01"),
+                    [
+                    ],
+                    [
+                    ]),
+            ],
+            Processors =
+            [
+            ],
+            Triggers =
+            [
+            ],
+        };
+
         public InputContext Context { get; }
 
         public EditorViewportContext()
@@ -109,7 +173,7 @@ public sealed class InputActions
             {
                 Name = "EditorViewport",
                 Enabled = true,
-                Actions = [Focus, Orbit, Zoom],
+                Actions = [Focus, Orbit, Zoom, Select, ToggleSelect, MousePosition],
             };
         }
 

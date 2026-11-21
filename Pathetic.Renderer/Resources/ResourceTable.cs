@@ -254,11 +254,13 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
         ArgumentOutOfRangeException.ThrowIfZero(elementCapacity);
 
         entry.ElementCapacity = elementCapacity;
-        BufferUsage usage = BufferUsage.StructuredBufferReadOnly;
+        BufferUsage usage = spec.IsWritable ? BufferUsage.StructuredBufferReadWrite : BufferUsage.StructuredBufferReadOnly;
         if (spec.IsDynamic)
             usage |= BufferUsage.Dynamic;
 
         var bufferDesc = new BufferDescription(spec.Stride * elementCapacity, usage, spec.Stride);
-        return device.ResourceFactory.CreateBuffer(bufferDesc);
+        DeviceBuffer buffer = device.ResourceFactory.CreateBuffer(bufferDesc);
+        spec.OnAllocated(buffer);
+        return buffer;
     }
 }

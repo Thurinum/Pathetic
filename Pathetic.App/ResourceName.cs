@@ -18,4 +18,8 @@ public static class ResourceName
     public const string BvhNodes = "bvhNodes";
     public const string BvhPrimitiveRefs = "bvhPrimitiveRefs";
     public const string Circles = "circlePrimitives";
+    public const string Selections = "selections";
+    public const string SelectionMask = "selectionMask";
+    public const string RaycastParams = "raycastParams";
+    public const string RaycastHits = "raycastHits";
 }

@@ -19,6 +19,8 @@ public abstract class RenderPass : IResourceUploader
     public virtual void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized) {}
     protected virtual (uint x, uint y) DispatchSize(RenderContext ctx) => (ctx.Width, ctx.Height);
 
+    protected virtual void PostExecute(RenderContext ctx, PassRenderState state) {}
+
     public void Execute(RenderContext ctx, PassRenderState state)
     {
         ctx.Cmd.SetPipeline(state.Pipeline);
@@ -26,6 +28,7 @@ public abstract class RenderPass : IResourceUploader
         (uint w, uint h) = DispatchSize(ctx);
         (uint x, uint y, uint z) = ComputeThreadGroupCount(state.ThreadGroupSize, w, h);
         ctx.Cmd.Dispatch(x, y, z);
+        PostExecute(ctx, state);
     }
     
     private static UIntVector3 ComputeThreadGroupCount(UIntVector3 groupSize, uint width, uint height)

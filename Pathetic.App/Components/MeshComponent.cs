@@ -45,7 +45,11 @@ public class MeshComponent(
         uint materialId = materials.GetOrAdd(Asset.Material);
 
         foreach (MeshTriangle triangle in Asset.Triangles)
-            _handles.Add(triangles.Add(ToPrimitive(triangle, materialId, _transformId)));
+        {
+            Handle handle = triangles.Add(ToPrimitive(triangle, materialId, _transformId));
+            triangles.SetOwner(handle, this);
+            _handles.Add(handle);
+        }
 
         BakeTransform();
     }

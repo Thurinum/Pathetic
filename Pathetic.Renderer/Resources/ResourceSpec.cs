@@ -45,5 +45,7 @@ public interface IStructuredBufferSpec : IResourceSpec, IResourceUploader
     uint InitialCapacity { get; }
     bool IsResizable { get; }
     bool IsDynamic { get; }
-}
+    bool IsWritable => false;
 
+    void OnAllocated(DeviceBuffer buffer) { }
+}

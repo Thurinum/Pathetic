@@ -1,6 +1,4 @@
-﻿using System.Numerics;
-
-namespace Pathetic.Input;
+﻿namespace Pathetic.Input;
 
 public interface IInputProcessor
 {

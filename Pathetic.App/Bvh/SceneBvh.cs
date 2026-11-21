@@ -15,24 +15,22 @@ public sealed class SceneBvh(
     private const uint SphereType = 1;
     private const uint TriangleType = 2;
 
-    private GpuBvhNode[] _nodes = [];
-    private GpuBvhPrimitiveRef[] _primitiveRefs = [];
     private uint _sphereRevision;
     private uint _planeRevision;
     private uint _triangleRevision;
     private uint _transformRevision;
-    private bool _built;
 
     public uint Version { get; private set; }
-    public GpuBvhNode[] Nodes => _nodes;
-    public GpuBvhPrimitiveRef[] PrimitiveRefs => _primitiveRefs;
+    public GpuBvhNode[] Nodes { get; private set; } = [];
+    public GpuBvhPrimitiveRef[] PrimitiveRefs { get; private set; } = [];
 
-    public bool IsDirty =>
-        !_built
+    public bool IsDirty { get =>
+        !field
         || _sphereRevision != spheres.Revision
         || _planeRevision != planes.Revision
         || _triangleRevision != triangles.Revision
-        || _transformRevision != meshTransforms.Revision;
+        || _transformRevision != meshTransforms.Revision; private set;
+    }
 
     public void Rebuild()
     {
@@ -50,13 +48,13 @@ public sealed class SceneBvh(
             root.Flatten(nodes, primitiveRefs);
         }
 
-        _nodes = nodes.ToArray();
-        _primitiveRefs = primitiveRefs.ToArray();
+        Nodes = nodes.ToArray();
+        PrimitiveRefs = primitiveRefs.ToArray();
         _sphereRevision = spheres.Revision;
         _planeRevision = planes.Revision;
         _triangleRevision = triangles.Revision;
         _transformRevision = meshTransforms.Revision;
-        _built = true;
+        IsDirty = true;
         Version++;
     }
 

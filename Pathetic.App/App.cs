@@ -20,9 +20,12 @@ public sealed class App(SceneLoop loop, SceneManager sceneManager, ObjLoader obj
 
         sceneManager.CreateObject(scene, "fpsCounter")
             .AddComponent<FPSCounter>();
-
-        sceneManager.CreateObject(scene, "youssefAimePasTemporalAccumFix")
+        
+        sceneManager.CreateObject(scene, "renderSettings")
             .AddComponent<RenderSettingsComponent>();
+        
+        sceneManager.CreateObject(scene, "editor")
+            .AddComponent<EditorSelection>();
 
         var floor = AddPlane(scene, new Vector3(0.0f, -0.5f, 0.0f), Quaternion.FromEuler(new Vector3(-90.0f, 0.0f, 0.0f)));
         floor.Width = 500.0f;
