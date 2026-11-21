@@ -28,6 +28,7 @@ AddOptions<RendererOptions>();
 AddOptions<PathTracerOptions>();
 AddOptions<TemporalAccumulationOptions>();
 AddOptions<TonemappingOptions>();
+AddOptions<CameraOptions>();
 
 builder.Services.AddSingleton<ConvergenceController>();
 
