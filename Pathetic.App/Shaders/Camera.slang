@@ -2,8 +2,6 @@ module Camera;
 
 import Random;
 
-static const float Pi = 3.14159265358979323846;
-
 public struct Camera
 {
     public float3 Origin;    
@@ -47,6 +45,6 @@ public Ray BuildPrimaryRay(Camera camera, uint2 pixel, uint2 frameSize, float2 j
 float2 SampleAperture(Camera camera, float2 unitSquarePoint)
 {
     float radius = sqrt(unitSquarePoint.x);
-    float angle = 2.0 * Pi * unitSquarePoint.y;
+    float angle = 2.0 * float.getPi() * unitSquarePoint.y;
     return float2(radius * cos(angle), radius * sin(angle)) * camera.ApertureRadius;
 }
