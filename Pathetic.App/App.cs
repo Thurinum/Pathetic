@@ -34,6 +34,7 @@ public sealed class App(SceneLoop loop, SceneManager sceneManager, ObjLoader obj
         AddSphere(scene, new Vector3(-0.2f, 1.0f, 0.0f), 0.7f, Rgb(0.0f, 0.0f, 0.0f), Rgb(1.0f, 0.8f, 0.6f), 15.0f);
         AddModel(scene, "cube.obj", new Vector3(0.5f, 0.0f, 1.5f), 0.5f, albedo: RandomColor());
         AddModel(scene, "teapot.obj", new Vector3(-2.2f, -0.5f, 3.2f), 1f, Quaternion.CreateFromAxisAngle(Vector3.UnitY, -0.35f), RandomColor());
+        AddModel(scene, "cow.obj", new Vector3(2.2f, 1.3f, -3.2f), 0.5f, Quaternion.CreateFromAxisAngle(Vector3.UnitY, -0.35f), RandomColor());
         AddModel(scene, "cube.obj", new Vector3(1.4f, -0.35f, 1.0f), 0.15f, Quaternion.CreateFromAxisAngle(Vector3.UnitY, 0.6f), RandomColor());
 
         var camera = sceneManager.CreateObject(scene, "camera");
