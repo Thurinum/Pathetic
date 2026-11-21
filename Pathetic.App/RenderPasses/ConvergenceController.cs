@@ -18,6 +18,8 @@ public sealed class ConvergenceController(
     private bool _runPathTracer = true;
     private bool _wasMoving;
     private bool _wasTaaEnabled = true;
+    private bool _displayNormals;
+    private bool _smoothShading;
     private ConvergencePlan _plan;
 
     public ConvergencePlan GetPlan(uint frameIndex, SceneChange sceneRevision)
@@ -31,7 +33,14 @@ public sealed class ConvergenceController(
         var taa = temporalAccumulation.Value;
         bool taaEnabled = taa.Enabled;
         bool isMoving = sceneRevision != SceneChange.None;
-        bool resetAccumulation = firstFrame || !taaEnabled || isMoving || _wasMoving || !_wasTaaEnabled;
+
+        bool displayNormals = pathTracer.Value.DisplayNormals;
+        bool smoothShading = pathTracer.Value.SmoothShading;
+        bool settingsChanged = _displayNormals != displayNormals || _smoothShading != smoothShading;
+        _displayNormals = displayNormals;
+        _smoothShading = smoothShading;
+
+        bool resetAccumulation = firstFrame || !taaEnabled || isMoving || _wasMoving || !_wasTaaEnabled || settingsChanged;
         uint maxFrames = GetMaxFrames(taa);
 
         if (resetAccumulation)

@@ -19,6 +19,8 @@ public sealed class PathTracerPass(
         public uint SamplesPerPixel;
         public uint MaxBounces;
         public uint BvhNodeCount;
+        public uint DisplayNormals;
+        public uint SmoothShading;
     }
 
     public override string ShaderModule => "PathTracer";
@@ -54,6 +56,8 @@ public sealed class PathTracerPass(
             SamplesPerPixel = plan.SamplesPerPixel,
             MaxBounces = options.Value.MaxBounces,
             BvhNodeCount = ctx.Resources.GetElementCount(ResourceName.BvhNodes),
+            DisplayNormals = options.Value.DisplayNormals ? 1u : 0u,
+            SmoothShading = options.Value.SmoothShading ? 1u : 0u,
         };
         ctx.Cmd.UpdateBuffer(buffer, 0, @params);
     }

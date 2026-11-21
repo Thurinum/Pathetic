@@ -17,6 +17,8 @@ struct Params
     uint SamplesPerPixel;
     uint MaxBounces;
     uint BvhNodeCount;
+    uint DisplayNormals;
+    uint SmoothShading;
 }
 
 struct BvhStackEntry
@@ -134,18 +136,23 @@ float3 Trace(Ray ray, inout Rng rng)
         Material material = materials[bestHit.MaterialId];
         float3 albedo = UnpackRgb(material.Albedo);
 
+        float3 shadingNormal = params.SmoothShading != 0 ? bestHit.NormalInterp : bestHit.Normal;
+
+        if (params.DisplayNormals != 0)
+            return 0.5 * (shadingNormal + 1.0);
+
         if (dot(bestHit.NormalExt, -ray.Direction) > 0.0)
             light += weight * UnpackRgb(material.Emission) * material.EmissionStrength;
 
         if (all(albedo == 0.0))
             break;
 
-        float3 newDirection = RandomBounceDirection(bestHit.NormalInterp, rng);
+        float3 newDirection = RandomBounceDirection(shadingNormal, rng);
 
         if (dot(newDirection, bestHit.Normal) <= 0.0)
             break;
 
-        weight *= 2.0 * albedo * dot(bestHit.NormalInterp, newDirection);
+        weight *= 2.0 * albedo * dot(shadingNormal, newDirection);
         if (all(weight == 0.0))
             break;
 

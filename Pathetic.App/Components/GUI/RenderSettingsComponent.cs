@@ -41,6 +41,14 @@ public class RenderSettingsComponent(
         if (ImGui.IsItemHovered())
             ImGui.SetTooltip("Samples per pixel while the camera or scene is changing");
 
+        bool displayNormals = pathTracer.Value.DisplayNormals;
+        if (ImGui.Checkbox("Display Normals", ref displayNormals))
+            pathTracer.Value.DisplayNormals = displayNormals;
+
+        bool smoothShading = pathTracer.Value.SmoothShading;
+        if (ImGui.Checkbox("Smooth Shading", ref smoothShading))
+            pathTracer.Value.SmoothShading = smoothShading;
+
         int tonemapper = Math.Max(0, Array.FindIndex(Tonemappers, t => t.Value == tonemapping.Value.Tonemapper));
         if (ImGui.Combo("Tonemapper", ref tonemapper, TonemapperLabels, TonemapperLabels.Length))
             tonemapping.Value.Tonemapper = Tonemappers[tonemapper].Value;

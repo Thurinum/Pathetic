@@ -15,4 +15,8 @@ public sealed record PathTracerOptions : IConfig
     
     [Range(1, 67)]
     public uint MaxBounces { get; init; } = 8;
+
+    public bool DisplayNormals { get; set; }
+
+    public bool SmoothShading { get; set; } = true;
 }
