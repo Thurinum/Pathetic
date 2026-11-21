@@ -7,12 +7,18 @@ namespace Pathetic.App.Bvh;
 
 public sealed class SceneBvh(
     StructuredBuffer<SpherePrimitive> spheres,
-    StructuredBuffer<PlanePrimitive> planes)
+    StructuredBuffer<PlanePrimitive> planes,
+    StructuredBuffer<TrianglePrimitive> triangles,
+    StructuredBuffer<MeshTransform> meshTransforms)
 {
     private const uint PlaneType = 0;
     private const uint SphereType = 1;
+    private const uint TriangleType = 2;
+
     private uint _sphereRevision;
     private uint _planeRevision;
+    private uint _triangleRevision;
+    private uint _transformRevision;
 
     public uint Version { get; private set; }
     public GpuBvhNode[] Nodes { get; private set; } = [];
@@ -21,7 +27,9 @@ public sealed class SceneBvh(
     public bool IsDirty { get =>
         !field
         || _sphereRevision != spheres.Revision
-        || _planeRevision != planes.Revision; private set;
+        || _planeRevision != planes.Revision
+        || _triangleRevision != triangles.Revision
+        || _transformRevision != meshTransforms.Revision; private set;
     }
 
     public void Rebuild()
@@ -29,20 +37,23 @@ public sealed class SceneBvh(
         List<BvhPrimitiveRef> references = [];
         AppendSpheres(references);
         AppendPlanes(references);
+        AppendTriangles(references);
 
         List<GpuBvhNode> nodes = [];
         List<GpuBvhPrimitiveRef> primitiveRefs = [];
 
         if (references.Count > 0)
         {
-            BvhNode root = new BvhBuilder().Build(references);
-            Flatten(root, nodes, primitiveRefs);
+            BvhNode root = BvhBuilder.Build(references);
+            root.Flatten(nodes, primitiveRefs);
         }
 
         Nodes = nodes.ToArray();
         PrimitiveRefs = primitiveRefs.ToArray();
         _sphereRevision = spheres.Revision;
         _planeRevision = planes.Revision;
+        _triangleRevision = triangles.Revision;
+        _transformRevision = meshTransforms.Revision;
         IsDirty = true;
         Version++;
     }
@@ -79,44 +90,39 @@ public sealed class SceneBvh(
         }
     }
 
-    private static uint Flatten(
-        BvhNode node,
-        List<GpuBvhNode> nodes,
-        List<GpuBvhPrimitiveRef> primitiveRefs)
+    private void AppendTriangles(List<BvhPrimitiveRef> references)
     {
-        uint nodeIndex = (uint)nodes.Count;
-        nodes.Add(default);
+        ReadOnlySpan<TrianglePrimitive> source = triangles.Values;
+        ReadOnlySpan<MeshTransform> transforms = meshTransforms.Values;
 
-        GpuBvhNode gpuNode = new()
+        for (uint i = 0; i < source.Length; i++)
         {
-            Min = node.Bounds.Min,
-            Max = node.Bounds.Max,
-            Left = uint.MaxValue,
-            Right = uint.MaxValue
-        };
+            TrianglePrimitive triangle = source[(int)i];
 
-        if (node.Primitives is not null)
-        {
-            gpuNode.FirstPrimitive = (uint)primitiveRefs.Count;
-            gpuNode.PrimitiveCount = (uint)node.Primitives.Count;
+            AxisAlignedBoundingBox bounds = AxisAlignedBoundingBox.Empty
+                .Include(triangle.V0).Include(triangle.V1).Include(triangle.V2);
 
-            primitiveRefs.AddRange(node.Primitives.Select(primitive => new GpuBvhPrimitiveRef
-            {
-                Type = primitive.Type,
-                Index = primitive.Index
-            }));
+            if (triangle.TransformId < transforms.Length)
+                bounds = TransformBounds(bounds, transforms[(int)triangle.TransformId]);
+
+            references.Add(new BvhPrimitiveRef(TriangleType, i, bounds));
         }
-        else
-        {
-            if (node.Left is null || node.Right is null)
-                throw new InvalidOperationException("Internal BVH nodes must have two children.");
+    }
 
-            gpuNode.Left = Flatten(node.Left, nodes, primitiveRefs);
-            gpuNode.Right = Flatten(node.Right, nodes, primitiveRefs);
-            gpuNode.PrimitiveCount = 0;
+    private static AxisAlignedBoundingBox TransformBounds(AxisAlignedBoundingBox bounds, MeshTransform transform)
+    {
+        AxisAlignedBoundingBox result = AxisAlignedBoundingBox.Empty;
+
+        for (int corner = 0; corner < 8; corner++)
+        {
+            Vector3 point = new(
+                (corner & 1) == 0 ? bounds.Min.X : bounds.Max.X,
+                (corner & 2) == 0 ? bounds.Min.Y : bounds.Max.Y,
+                (corner & 4) == 0 ? bounds.Min.Z : bounds.Max.Z);
+
+            result = result.Include(transform.TransformPoint(point));
         }
 
-        nodes[(int)nodeIndex] = gpuNode;
-        return nodeIndex;
+        return result;
     }
 }

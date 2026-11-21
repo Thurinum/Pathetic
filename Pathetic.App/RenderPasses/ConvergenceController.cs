@@ -11,14 +11,19 @@ public readonly record struct ConvergencePlan(
 
 public sealed class ConvergenceController(
     IOptions<TemporalAccumulationOptions> temporalAccumulation,
-    IOptions<PathTracerOptions> pathTracer)
+    IOptions<PathTracerOptions> pathTracer,
+    RenderDebugSettings debug)
 {
     private uint? _lastFrameIndex;
     private uint _framesSinceReset;
     private bool _runPathTracer = true;
     private bool _wasMoving;
     private bool _wasTaaEnabled = true;
+    private uint _debugRevision;
+    private bool _invalidated;
     private ConvergencePlan _plan;
+
+    public void Invalidate() => _invalidated = true;
 
     public ConvergencePlan GetPlan(uint frameIndex, SceneChange sceneRevision)
     {
@@ -31,7 +36,12 @@ public sealed class ConvergenceController(
         TemporalAccumulationOptions taa = temporalAccumulation.Value;
         bool taaEnabled = taa.Enabled;
         bool isMoving = sceneRevision != SceneChange.None;
-        bool resetAccumulation = firstFrame || !taaEnabled || isMoving || _wasMoving || !_wasTaaEnabled;
+
+        bool settingsChanged = _debugRevision != debug.Revision;
+        _debugRevision = debug.Revision;
+
+        bool resetAccumulation = firstFrame || _invalidated || !taaEnabled || isMoving || _wasMoving || !_wasTaaEnabled || settingsChanged;
+        _invalidated = false;
         uint maxFrames = GetMaxFrames(taa);
 
         if (resetAccumulation)

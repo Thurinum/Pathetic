@@ -1,15 +1,16 @@
 ﻿using System.Numerics;
+using Microsoft.Extensions.Options;
 using Pathetic.SceneGraph;
 using Pathetic.SceneGraph.Components;
 
 namespace Pathetic.App.Components.Camera;
 
-public class CameraComponent(CameraProvider provider) : Component
+public class CameraComponent(CameraProvider provider, IOptions<CameraOptions> options) : Component
 {
     private Transform _transform = null!;
-    public float FovDegrees { get; } = 80.0f;
-    public float FocusDistance { get; set; } = 5.0f;
-    public float ApertureRadius { get; set; } = 0.15f;
+    public float FovDegrees { get; set; } = options.Value.FovDegrees;
+    public float FocusDistance { get; set; } = options.Value.FocusDistance;
+    public float ApertureRadius { get; set; } = options.Value.ApertureRadius;
 
     protected override void Setup()
     {

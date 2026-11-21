@@ -1,6 +1,7 @@
 module PathTracer;
 
 import Primitives;
+import Materials;
 import Camera;
 import Random;
 import Accumulation;
@@ -12,15 +13,26 @@ struct Params
 {
     uint PlaneCount;
     uint SphereCount;
+    uint TriangleCount;
     uint SamplesPerPixel;
     uint MaxBounces;
     uint BvhNodeCount;
+    uint DisplayNormals;
+    uint SmoothShading;
 }
+
+struct BvhStackEntry
+{
+    uint Node;
+    float Near;
+};
 
 RWTexture2D<float4> pathTracerColor;
 ConstantBuffer<Camera> camera;
 StructuredBuffer<Plane, ScalarDataLayout> planes;
 StructuredBuffer<Sphere, ScalarDataLayout> spheres;
+StructuredBuffer<Triangle, ScalarDataLayout> triangles;
+StructuredBuffer<Material, ScalarDataLayout> materials;
 ConstantBuffer<Params> params;
 StructuredBuffer<BvhNode, ScalarDataLayout> bvhNodes;
 StructuredBuffer<BvhPrimitiveRef, ScalarDataLayout> bvhPrimitiveRefs;
@@ -32,20 +44,25 @@ public HitResult TraceBvh(Ray ray)
 
     HitResult bestHit = HitResult.Miss();
     float bestT = 1e30;
-    
+
     // Check if there is an intersection with the BVH at all
     BvhIntersection rootIntersection = bvhNodes[BvhNode.Root].Intersects(ray, 1e-4, bestT);
     if (!rootIntersection.Hit)
         return bestHit;
 
-    uint stack[32];
+    BvhStackEntry stack[64];
     uint stackSize = 0;
-    stack[stackSize++] = BvhNode.Root;
+    stack[stackSize++] = { BvhNode.Root, rootIntersection.Near };
 
     while (stackSize > 0)
     {
-        uint nodeIndex = stack[--stackSize];
-        BvhNode node = bvhNodes[nodeIndex];
+        BvhStackEntry entry = stack[--stackSize];
+
+        // Discard nodes whose entry point is past the closest hit found so far
+        if (entry.Near > bestT)
+            continue;
+
+        BvhNode node = bvhNodes[entry.Node];
 
         if (node.PrimitiveCount > 0)
         {
@@ -57,12 +74,13 @@ public HitResult TraceBvh(Ray ray)
                 switch (primitive.Type)
                 {
                     case PrimitiveType.Plane:
-                        Plane plane = planes[primitive.Index];
-                        hit = IntersectPlane(ray.Origin, ray.Direction, plane, 1e-4, bestT);
+                        hit = IntersectPlane(ray.Origin, ray.Direction, planes[primitive.Index], 1e-4, bestT);
                         break;
                     case PrimitiveType.Sphere:
-                        Sphere sphere = spheres[primitive.Index];
-                        hit = IntersectSphere(ray.Origin, ray.Direction, sphere.Center, sphere.Radius, 1e-4, bestT);
+                        hit = IntersectSphere(ray.Origin, ray.Direction, spheres[primitive.Index], 1e-4, bestT);
+                        break;
+                    case PrimitiveType.Triangle:
+                        hit = IntersectTriangle(ray.Origin, ray.Direction, triangles[primitive.Index], 1e-4, bestT);
                         break;
                 }
 
@@ -82,18 +100,18 @@ public HitResult TraceBvh(Ray ray)
 
         if (leftIntersection.Hit && !rightIntersection.Hit)
         {
-            stack[stackSize++] = node.Left;
+            stack[stackSize++] = { node.Left, leftIntersection.Near };
         }
         else if (!leftIntersection.Hit && rightIntersection.Hit)
         {
-            stack[stackSize++] = node.Right;
+            stack[stackSize++] = { node.Right, rightIntersection.Near };
         }
         else if (leftIntersection.Hit && rightIntersection.Hit)
         {
             // Put nearest intersection on the stack last
             bool leftIsNearer = leftIntersection.Near < rightIntersection.Near;
-            stack[stackSize++] = leftIsNearer ? node.Right : node.Left;
-            stack[stackSize++] = leftIsNearer ? node.Left : node.Right;
+            stack[stackSize++] = { leftIsNearer ? node.Right : node.Left, leftIsNearer ? rightIntersection.Near : leftIntersection.Near };
+            stack[stackSize++] = { leftIsNearer ? node.Left : node.Right, leftIsNearer ? leftIntersection.Near : rightIntersection.Near };
         }
     }
 
@@ -105,14 +123,9 @@ float3 Trace(Ray ray, inout Rng rng)
     float3 light = 0.0;
     float3 weight = 1.0;
 
-    for (uint bounce = 0; bounce <= params.MaxBounces; ++bounce)
+    for (uint bounce = 0; bounce < params.MaxBounces; ++bounce)
     {
         HitResult bestHit = TraceBvh(ray);
-        
-        if (bestHit.Primitive == PrimitiveType.Plane)
-        {
-            return float3(0.0, 1.0, 0.0);
-        }
 
         if (!bestHit.IsHit())
         {
@@ -120,16 +133,34 @@ float3 Trace(Ray ray, inout Rng rng)
             break;
         }
 
-        float3 albedo = UnpackRgb(spheres[bestHit.Index].Albedo);
+        Material material = materials[bestHit.MaterialId];
+        float3 albedo = material.Albedo.UnpackRgb();
+
+        float3 shadingNormal = params.SmoothShading != 0 ? bestHit.NormalInterp : bestHit.Normal;
+
+        if (params.DisplayNormals != 0)
+            return 0.5 * (shadingNormal + 1.0);
 
         if (dot(bestHit.NormalExt, -ray.Direction) > 0.0)
-            light += weight * UnpackRgb(spheres[bestHit.Index].Emission) * spheres[bestHit.Index].EmissionStrength;
+            light += weight * material.Emission.UnpackRgb() * material.EmissionStrength;
 
-        if (bounce == params.MaxBounces || all(albedo == 0.0))
+        if (all(albedo == 0.0))
             break;
 
-        float3 newDirection = RandomBounceDirection(bestHit.Normal, rng);
-        weight *= 2.0 * albedo * dot(bestHit.Normal, newDirection);
+        float3 newDirection = RandomBounceDirection(shadingNormal, rng);
+        weight *= albedo;
+
+        if (all(weight == 0.0))
+            break;
+
+        if (bounce >= 3)
+        {
+            float continuationProbability = min(0.95, max(0.05, max(weight.r, max(weight.g, weight.b))));
+            if (rng.Next() >= continuationProbability)
+                break;
+            weight /= continuationProbability;
+        }
+
         ray.Origin += bestHit.T * ray.Direction + 1e-4 * bestHit.Normal;
         ray.Direction = newDirection;
     }
@@ -150,11 +181,16 @@ void main(uint3 dispatchThreadId : SV_DispatchThreadID)
     Rng rng = Rng(pixel, frameState.FrameIndex);
     Accumulator accum = Accumulator();
 
-    for (uint k = 0; k < params.SamplesPerPixel; ++k)
+    uint cellsPerAxis = clamp((uint)floor(sqrt((float)params.SamplesPerPixel)), 1u, 8u);
+    uint sampleCount = cellsPerAxis * cellsPerAxis;
+    uint apertureCells[64];
+    ShuffleCells(apertureCells, sampleCount, rng);
+
+    for (uint sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex)
     {
-        float2 jitter = float2(rng.Next(), rng.Next());
-        float3 C = Trace(BuildPrimaryRay(camera, rng, pixel, frameSize, jitter), rng);
-        accum.Add(C);
+        float2 pixelPoint = StratifiedPoint(sampleIndex, cellsPerAxis, rng);
+        float2 aperturePoint = StratifiedPoint(apertureCells[sampleIndex], cellsPerAxis, rng);
+        accum.Add(Trace(BuildPrimaryRay(camera, pixel, frameSize, pixelPoint, aperturePoint), rng));
     }
 
     pathTracerColor[pixel] = float4(accum.Average(), 1.0);
