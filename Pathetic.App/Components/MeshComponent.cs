@@ -1,20 +1,25 @@
 using System.Numerics;
+using System.Runtime.InteropServices;
 using Pathetic.Renderer.Buffers;
 using Pathetic.SceneGraph;
 using Pathetic.SceneGraph.Components;
 
 namespace Pathetic.App.Components;
 
-public class MeshComponent(
-    SparseSet<Primitive> primitives,
-    GpuPool<MeshData> meshes,
-    StructuredBuffer<MeshTriangle> triangles,
-    MaterialLibrary materials) : Component
+[StructLayout(LayoutKind.Explicit, Size = 40)]
+public record struct TrianglePrimitive
 {
-    private Handle _handle = Handle.Invalid;
-    private uint _dataIdx = GpuPool<MeshData>.InvalidIndex;
-    private uint _startTriangleIdx;
-    private int _triangleCount;
+    [FieldOffset(00)] public Vector3 V0;
+    [FieldOffset(12)] public Vector3 V1;
+    [FieldOffset(24)] public Vector3 V2;
+    [FieldOffset(36)] public uint MaterialId;
+}
+
+public record struct MeshTriangle(Vector3 V0, Vector3 V1, Vector3 V2);
+
+public class MeshComponent(SparseSet<TrianglePrimitive> triangles, MaterialLibrary materials) : Component
+{
+    private readonly List<Handle> _handles = [];
     private Vector3 _bakedPosition;
     private Quaternion _bakedRotation = Quaternion.Identity;
     private Vector3 _bakedScale = Vector3.One;
@@ -24,92 +29,64 @@ public class MeshComponent(
 
     protected override void Setup()
     {
-        _handle = primitives.Add(BuildPrimitive(append: true));
+        Rebuild();
+        BakeTransform();
     }
 
     protected override void LateUpdate(float deltaTime)
     {
-        if (!_handle.IsValid)
+        if (Triangles.Length == _handles.Count && !TransformChanged())
             return;
 
-        bool reallocate = Triangles.Length != _triangleCount;
-        if (!reallocate && !TransformChanged())
-            return;
-
-        primitives.Update(_handle, BuildPrimitive(reallocate));
+        Rebuild();
+        BakeTransform();
     }
 
     protected override void Cleanup()
     {
-        if (_handle.IsValid)
-            primitives.Remove(ref _handle);
+        for (int i = _handles.Count - 1; i >= 0; i--)
+        {
+            Handle handle = _handles[i];
+            triangles.Remove(ref handle);
+        }
 
-        if (_dataIdx == GpuPool<MeshData>.InvalidIndex)
-            return;
-
-        meshes.Remove(_dataIdx);
-        _dataIdx = GpuPool<MeshData>.InvalidIndex;
+        _handles.Clear();
     }
 
-    private Primitive BuildPrimitive(bool append)
+    private void Rebuild()
     {
-        Transform transform = Parent.Transform;
-        Matrix4x4 matrix = Matrix4x4.CreateScale(transform.Scale)
-            * Matrix4x4.CreateFromQuaternion(transform.Rotation)
-            * Matrix4x4.CreateTranslation(transform.Position);
+        uint materialId = materials.GetOrAdd(Material);
+        Matrix4x4 matrix = BuildMatrix();
 
-        Vector3 min = new(float.PositiveInfinity);
-        Vector3 max = new(float.NegativeInfinity);
+        if (_handles.Count != Triangles.Length)
+        {
+            Cleanup();
 
-        if (append)
-            _startTriangleIdx = (uint)triangles.Count;
+            foreach (MeshTriangle triangle in Triangles)
+                _handles.Add(triangles.Add(ToPrimitive(triangle, matrix, materialId)));
+
+            return;
+        }
 
         for (int i = 0; i < Triangles.Length; i++)
-        {
-            MeshTriangle triangle = TransformTriangle(Triangles[i], matrix);
-
-            if (append)
-                triangles.Add(triangle);
-            else
-                triangles.UpdateAt((int)(_startTriangleIdx + i), triangle);
-
-            min = Vector3.Min(min, Vector3.Min(triangle.V0, Vector3.Min(triangle.V1, triangle.V2)));
-            max = Vector3.Max(max, Vector3.Max(triangle.V0, Vector3.Max(triangle.V1, triangle.V2)));
-        }
-
-        _triangleCount = Triangles.Length;
-
-        if (append)
-        {
-            MeshData data = new()
-            {
-                StartTriangleIdx = _startTriangleIdx,
-                TriangleCount = (uint)_triangleCount
-            };
-
-            if (_dataIdx == GpuPool<MeshData>.InvalidIndex)
-                _dataIdx = meshes.Add(data);
-            else
-                meshes.Update(_dataIdx, data);
-        }
-
-        if (!float.IsFinite(min.X))
-            min = max = transform.Position;
-
-        _bakedPosition = transform.Position;
-        _bakedRotation = transform.Rotation;
-        _bakedScale = transform.Scale;
-
-        return new Primitive
-        {
-            Type = PrimitiveType.Mesh,
-            Center = (min + max) * 0.5f,
-            MaterialId = materials.GetOrAdd(Material),
-            DataIdx = _dataIdx,
-            Min = min,
-            Max = max
-        };
+            triangles.Update(_handles[i], ToPrimitive(Triangles[i], matrix, materialId));
     }
+
+    private Matrix4x4 BuildMatrix()
+    {
+        Transform transform = Parent.Transform;
+        return Matrix4x4.CreateScale(transform.Scale)
+            * Matrix4x4.CreateFromQuaternion(transform.Rotation)
+            * Matrix4x4.CreateTranslation(transform.Position);
+    }
+
+    private static TrianglePrimitive ToPrimitive(MeshTriangle triangle, Matrix4x4 matrix, uint materialId) => new()
+    {
+        V0 = Vector3.Transform(triangle.V0, matrix),
+        V1 = Vector3.Transform(triangle.V1, matrix),
+        V2 = Vector3.Transform(triangle.V2, matrix),
+        MaterialId = materialId
+    };
 
     private bool TransformChanged()
     {
@@ -119,10 +96,11 @@ public class MeshComponent(
             || transform.Scale != _bakedScale;
     }
 
-    private static MeshTriangle TransformTriangle(MeshTriangle triangle, Matrix4x4 matrix) => new()
+    private void BakeTransform()
     {
-        V0 = Vector3.Transform(triangle.V0, matrix),
-        V1 = Vector3.Transform(triangle.V1, matrix),
-        V2 = Vector3.Transform(triangle.V2, matrix)
-    };
+        Transform transform = Parent.Transform;
+        _bakedPosition = transform.Position;
+        _bakedRotation = transform.Rotation;
+        _bakedScale = transform.Scale;
+    }
 }

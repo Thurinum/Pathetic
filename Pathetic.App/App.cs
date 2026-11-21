@@ -1,15 +1,15 @@
 ﻿using System.Numerics;
 using NeoVeldrid;
+using Pathetic.App.Assets;
 using Pathetic.App.Components;
 using Pathetic.App.Components.Camera;
 using Pathetic.App.Components.GUI;
-using Pathetic.Renderer.Utils;
 using Pathetic.SceneGraph;
 using Pathetic.SceneGraph.Scenes;
 
 namespace Pathetic.App;
 
-public class App(SceneLoop loop, SceneManager sceneManager)
+public class App(SceneLoop loop, SceneManager sceneManager, ObjLoader objLoader)
 {
     public void Run()
     {
@@ -25,7 +25,8 @@ public class App(SceneLoop loop, SceneManager sceneManager)
         AddSphere(scene, new Vector3(2.0f, 0.2f, 0.0f), 0.7f, Rgb(0.9f, 0.6f, 0.2f));
         AddSphere(scene, new Vector3(1.3f, -0.3f, 0.9f), 0.2f, Rgb(0.2f, 0.6f, 0.9f));
         AddSphere(scene, new Vector3(-0.2f, 1.0f, 0.0f), 0.7f, Rgb(0.0f, 0.0f, 0.0f), Rgb(1.0f, 0.8f, 0.6f), 15.0f);
-        AddMesh(scene, new Vector3(0.5f, -0.5f, 1.5f), 1.0f, Rgb(0.8f, 0.8f, 0.8f));
+        AddModel(scene, "cube.obj", new Vector3(0.5f, 0.0f, 1.5f), 0.5f);
+        AddModel(scene, "teapot.obj", new Vector3(-2.2f, -0.5f, 1.2f), 0.5f);
         
         var camera = sceneManager.CreateObject(scene, "camera");
         camera.AddComponent<CameraComponent>();
@@ -40,11 +41,11 @@ public class App(SceneLoop loop, SceneManager sceneManager)
         var orbit = camera.AddComponent<CameraControls>();
         orbit.Target = new Vector3(2,0,0);
         
-        AddPlane(scene, new Vector3( 0, -1,  0), Quaternion.FromEuler(new Vector3(-90,   0,  0))); // floor  +Y
-        AddPlane(scene, new Vector3( 0,  1,  0), Quaternion.FromEuler(new Vector3( 90,   0,  0))); // ceil   -Y
-        AddPlane(scene, new Vector3(-1,  0,  0), Quaternion.FromEuler(new Vector3(  0,  90,  0))); // left   +X
-        AddPlane(scene, new Vector3( 1,  0,  0), Quaternion.FromEuler(new Vector3(  0, -90,  0))); // right  -X
-        AddPlane(scene, new Vector3( 0,  0, -1), Quaternion.FromEuler(new Vector3(  0,   0,  0))); // back   +Z
+        // AddPlane(scene, new Vector3( 0, -1,  0), Quaternion.FromEuler(new Vector3(-90,   0,  0))); // floor  +Y
+        // AddPlane(scene, new Vector3( 0,  1,  0), Quaternion.FromEuler(new Vector3( 90,   0,  0))); // ceil   -Y
+        // AddPlane(scene, new Vector3(-1,  0,  0), Quaternion.FromEuler(new Vector3(  0,  90,  0))); // left   +X
+        // AddPlane(scene, new Vector3( 1,  0,  0), Quaternion.FromEuler(new Vector3(  0, -90,  0))); // right  -X
+        // AddPlane(scene, new Vector3( 0,  0, -1), Quaternion.FromEuler(new Vector3(  0,   0,  0))); // back   +Z
         
         loop.Run(scene);
     }
@@ -63,49 +64,13 @@ public class App(SceneLoop loop, SceneManager sceneManager)
         // obj.AddComponent<RandomMover>();
     }
 
-    private void AddMesh(Scene scene, Vector3 position, float size, RgbaByte albedo)
+    private void AddModel(Scene scene, string model, Vector3 position, float scale)
     {
-        var obj = sceneManager.CreateObject(scene, "mesh");
+        var obj = sceneManager.CreateObject(scene, model);
         obj.Transform.Position = position;
+        obj.Transform.Scale = new Vector3(scale);
 
-        var mesh = obj.AddComponent<MeshComponent>();
-        mesh.Triangles = Cube(size);
-        mesh.Material = new Material { Albedo = albedo };
-    }
-
-    private static MeshTriangle[] Cube(float size)
-    {
-        float h = size * 0.5f;
-
-        Vector3[] corners =
-        [
-            new(-h, -h, -h), new(h, -h, -h), new(h, h, -h), new(-h, h, -h),
-            new(-h, -h, h), new(h, -h, h), new(h, h, h), new(-h, h, h)
-        ];
-
-        int[] faces =
-        [
-            4, 5, 6, 4, 6, 7,
-            1, 0, 3, 1, 3, 2,
-            0, 4, 7, 0, 7, 3,
-            5, 1, 2, 5, 2, 6,
-            3, 7, 6, 3, 6, 2,
-            0, 1, 5, 0, 5, 4
-        ];
-
-        var triangles = new MeshTriangle[faces.Length / 3];
-
-        for (int i = 0; i < triangles.Length; i++)
-        {
-            triangles[i] = new MeshTriangle
-            {
-                V0 = corners[faces[i * 3]],
-                V1 = corners[faces[i * 3 + 1]],
-                V2 = corners[faces[i * 3 + 2]]
-            };
-        }
-
-        return triangles;
+        objLoader.Initialize(obj.AddComponent<MeshComponent>(), model);
     }
 
     private static RgbaByte Rgb(float r, float g, float b) =>

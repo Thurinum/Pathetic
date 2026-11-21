@@ -1,6 +1,7 @@
 ﻿module Bvh;
 
 import Camera;
+import Primitives;
 
 public struct BvhIntersection
 {
@@ -41,5 +42,6 @@ public struct BvhNode
 
 public struct BvhPrimitiveRef
 {
+    public PrimitiveType Type;
     public uint Index;
 };

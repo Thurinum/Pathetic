@@ -3,48 +3,32 @@ module Primitives;
 public enum PrimitiveType {
     Plane = 0u,
     Sphere = 1u,
-    Circle = 2u,
-    Mesh = 3u,
+    Triangle = 2u,
+    None = 1000u,
 }
 
-public struct Primitive
+public struct Sphere
 {
-    public PrimitiveType Type;
     public float3 Center;
-    public uint MaterialId;
-    public uint DataIdx;
-    public float3 Min;
-    public float3 Max;
-}
-
-public struct SphereData
-{
     public float Radius;
+    public uint MaterialId;
 }
 
-public struct PlaneData
+public struct Plane
 {
-    public float3 HalfExtentX;
-    public float3 HalfExtentY;
+    public float3 Center;
+    public float3 U;
+    public float3 V;
+    public uint MaterialId;
 }
 
-public struct MeshData
-{
-    public uint StartTriangleIdx;
-    public uint TriangleCount;
-}
-
-public struct MeshTriangle
+public struct Triangle
 {
     public float3 V0;
     public float3 V1;
     public float3 V2;
+    public uint MaterialId;
 }
-
-StructuredBuffer<SphereData, ScalarDataLayout> sphereData;
-StructuredBuffer<PlaneData, ScalarDataLayout> planeData;
-StructuredBuffer<MeshData, ScalarDataLayout> meshData;
-StructuredBuffer<MeshTriangle, ScalarDataLayout> meshTriangles;
 
 // Unpacks a packed RgbaByte into normalized 0..1 components.
 public float3 UnpackRgb(uint packed)
@@ -59,6 +43,8 @@ public struct HitResult
     public float3 NormalExt;
     public float2 UV;
     public uint Index;
+    public uint MaterialId;
+    public PrimitiveType Primitive;
     
     public bool IsHit() { return T > 0; }
     
@@ -70,16 +56,18 @@ public struct HitResult
         h.NormalExt = 0;
         h.UV = 0;
         h.Index = 0;
+        h.MaterialId = 0;
+        h.Primitive = PrimitiveType.None;
         return h;
     }
 }
 
-public HitResult IntersectSphere(float3 origin, float3 dir, Primitive p, SphereData d, float tMin, float tMax) 
+public HitResult IntersectSphere(float3 origin, float3 dir, Sphere p, float tMin, float tMax) 
 {    
     float3 q = origin - p.Center;
     float a = dot(dir,dir);
     float b = 2 * dot(q, dir);
-    float c = dot(q,q) - (d.Radius * d.Radius);
+    float c = dot(q,q) - (p.Radius * p.Radius);
     float discriminant = (b * b) - (4 * a * c);
     if (discriminant < 0) 
         return HitResult.Miss();
@@ -102,13 +90,20 @@ public HitResult IntersectSphere(float3 origin, float3 dir, Primitive p, SphereD
     if (dot(n, dir) > 0)
         n = -n;
         
-    HitResult result = { t, n, nExt, uv, 0 };
+    HitResult result = {};
+    result.T = t;
+    result.Normal = n;
+    result.NormalExt = nExt;
+    result.UV = uv;
+    result.Index = 0;
+    result.MaterialId = p.MaterialId;
+    result.Primitive = PrimitiveType.Sphere;
     return result; 
 }
 
-public HitResult IntersectPlane(float3 origin, float3 dir, Primitive p, PlaneData d, float tMin, float tMax)
+public HitResult IntersectPlane(float3 origin, float3 dir, Plane p, float tMin, float tMax)
 {
-    float3 n = normalize(cross(d.HalfExtentX, d.HalfExtentY));
+    float3 n = normalize(cross(p.U, p.V));
     float denom = dot(n, dir);
     if (abs(denom) < 1e-6) 
         return HitResult.Miss();
@@ -118,18 +113,25 @@ public HitResult IntersectPlane(float3 origin, float3 dir, Primitive p, PlaneDat
         return HitResult.Miss();
 
     float3 w = origin + t * dir - p.Center;
-    float a = dot(w, d.HalfExtentX) / dot(d.HalfExtentX, d.HalfExtentX);
-    float b = dot(w, d.HalfExtentY) / dot(d.HalfExtentY, d.HalfExtentY);
+    float a = dot(w, p.U) / dot(p.U, p.U);
+    float b = dot(w, p.V) / dot(p.V, p.V);
     if (max(abs(a), abs(b)) > 1.0) 
         return HitResult.Miss();
 
     float2 uv = float2(a, b) * 0.5 + 0.5; // [-1, 1] to [0, 1]
 
-    HitResult hit = { t, n, n, uv, 0 };
+    HitResult hit = {};
+    hit.T = t;
+    hit.Normal = n;
+    hit.NormalExt = n;
+    hit.UV = uv;
+    hit.Index = 0;
+    hit.MaterialId = p.MaterialId;
+    hit.Primitive = PrimitiveType.Plane;
     return hit;
 }
 
-public HitResult IntersectTriangle(float3 origin, float3 dir, MeshTriangle tri, float tMin, float tMax)
+public HitResult IntersectTriangle(float3 origin, float3 dir, Triangle tri, float tMin, float tMax)
 {
     float3 edge1 = tri.V1 - tri.V0;
     float3 edge2 = tri.V2 - tri.V0;
@@ -158,39 +160,13 @@ public HitResult IntersectTriangle(float3 origin, float3 dir, MeshTriangle tri, 
     if (dot(n, dir) > 0)
         n = -n;
 
-    HitResult result = { t, n, nExt, float2(u, v), 0 };
+    HitResult result = {};
+    result.T = t;
+    result.Normal = n;
+    result.NormalExt = nExt;
+    result.UV = float2(u, v);
+    result.Index = 0;
+    result.MaterialId = tri.MaterialId;
+    result.Primitive = PrimitiveType.Triangle;
     return result;
-}
-
-public HitResult IntersectMesh(float3 origin, float3 dir, Primitive p, MeshData d, float tMin, float tMax)
-{
-    HitResult best = HitResult.Miss();
-    float closest = tMax;
-
-    for (uint i = 0; i < d.TriangleCount; ++i)
-    {
-        HitResult hit = IntersectTriangle(origin, dir, meshTriangles[d.StartTriangleIdx + i], tMin, closest);
-        if (hit.IsHit())
-        {
-            closest = hit.T;
-            best = hit;
-        }
-    }
-
-    return best;
-}
-
-public HitResult IntersectPrimitive(float3 origin, float3 dir, Primitive p, float tMin, float tMax)
-{
-    switch (p.Type)
-    {
-        case PrimitiveType.Plane:
-            return IntersectPlane(origin, dir, p, planeData[p.DataIdx], tMin, tMax);
-        case PrimitiveType.Sphere:
-            return IntersectSphere(origin, dir, p, sphereData[p.DataIdx], tMin, tMax);
-        case PrimitiveType.Mesh:
-            return IntersectMesh(origin, dir, p, meshData[p.DataIdx], tMin, tMax);
-        default:
-            return HitResult.Miss();
-    }
 }

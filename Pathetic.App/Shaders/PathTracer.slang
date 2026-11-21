@@ -11,59 +11,82 @@ import Bvh;
 
 struct Params
 {
-    uint PrimitiveCount;
+    uint PlaneCount;
+    uint SphereCount;
+    uint TriangleCount;
     uint SamplesPerPixel;
     uint MaxBounces;
     uint BvhNodeCount;
 }
 
+struct BvhStackEntry
+{
+    uint Node;
+    float Near;
+};
+
 RWTexture2D<float4> pathTracerColor;
 ConstantBuffer<Camera> camera;
-StructuredBuffer<Primitive, ScalarDataLayout> primitives;
+StructuredBuffer<Plane, ScalarDataLayout> planes;
+StructuredBuffer<Sphere, ScalarDataLayout> spheres;
+StructuredBuffer<Triangle, ScalarDataLayout> triangles;
 StructuredBuffer<Material, ScalarDataLayout> materials;
 ConstantBuffer<Params> params;
 StructuredBuffer<BvhNode, ScalarDataLayout> bvhNodes;
 StructuredBuffer<BvhPrimitiveRef, ScalarDataLayout> bvhPrimitiveRefs;
 
-public HitResult TraceBvh(Ray ray, out Primitive hitPrimitive)
+public HitResult TraceBvh(Ray ray)
 {
-    hitPrimitive = { PrimitiveType.Plane, float3(0.0), 0, 0 };
-
     if (params.BvhNodeCount == 0)
         return HitResult.Miss();
 
     HitResult bestHit = HitResult.Miss();
     float bestT = 1e30;
-    
+
     // Check if there is an intersection with the BVH at all
     BvhIntersection rootIntersection = bvhNodes[BvhNode.Root].Intersects(ray, 1e-4, bestT);
     if (!rootIntersection.Hit)
         return bestHit;
 
-    uint stack[32];
+    BvhStackEntry stack[64];
     uint stackSize = 0;
-    stack[stackSize++] = BvhNode.Root;
+    stack[stackSize++] = { BvhNode.Root, rootIntersection.Near };
 
     while (stackSize > 0)
     {
-        uint nodeIndex = stack[--stackSize];
-        BvhNode node = bvhNodes[nodeIndex];
+        BvhStackEntry entry = stack[--stackSize];
+
+        // Discard nodes whose entry point is past the closest hit found so far
+        if (entry.Near > bestT)
+            continue;
+
+        BvhNode node = bvhNodes[entry.Node];
 
         if (node.PrimitiveCount > 0)
         {
             for (uint i = 0; i < node.PrimitiveCount; ++i)
             {
                 BvhPrimitiveRef primitive = bvhPrimitiveRefs[node.FirstPrimitive + i];
-                Primitive candidate = primitives[primitive.Index];
 
-                HitResult hit = IntersectPrimitive(ray.Origin, ray.Direction, candidate, 1e-4, bestT);
+                HitResult hit = HitResult.Miss();
+                switch (primitive.Type)
+                {
+                    case PrimitiveType.Plane:
+                        hit = IntersectPlane(ray.Origin, ray.Direction, planes[primitive.Index], 1e-4, bestT);
+                        break;
+                    case PrimitiveType.Sphere:
+                        hit = IntersectSphere(ray.Origin, ray.Direction, spheres[primitive.Index], 1e-4, bestT);
+                        break;
+                    case PrimitiveType.Triangle:
+                        hit = IntersectTriangle(ray.Origin, ray.Direction, triangles[primitive.Index], 1e-4, bestT);
+                        break;
+                }
 
                 if (hit.IsHit() && hit.T < bestT)
                 {
                     bestT = hit.T;
                     bestHit = hit;
                     bestHit.Index = primitive.Index;
-                    hitPrimitive = candidate;
                 }
             }
 
@@ -75,18 +98,18 @@ public HitResult TraceBvh(Ray ray, out Primitive hitPrimitive)
 
         if (leftIntersection.Hit && !rightIntersection.Hit)
         {
-            stack[stackSize++] = node.Left;
+            stack[stackSize++] = { node.Left, leftIntersection.Near };
         }
         else if (!leftIntersection.Hit && rightIntersection.Hit)
         {
-            stack[stackSize++] = node.Right;
+            stack[stackSize++] = { node.Right, rightIntersection.Near };
         }
         else if (leftIntersection.Hit && rightIntersection.Hit)
         {
             // Put nearest intersection on the stack last
             bool leftIsNearer = leftIntersection.Near < rightIntersection.Near;
-            stack[stackSize++] = leftIsNearer ? node.Right : node.Left;
-            stack[stackSize++] = leftIsNearer ? node.Left : node.Right;
+            stack[stackSize++] = { leftIsNearer ? node.Right : node.Left, leftIsNearer ? rightIntersection.Near : leftIntersection.Near };
+            stack[stackSize++] = { leftIsNearer ? node.Left : node.Right, leftIsNearer ? leftIntersection.Near : rightIntersection.Near };
         }
     }
 
@@ -100,8 +123,7 @@ float3 Trace(Ray ray, inout Rng rng)
 
     for (uint bounce = 0; ; ++bounce)
     {
-        Primitive hitPrimitive;
-        HitResult bestHit = TraceBvh(ray, hitPrimitive);
+        HitResult bestHit = TraceBvh(ray);
 
         if (!bestHit.IsHit())
         {
@@ -109,7 +131,7 @@ float3 Trace(Ray ray, inout Rng rng)
             break;
         }
 
-        Material material = materials[hitPrimitive.MaterialId];
+        Material material = materials[bestHit.MaterialId];
         float3 albedo = UnpackRgb(material.Albedo);
 
         if (dot(bestHit.NormalExt, -ray.Direction) > 0.0)

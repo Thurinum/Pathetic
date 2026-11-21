@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Pathetic.App;
+using Pathetic.App.Assets;
 using Pathetic.App.Bvh;
 using Pathetic.App.Components;
 using Pathetic.App.Components.Camera;
@@ -36,13 +37,12 @@ builder.Services.AddRenderer(graph => graph
     .AddPass<TemporalAccumulationPass>()
     .Present(ResourceName.PresentColor));
 
-builder.Services.AddStructuredBuffer<Primitive>(ResourceName.Primitives, sparseStorage: true);
+builder.Services.AddStructuredBuffer<SpherePrimitive>(ResourceName.Spheres, sparseStorage: true);
+builder.Services.AddStructuredBuffer<PlanePrimitive>(ResourceName.Planes, sparseStorage: true);
+builder.Services.AddStructuredBuffer<TrianglePrimitive>(ResourceName.Triangles, sparseStorage: true);
 builder.Services.AddStructuredBuffer<Material>(ResourceName.Materials);
 builder.Services.AddSingleton<MaterialLibrary>();
-builder.Services.AddGpuPool<SphereData>(ResourceName.SphereData);
-builder.Services.AddGpuPool<PlaneData>(ResourceName.PlaneData);
-builder.Services.AddGpuPool<MeshData>(ResourceName.MeshData);
-builder.Services.AddStructuredBuffer<MeshTriangle>(ResourceName.MeshTriangles);
+builder.Services.AddSingleton<ObjLoader>();
 builder.Services.AddStructuredBuffer<CameraProvider>();
 
 builder.Services.AddSingleton<SceneBvh>();

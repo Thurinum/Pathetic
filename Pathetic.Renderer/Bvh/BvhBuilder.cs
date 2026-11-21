@@ -2,12 +2,6 @@ namespace Pathetic.Renderer.Bvh;
 
 using System.Numerics;
 
-public enum BvhType
-{
-    MedianSplit,
-    Sah,
-}
-
 struct Bucket
 {
     public int Count;
@@ -16,13 +10,11 @@ struct Bucket
 
 public sealed class BvhBuilder
 {
-    private const int MaxLeafSize = 3;
-    
+    private const int MaxLeafSize = 4;
+
     private const int BucketCount = 8;
     private const float IntersectionCost = 1;
     private const float TraversalCost = 1;
-
-    private const BvhType Type = BvhType.Sah;
 
     public static BvhNode Build(List<BvhPrimitiveRef> primitives)
     {
@@ -31,7 +23,7 @@ public sealed class BvhBuilder
 
         return BuildRecursive(primitives);
     }
-    
+
     private static BvhNode BuildRecursive(List<BvhPrimitiveRef> primitives)
     {
         var bounds = primitives
@@ -40,14 +32,8 @@ public sealed class BvhBuilder
                 AxisAlignedBoundingBox.Empty,
                 (current, next) => current.Include(next));
 
-        if (primitives.Count <= MaxLeafSize)
-        {
-            return new BvhNode
-            {
-                Bounds = bounds,
-                Primitives = primitives
-            };
-        }
+        if (primitives.Count <= 1)
+            return BuildLeaf(bounds, primitives);
 
         var centroidBounds = primitives
             .Select(p => p.Bounds.Centroid)
@@ -55,37 +41,47 @@ public sealed class BvhBuilder
                 AxisAlignedBoundingBox.Empty,
                 (current, next) => current.Include(next));
 
-        if (Type == BvhType.MedianSplit)
-#pragma warning disable CS0162 // Unreachable code detected
+        var sahSplit = FindSahSplit(primitives, bounds, centroidBounds);
+
+        if (sahSplit is { } split && (split.bestCost < primitives.Count * IntersectionCost || primitives.Count > MaxLeafSize))
         {
-            return BuildMedianSplitBranch(bounds, centroidBounds, primitives);
+            return BuildSahBranch(primitives, bounds, centroidBounds, split.bestAxis, split.bestBucket);
         }
-#pragma warning restore CS0162 // Unreachable code detected
 
+        if (primitives.Count <= MaxLeafSize)
+            return BuildLeaf(bounds, primitives);
+
+        return BuildMedianSplitBranch(bounds, centroidBounds, primitives);
+    }
+
+    private static BvhNode BuildLeaf(AxisAlignedBoundingBox bounds, List<BvhPrimitiveRef> primitives) =>
+        new()
         {
-            var sahSplit = FindSahSplit(primitives, bounds, centroidBounds);
+            Bounds = bounds,
+            Primitives = primitives
+        };
 
-            if (sahSplit is null)
-            {
-                return BuildMedianSplitBranch(bounds, centroidBounds, primitives);
-            }
+    private static BvhNode BuildSahBranch(
+        List<BvhPrimitiveRef> primitives,
+        AxisAlignedBoundingBox bounds,
+        AxisAlignedBoundingBox centroidBounds,
+        int axis,
+        int bucket)
+    {
+        var left = new List<BvhPrimitiveRef>();
+        var right = new List<BvhPrimitiveRef>();
+        var axisMin = centroidBounds.Min[axis];
+        var axisExtent = centroidBounds.Max[axis] - axisMin;
 
-            var (sahAxis, sahBucket) = sahSplit.Value;
-            var left = new List<BvhPrimitiveRef>();
-            var right = new List<BvhPrimitiveRef>();
-            var axisMin = centroidBounds.Min[sahAxis];
-            var axisExtent = centroidBounds.Max[sahAxis] - axisMin;
-
-            foreach (var primitive in primitives)
-            {
-                if (BucketIndex(primitive.Bounds.Centroid[sahAxis], axisMin, axisExtent) <= sahBucket)
-                    left.Add(primitive);
-                else
-                    right.Add(primitive);
-            }
-
-            return BuildBranch(bounds, left, right);
+        foreach (var primitive in primitives)
+        {
+            if (BucketIndex(primitive.Bounds.Centroid[axis], axisMin, axisExtent) <= bucket)
+                left.Add(primitive);
+            else
+                right.Add(primitive);
         }
+
+        return BuildBranch(bounds, left, right);
     }
 
     private static BvhNode BuildMedianSplitBranch(
@@ -93,7 +89,6 @@ public sealed class BvhBuilder
         AxisAlignedBoundingBox centroidBounds,
         List<BvhPrimitiveRef> primitives)
     {
-        
         var axis = LargestAxis(centroidBounds.Max - centroidBounds.Min);
         primitives.Sort((a, b) =>
             a.Bounds.Centroid[axis].CompareTo(b.Bounds.Centroid[axis]));
@@ -104,7 +99,7 @@ public sealed class BvhBuilder
             primitives.GetRange(0, middle),
             primitives.GetRange(middle, primitives.Count - middle));
     }
-    
+
     private static BvhNode BuildBranch(
         AxisAlignedBoundingBox bounds,
         List<BvhPrimitiveRef> left,
@@ -134,7 +129,7 @@ public sealed class BvhBuilder
         };
     }
 
-    private static (int bestAxis, int bestBucket)? FindSahSplit(
+    private static (int bestAxis, int bestBucket, float bestCost)? FindSahSplit(
         List<BvhPrimitiveRef> primitives,
         AxisAlignedBoundingBox bounds,
         AxisAlignedBoundingBox centroidBounds)
@@ -143,6 +138,9 @@ public sealed class BvhBuilder
         var bestBucket = -1;
         var bestCost = float.PositiveInfinity;
         var parentArea = bounds.SurfaceArea;
+
+        if (parentArea <= 0)
+            return null;
 
         for (var axis = 0; axis < 3; axis++)
         {
@@ -206,7 +204,7 @@ public sealed class BvhBuilder
             }
         }
 
-        return bestAxis < 0 ? null : (bestAxis, bestBucket);
+        return bestAxis < 0 ? null : (bestAxis, bestBucket, bestCost);
     }
 
     private static int BucketIndex(float centroid, float axisMin, float axisExtent) =>

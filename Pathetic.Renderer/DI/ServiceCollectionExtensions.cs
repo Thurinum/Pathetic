@@ -40,20 +40,6 @@ public static class ServiceCollectionExtensions
             if (sparseStorage)
                 services.AddSingleton(new SparseSet<T>(buffer));
         }
-
-        /// <summary>
-        /// Registers a buffer whose elements are addressed by a stable index that survives removal.
-        /// </summary>
-        /// <param name="name">Name of the resource as used in shaders.</param>
-        /// <param name="capacity">How many elements the buffer can hold.</param>
-        /// <typeparam name="T"></typeparam>
-        public void AddGpuPool<T>(string name, uint capacity = 256) where T : unmanaged, IEquatable<T>
-        {
-            var buffer = new StructuredBuffer<T>(name, resizable: true, dynamic: true, capacity, 64);
-            services.AddSingleton(buffer);
-            services.AddSingleton<IResourceUploader>(buffer);
-            services.AddSingleton(new GpuPool<T>(buffer));
-        }
         
         public IServiceCollection AddRenderer(Action<RenderGraphSpecBuilder> configureGraph)
         {
