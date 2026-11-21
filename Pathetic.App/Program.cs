@@ -30,6 +30,7 @@ AddOptions<TemporalAccumulationOptions>();
 AddOptions<TonemappingOptions>();
 AddOptions<CameraOptions>();
 
+builder.Services.AddSingleton<RenderDebugSettings>();
 builder.Services.AddSingleton<ConvergenceController>();
 
 builder.Services.AddRenderer(graph => graph

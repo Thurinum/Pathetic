@@ -9,9 +9,13 @@ using Material = Pathetic.App.Components.Material;
 
 namespace Pathetic.App.Assets;
 
+public sealed record MeshAsset(MeshTriangle[] Triangles, Material Material);
+
 public sealed class ObjLoader(ILogger<ObjLoader> logger)
 {
     private const PostProcessSteps Steps = PostProcessSteps.Triangulate | PostProcessSteps.JoinIdenticalVertices;
+
+    private readonly Dictionary<string, MeshAsset> _cache = [];
 
     public static string GetModelPath(string name)
     {
@@ -22,13 +26,22 @@ public sealed class ObjLoader(ILogger<ObjLoader> logger)
             : Path.Combine(AppContext.BaseDirectory, "Assets", "Models", name);
     }
 
-    public unsafe MeshComponent Initialize(MeshComponent mesh, string path)
+    public MeshAsset Load(string name)
     {
-        ArgumentNullException.ThrowIfNull(mesh);
-        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
-        string filePath = GetModelPath(path);
+        string filePath = Path.GetFullPath(GetModelPath(name));
 
+        if (_cache.TryGetValue(filePath, out MeshAsset? cached))
+            return cached;
+
+        MeshAsset asset = Import(filePath);
+        _cache.Add(filePath, asset);
+        return asset;
+    }
+
+    private unsafe MeshAsset Import(string filePath)
+    {
         if (!File.Exists(filePath))
             throw new FileNotFoundException($"Model file '{filePath}' was not found.", filePath);
 
@@ -43,24 +56,20 @@ public sealed class ObjLoader(ILogger<ObjLoader> logger)
             var triangles = new List<MeshTriangle>();
             CollectTriangles(scene, scene->MRootNode, Matrix4x4.Identity, triangles);
 
-            mesh.Triangles = [.. triangles];
+            Material material = Material.Default;
 
             if (ReadDiffuse(assimp, scene) is { } albedo)
-            {
-                Material material = mesh.Material;
-                material.Albedo = albedo;
-                mesh.Material = material;
-            }
+                material = material with { Albedo = albedo };
 
             if (logger.IsEnabled(LogLevel.Information))
                 logger.LogInformation("Loaded {TriangleCount} triangles from {Path}.", triangles.Count, filePath);
+
+            return new MeshAsset([.. triangles], material);
         }
         finally
         {
             assimp.ReleaseImport(scene);
         }
-
-        return mesh;
     }
 
     private static unsafe void CollectTriangles(Scene* scene, Node* node, Matrix4x4 parentTransform, List<MeshTriangle> output)
@@ -68,7 +77,8 @@ public sealed class ObjLoader(ILogger<ObjLoader> logger)
         if (node == null)
             return;
 
-        Matrix4x4 transform = node->MTransformation * parentTransform;
+        Matrix4x4 local = node->MTransformation;
+        Matrix4x4 transform = Matrix4x4.Transpose(local) * parentTransform;
 
         for (uint i = 0; i < node->MNumMeshes; i++)
             AppendMesh(scene->MMeshes[node->MMeshes[i]], transform, output);
@@ -122,21 +132,20 @@ public sealed class ObjLoader(ILogger<ObjLoader> logger)
         for (uint i = 0; i < mesh->MNumFaces; i++)
         {
             Face face = mesh->MFaces[i];
+            if (face.MNumIndices != 3)
+                continue;
 
-            for (uint j = 2; j < face.MNumIndices; j++)
-            {
-                int a = (int)face.MIndices[0];
-                int b = (int)face.MIndices[j - 1];
-                int c = (int)face.MIndices[j];
+            int a = (int)face.MIndices[0];
+            int b = (int)face.MIndices[1];
+            int c = (int)face.MIndices[2];
 
-                output.Add(new MeshTriangle(
-                    Vector3.Transform(mesh->MVertices[a], transform),
-                    Vector3.Transform(mesh->MVertices[b], transform),
-                    Vector3.Transform(mesh->MVertices[c], transform),
-                    TransformNormal(normals[a], normalMatrix),
-                    TransformNormal(normals[b], normalMatrix),
-                    TransformNormal(normals[c], normalMatrix)));
-            }
+            output.Add(new MeshTriangle(
+                Vector3.Transform(mesh->MVertices[a], transform),
+                Vector3.Transform(mesh->MVertices[b], transform),
+                Vector3.Transform(mesh->MVertices[c], transform),
+                TransformNormal(normals[a], normalMatrix),
+                TransformNormal(normals[b], normalMatrix),
+                TransformNormal(normals[c], normalMatrix)));
         }
     }
 

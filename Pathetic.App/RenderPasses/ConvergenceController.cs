@@ -11,15 +11,15 @@ public readonly record struct ConvergencePlan(
 
 public sealed class ConvergenceController(
     IOptions<TemporalAccumulationOptions> temporalAccumulation,
-    IOptions<PathTracerOptions> pathTracer)
+    IOptions<PathTracerOptions> pathTracer,
+    RenderDebugSettings debug)
 {
     private uint? _lastFrameIndex;
     private uint _framesSinceReset;
     private bool _runPathTracer = true;
     private bool _wasMoving;
     private bool _wasTaaEnabled = true;
-    private bool _displayNormals;
-    private bool _smoothShading;
+    private uint _debugRevision;
     private ConvergencePlan _plan;
 
     public ConvergencePlan GetPlan(uint frameIndex, SceneChange sceneRevision)
@@ -34,11 +34,8 @@ public sealed class ConvergenceController(
         bool taaEnabled = taa.Enabled;
         bool isMoving = sceneRevision != SceneChange.None;
 
-        bool displayNormals = pathTracer.Value.DisplayNormals;
-        bool smoothShading = pathTracer.Value.SmoothShading;
-        bool settingsChanged = _displayNormals != displayNormals || _smoothShading != smoothShading;
-        _displayNormals = displayNormals;
-        _smoothShading = smoothShading;
+        bool settingsChanged = _debugRevision != debug.Revision;
+        _debugRevision = debug.Revision;
 
         bool resetAccumulation = firstFrame || !taaEnabled || isMoving || _wasMoving || !_wasTaaEnabled || settingsChanged;
         uint maxFrames = GetMaxFrames(taa);

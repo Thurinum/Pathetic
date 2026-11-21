@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
+using Pathetic.App.Assets;
 using Pathetic.Renderer.Buffers;
 using Pathetic.SceneGraph;
 using Pathetic.SceneGraph.Components;
@@ -32,38 +33,33 @@ public class MeshComponent(
     private Vector3 _bakedScale = Vector3.One;
     private uint _transformId = MeshTransform.None;
 
-    public MeshTriangle[] Triangles { get; set; } = [];
-    public Material Material { get; set; } = Material.Default;
-
-    public bool KeepLocalGeometry { get; set; }
+    public MeshAsset? Asset { get; set; }
 
     protected override void Setup()
     {
-        Rebuild();
+        if (Asset is null)
+            return;
+
+        _transformId = transforms.Add(MeshTransform.FromMatrix(BuildMatrix()));
+
+        uint materialId = materials.GetOrAdd(Asset.Material);
+
+        foreach (MeshTriangle triangle in Asset.Triangles)
+            _handles.Add(triangles.Add(ToPrimitive(triangle, materialId, _transformId)));
+
         BakeTransform();
     }
 
     protected override void LateUpdate(float deltaTime)
     {
-        if (Triangles.Length == _handles.Count && !TransformChanged())
+        if (_transformId == MeshTransform.None || !TransformChanged())
             return;
 
-        Rebuild();
+        transforms.Update(_transformId, MeshTransform.FromMatrix(BuildMatrix()));
         BakeTransform();
     }
 
     protected override void Cleanup()
-    {
-        RemoveTriangles();
-
-        if (_transformId == MeshTransform.None)
-            return;
-
-        transforms.Remove(_transformId);
-        _transformId = MeshTransform.None;
-    }
-
-    private void RemoveTriangles()
     {
         for (int i = _handles.Count - 1; i >= 0; i--)
         {
@@ -72,50 +68,12 @@ public class MeshComponent(
         }
 
         _handles.Clear();
-    }
 
-    private void Rebuild()
-    {
-        uint materialId = materials.GetOrAdd(Material);
-        Matrix4x4 matrix = BuildMatrix();
-        bool local = KeepLocalGeometry;
-        uint transformId = MeshTransform.None;
-
-        if (local)
-        {
-            MeshTransform transform = MeshTransform.FromMatrix(matrix);
-
-            if (_transformId == MeshTransform.None)
-                _transformId = transforms.Add(transform);
-            else
-                transforms.Update(_transformId, transform);
-
-            transformId = _transformId;
-        }
-        else if (_transformId != MeshTransform.None)
-        {
-            transforms.Remove(_transformId);
-            _transformId = MeshTransform.None;
-        }
-
-        Matrix4x4 vertexMatrix = local ? Matrix4x4.Identity : matrix;
-        Matrix4x4 normalMatrix = Matrix4x4.Identity;
-
-        if (!local && Matrix4x4.Invert(matrix, out Matrix4x4 inverse))
-            normalMatrix = Matrix4x4.Transpose(inverse);
-
-        if (_handles.Count != Triangles.Length)
-        {
-            RemoveTriangles();
-
-            foreach (MeshTriangle triangle in Triangles)
-                _handles.Add(triangles.Add(ToPrimitive(triangle, vertexMatrix, normalMatrix, materialId, transformId)));
-
+        if (_transformId == MeshTransform.None)
             return;
-        }
 
-        for (int i = 0; i < Triangles.Length; i++)
-            triangles.Update(_handles[i], ToPrimitive(Triangles[i], vertexMatrix, normalMatrix, materialId, transformId));
+        transforms.Remove(_transformId);
+        _transformId = MeshTransform.None;
     }
 
     private Matrix4x4 BuildMatrix()
@@ -126,29 +84,17 @@ public class MeshComponent(
             * Matrix4x4.CreateTranslation(transform.Position);
     }
 
-    private static TrianglePrimitive ToPrimitive(
-        MeshTriangle triangle,
-        Matrix4x4 matrix,
-        Matrix4x4 normalMatrix,
-        uint materialId,
-        uint transformId) => new()
+    private static TrianglePrimitive ToPrimitive(MeshTriangle triangle, uint materialId, uint transformId) => new()
     {
-        V0 = Vector3.Transform(triangle.V0, matrix),
-        V1 = Vector3.Transform(triangle.V1, matrix),
-        V2 = Vector3.Transform(triangle.V2, matrix),
-        N0 = TransformNormal(triangle.N0, normalMatrix),
-        N1 = TransformNormal(triangle.N1, normalMatrix),
-        N2 = TransformNormal(triangle.N2, normalMatrix),
+        V0 = triangle.V0,
+        V1 = triangle.V1,
+        V2 = triangle.V2,
+        N0 = triangle.N0,
+        N1 = triangle.N1,
+        N2 = triangle.N2,
         MaterialId = materialId,
         TransformId = transformId
     };
-
-    private static Vector3 TransformNormal(Vector3 normal, Matrix4x4 normalMatrix)
-    {
-        Vector3 transformed = Vector3.TransformNormal(normal, normalMatrix);
-        float length = transformed.Length();
-        return length > 1e-12f ? transformed / length : Vector3.Zero;
-    }
 
     private bool TransformChanged()
     {

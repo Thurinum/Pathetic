@@ -8,7 +8,8 @@ namespace Pathetic.App.RenderPasses;
 
 public sealed class PathTracerPass(
     IOptions<PathTracerOptions> options,
-    ConvergenceController convergence) : RenderPass
+    ConvergenceController convergence,
+    RenderDebugSettings debug) : RenderPass
 {
     [StructLayout(LayoutKind.Sequential)]
     private struct Params
@@ -56,8 +57,8 @@ public sealed class PathTracerPass(
             SamplesPerPixel = plan.SamplesPerPixel,
             MaxBounces = options.Value.MaxBounces,
             BvhNodeCount = ctx.Resources.GetElementCount(ResourceName.BvhNodes),
-            DisplayNormals = options.Value.DisplayNormals ? 1u : 0u,
-            SmoothShading = options.Value.SmoothShading ? 1u : 0u,
+            DisplayNormals = debug.DisplayNormals ? 1u : 0u,
+            SmoothShading = debug.SmoothShading ? 1u : 0u,
         };
         ctx.Cmd.UpdateBuffer(buffer, 0, @params);
     }

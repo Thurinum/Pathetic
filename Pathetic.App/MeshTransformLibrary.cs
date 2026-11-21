@@ -23,7 +23,9 @@ public record struct MeshTransform
 
     public static MeshTransform FromMatrix(Matrix4x4 matrix)
     {
-        Matrix4x4.Invert(matrix, out Matrix4x4 inverse);
+        if (!Matrix4x4.Invert(matrix, out Matrix4x4 inverse))
+            inverse = Matrix4x4.Identity;
+
         Matrix4x4 normal = Matrix4x4.Transpose(inverse);
 
         return new MeshTransform

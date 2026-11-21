@@ -104,7 +104,7 @@ public sealed class SceneBvh(
             AxisAlignedBoundingBox bounds = AxisAlignedBoundingBox.Empty
                 .Include(triangle.V0).Include(triangle.V1).Include(triangle.V2);
 
-            if (triangle.TransformId != MeshTransform.None && triangle.TransformId < transforms.Length)
+            if (triangle.TransformId < transforms.Length)
                 bounds = TransformBounds(bounds, transforms[(int)triangle.TransformId]);
 
             references.Add(new BvhPrimitiveRef(TriangleType, i, bounds));

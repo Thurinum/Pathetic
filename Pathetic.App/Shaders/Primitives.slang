@@ -34,8 +34,6 @@ public struct Triangle
     public uint TransformId;
 }
 
-public static const uint NoTransform = 0xFFFFFFFFu;
-
 public struct MeshTransform
 {
     public float3 InverseX;
@@ -165,17 +163,9 @@ public HitResult IntersectPlane(float3 origin, float3 dir, Plane p, float tMin, 
 
 public HitResult IntersectTriangle(float3 origin, float3 dir, Triangle tri, float tMin, float tMax)
 {
-    float3 localOrigin = origin;
-    float3 localDir = dir;
-    MeshTransform transform = {};
-    bool transformed = tri.TransformId != NoTransform;
-
-    if (transformed)
-    {
-        transform = meshTransforms[tri.TransformId];
-        localOrigin = TransformDirection(origin, transform.InverseX, transform.InverseY, transform.InverseZ) + transform.InverseOffset;
-        localDir = TransformDirection(dir, transform.InverseX, transform.InverseY, transform.InverseZ);
-    }
+    MeshTransform transform = meshTransforms[tri.TransformId];
+    float3 localOrigin = TransformDirection(origin, transform.InverseX, transform.InverseY, transform.InverseZ) + transform.InverseOffset;
+    float3 localDir = TransformDirection(dir, transform.InverseX, transform.InverseY, transform.InverseZ);
 
     float3 edge1 = tri.V1 - tri.V0;
     float3 edge2 = tri.V2 - tri.V0;
@@ -205,11 +195,8 @@ public HitResult IntersectTriangle(float3 origin, float3 dir, Triangle tri, floa
     float nInterpLength = length(nInterp);
     nInterp = nInterpLength > 1e-8 ? nInterp / nInterpLength : n;
 
-    if (transformed)
-    {
-        n = normalize(TransformDirection(n, transform.NormalX, transform.NormalY, transform.NormalZ));
-        nInterp = normalize(TransformDirection(nInterp, transform.NormalX, transform.NormalY, transform.NormalZ));
-    }
+    n = normalize(TransformDirection(n, transform.NormalX, transform.NormalY, transform.NormalZ));
+    nInterp = normalize(TransformDirection(nInterp, transform.NormalX, transform.NormalY, transform.NormalZ));
 
     float3 nExt = n;
     if (dot(n, dir) > 0)

@@ -8,7 +8,8 @@ namespace Pathetic.App.Components.GUI;
 public class RenderSettingsComponent(
     IOptions<PathTracerOptions> pathTracer,
     IOptions<TemporalAccumulationOptions> temporalAccumulation,
-    IOptions<TonemappingOptions> tonemapping) : Component
+    IOptions<TonemappingOptions> tonemapping,
+    RenderDebugSettings debug) : Component
 {
     private static readonly (Tonemapper Value, string Label)[] Tonemappers =
     [
@@ -41,13 +42,13 @@ public class RenderSettingsComponent(
         if (ImGui.IsItemHovered())
             ImGui.SetTooltip("Samples per pixel while the camera or scene is changing");
 
-        bool displayNormals = pathTracer.Value.DisplayNormals;
+        bool displayNormals = debug.DisplayNormals;
         if (ImGui.Checkbox("Display Normals", ref displayNormals))
-            pathTracer.Value.DisplayNormals = displayNormals;
+            debug.DisplayNormals = displayNormals;
 
-        bool smoothShading = pathTracer.Value.SmoothShading;
+        bool smoothShading = debug.SmoothShading;
         if (ImGui.Checkbox("Smooth Shading", ref smoothShading))
-            pathTracer.Value.SmoothShading = smoothShading;
+            debug.SmoothShading = smoothShading;
 
         int tonemapper = Math.Max(0, Array.FindIndex(Tonemappers, t => t.Value == tonemapping.Value.Tonemapper));
         if (ImGui.Combo("Tonemapper", ref tonemapper, TonemapperLabels, TonemapperLabels.Length))
