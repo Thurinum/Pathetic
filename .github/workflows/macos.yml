@@ -5,12 +5,18 @@ on:
     branches: [master]
   pull_request:
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      version:
+        description: Version stamped into the app bundle (e.g. 1.2.3).
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: macos-${{ github.ref }}
+  group: macos-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -21,15 +27,15 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 11.0.x
 
       - name: Cache NuGet packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
@@ -39,10 +45,12 @@ jobs:
         run: dotnet build Pathetic.slnx --configuration Release
 
       - name: Package app bundle
-        run: build/macos/package.sh "0.0.${{ github.run_number }}"
+        run: build/macos/package.sh "$VERSION"
+        env:
+          VERSION: ${{ inputs.version || format('0.0.{0}', github.run_number) }}
 
       - name: Upload app
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Pathetic-macos-arm64
           path: artifacts/Pathetic-macos-arm64.zip
