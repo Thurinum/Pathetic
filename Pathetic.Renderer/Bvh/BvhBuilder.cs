@@ -1,22 +1,40 @@
+namespace Pathetic.Renderer.Bvh;
+
 using System.Numerics;
 
-namespace Pathetic.Renderer.Bvh;
+public enum BvhType
+{
+    MedianSplit,
+    Sah,
+}
+
+struct Bucket
+{
+    public int Count;
+    public AxisAlignedBoundingBox Bounds;
+}
 
 public sealed class BvhBuilder
 {
     private const int MaxLeafSize = 3;
+    
+    private const int BucketCount = 8;
+    private const float IntersectionCost = 1;
+    private const float TraversalCost = 1;
 
-    public BvhNode Build(List<BvhPrimitiveRef> primitives)
+    private const BvhType Type = BvhType.Sah;
+
+    public static BvhNode Build(List<BvhPrimitiveRef> primitives)
     {
         if (primitives.Count == 0)
-            throw new ArgumentException("Cannot build a BVH with no primitives.", nameof(primitives));
+            throw new ArgumentException("Cannot build a BVH with no primitives.");
 
         return BuildRecursive(primitives);
     }
-
+    
     private static BvhNode BuildRecursive(List<BvhPrimitiveRef> primitives)
     {
-        AxisAlignedBoundingBox bounds = primitives
+        var bounds = primitives
             .Select(p => p.Bounds)
             .Aggregate(
                 AxisAlignedBoundingBox.Empty,
@@ -31,44 +49,170 @@ public sealed class BvhBuilder
             };
         }
 
-        AxisAlignedBoundingBox centroidBounds = primitives
+        var centroidBounds = primitives
             .Select(p => p.Bounds.Centroid)
             .Aggregate(
                 AxisAlignedBoundingBox.Empty,
                 (current, next) => current.Include(next));
 
-        Vector3 extent = centroidBounds.Max - centroidBounds.Min;
-        int axis = LargestAxis(extent);
+        if (Type == BvhType.MedianSplit)
+#pragma warning disable CS0162 // Unreachable code detected
+        {
+            return BuildMedianSplitBranch(bounds, centroidBounds, primitives);
+        }
+#pragma warning restore CS0162 // Unreachable code detected
 
+        {
+            var sahSplit = FindSahSplit(primitives, bounds, centroidBounds);
+
+            if (sahSplit is null)
+            {
+                return BuildMedianSplitBranch(bounds, centroidBounds, primitives);
+            }
+
+            var (sahAxis, sahBucket) = sahSplit.Value;
+            var left = new List<BvhPrimitiveRef>();
+            var right = new List<BvhPrimitiveRef>();
+            var axisMin = centroidBounds.Min[sahAxis];
+            var axisExtent = centroidBounds.Max[sahAxis] - axisMin;
+
+            foreach (var primitive in primitives)
+            {
+                if (BucketIndex(primitive.Bounds.Centroid[sahAxis], axisMin, axisExtent) <= sahBucket)
+                    left.Add(primitive);
+                else
+                    right.Add(primitive);
+            }
+
+            return BuildBranch(bounds, left, right);
+        }
+    }
+
+    private static BvhNode BuildMedianSplitBranch(
+        AxisAlignedBoundingBox bounds,
+        AxisAlignedBoundingBox centroidBounds,
+        List<BvhPrimitiveRef> primitives)
+    {
+        
+        var axis = LargestAxis(centroidBounds.Max - centroidBounds.Min);
         primitives.Sort((a, b) =>
             a.Bounds.Centroid[axis].CompareTo(b.Bounds.Centroid[axis]));
 
-        int middle = primitives.Count / 2;
+        var middle = primitives.Count / 2;
+        return BuildBranch(
+            bounds,
+            primitives.GetRange(0, middle),
+            primitives.GetRange(middle, primitives.Count - middle));
+    }
+    
+    private static BvhNode BuildBranch(
+        AxisAlignedBoundingBox bounds,
+        List<BvhPrimitiveRef> left,
+        List<BvhPrimitiveRef> right)
+    {
+        BvhNode? leftNode = null;
+        BvhNode? rightNode = null;
+        var levelsBelow = NumberOfLevelsBelow(left.Count + right.Count);
 
-        if (NumberOfLevelsBelow(primitives.Count) > 3)
+        if (levelsBelow > 3)
         {
-            BvhNode leftNode = null!;
-            BvhNode rightNode = null!;
-
             Parallel.Invoke(
-                () => leftNode = BuildRecursive(primitives.GetRange(0, middle)),
-                () => rightNode = BuildRecursive(primitives.GetRange(middle, primitives.Count - middle)));
-
-            return new BvhNode
-            {
-                Bounds = bounds,
-                Left = leftNode,
-                Right = rightNode
-            };
+                () => leftNode = BuildRecursive(left),
+                () => rightNode = BuildRecursive(right));
+        }
+        else
+        {
+            leftNode = BuildRecursive(left);
+            rightNode = BuildRecursive(right);
         }
 
         return new BvhNode
         {
             Bounds = bounds,
-            Left = BuildRecursive(primitives.GetRange(0, middle)),
-            Right = BuildRecursive(primitives.GetRange(middle, primitives.Count - middle)),
+            Left = leftNode,
+            Right = rightNode
         };
     }
+
+    private static (int bestAxis, int bestBucket)? FindSahSplit(
+        List<BvhPrimitiveRef> primitives,
+        AxisAlignedBoundingBox bounds,
+        AxisAlignedBoundingBox centroidBounds)
+    {
+        var bestAxis = -1;
+        var bestBucket = -1;
+        var bestCost = float.PositiveInfinity;
+        var parentArea = bounds.SurfaceArea;
+
+        for (var axis = 0; axis < 3; axis++)
+        {
+            var axisMin = centroidBounds.Min[axis];
+            var axisExtent = centroidBounds.Max[axis] - axisMin;
+
+            var buckets = new Bucket[BucketCount];
+            for (var i = 0; i < BucketCount; i++)
+                buckets[i].Bounds = AxisAlignedBoundingBox.Empty;
+
+            if (axisExtent <= 0)
+                continue;
+
+            foreach (var primitive in primitives)
+            {
+                var bucket = BucketIndex(primitive.Bounds.Centroid[axis], axisMin, axisExtent);
+                buckets[bucket].Count++;
+                buckets[bucket].Bounds = buckets[bucket].Bounds.Include(primitive.Bounds);
+            }
+
+            var leftCounts = new int[BucketCount - 1];
+            var rightCounts = new int[BucketCount - 1];
+            var leftBounds = new AxisAlignedBoundingBox[BucketCount - 1];
+            var rightBounds = new AxisAlignedBoundingBox[BucketCount - 1];
+
+            var leftCount = 0;
+            var leftBoundsAccumulator = AxisAlignedBoundingBox.Empty;
+            for (var i = 0; i < BucketCount - 1; i++)
+            {
+                leftCount += buckets[i].Count;
+                leftBoundsAccumulator = leftBoundsAccumulator.Include(buckets[i].Bounds);
+                leftCounts[i] = leftCount;
+                leftBounds[i] = leftBoundsAccumulator;
+            }
+
+            var rightCount = 0;
+            var rightBoundsAccumulator = AxisAlignedBoundingBox.Empty;
+            for (var i = BucketCount - 1; i > 0; i--)
+            {
+                rightCount += buckets[i].Count;
+                rightBoundsAccumulator = rightBoundsAccumulator.Include(buckets[i].Bounds);
+                rightCounts[i - 1] = rightCount;
+                rightBounds[i - 1] = rightBoundsAccumulator;
+            }
+
+            for (var i = 0; i < BucketCount - 1; i++)
+            {
+                if (leftCounts[i] == 0 || rightCounts[i] == 0)
+                    continue;
+
+                var cost = TraversalCost
+                    + IntersectionCost * (
+                        leftCounts[i] * leftBounds[i].SurfaceArea
+                        + rightCounts[i] * rightBounds[i].SurfaceArea)
+                    / parentArea;
+
+                if (!(cost < bestCost)) continue;
+                bestCost = cost;
+                bestAxis = axis;
+                bestBucket = i;
+            }
+        }
+
+        return bestAxis < 0 ? null : (bestAxis, bestBucket);
+    }
+
+    private static int BucketIndex(float centroid, float axisMin, float axisExtent) =>
+        axisExtent > 0
+            ? Math.Clamp((int)(((centroid - axisMin) / axisExtent) * BucketCount), 0, BucketCount - 1)
+            : 0;
 
     private static int LargestAxis(Vector3 extent)
     {

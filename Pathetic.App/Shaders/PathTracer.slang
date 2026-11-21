@@ -105,7 +105,7 @@ float3 Trace(Ray ray, inout Rng rng)
     float3 light = 0.0;
     float3 weight = 1.0;
 
-    for (uint bounce = 0; bounce <= params.MaxBounces; ++bounce)
+    for (uint bounce = 0; ; ++bounce)
     {
         HitResult bestHit = TraceBvh(ray);
         
@@ -125,11 +125,22 @@ float3 Trace(Ray ray, inout Rng rng)
         if (dot(bestHit.NormalExt, -ray.Direction) > 0.0)
             light += weight * UnpackRgb(spheres[bestHit.Index].Emission) * spheres[bestHit.Index].EmissionStrength;
 
-        if (bounce == params.MaxBounces || all(albedo == 0.0))
+        if (all(albedo == 0.0))
             break;
 
         float3 newDirection = RandomBounceDirection(bestHit.Normal, rng);
         weight *= albedo;
+        if (all(weight == 0.0))
+            break;
+
+        if (bounce >= 3)
+        {
+            float continuationProbability = min(0.95, max(0.05, max(weight.r, max(weight.g, weight.b))));
+            if (rng.Next() >= continuationProbability)
+                break;
+            weight /= continuationProbability;
+        }
+
         ray.Origin += bestHit.T * ray.Direction + 1e-4 * bestHit.Normal;
         ray.Direction = newDirection;
     }
@@ -150,11 +161,16 @@ void main(uint3 dispatchThreadId : SV_DispatchThreadID)
     Rng rng = Rng(pixel, frameState.FrameIndex);
     Accumulator accum = Accumulator();
 
-    for (uint k = 0; k < params.SamplesPerPixel; ++k)
+    uint cellsPerAxis = clamp((uint)floor(sqrt((float)params.SamplesPerPixel)), 1u, 8u);
+    uint sampleCount = cellsPerAxis * cellsPerAxis;
+    uint apertureCells[64];
+    ShuffleCells(apertureCells, sampleCount, rng);
+
+    for (uint sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex)
     {
-        float2 jitter = float2(rng.Next(), rng.Next());
-        float3 C = Trace(BuildPrimaryRay(camera, rng, pixel, frameSize, jitter), rng);
-        accum.Add(C);
+        float2 pixelPoint = StratifiedPoint(sampleIndex, cellsPerAxis, rng);
+        float2 aperturePoint = StratifiedPoint(apertureCells[sampleIndex], cellsPerAxis, rng);
+        accum.Add(Trace(BuildPrimaryRay(camera, pixel, frameSize, pixelPoint, aperturePoint), rng));
     }
 
     pathTracerColor[pixel] = float4(accum.Average(), 1.0);
