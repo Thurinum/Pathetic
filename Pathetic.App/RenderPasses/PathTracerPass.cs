@@ -8,16 +8,20 @@ namespace Pathetic.App.RenderPasses;
 
 public sealed class PathTracerPass(
     IOptions<PathTracerOptions> options,
-    ConvergenceController convergence) : RenderPass
+    ConvergenceController convergence,
+    RenderDebugSettings debug) : RenderPass
 {
     [StructLayout(LayoutKind.Sequential)]
     private struct Params
     {
         public uint PlaneCount;
         public uint SphereCount;
+        public uint TriangleCount;
         public uint SamplesPerPixel;
         public uint MaxBounces;
         public uint BvhNodeCount;
+        public uint DisplayNormals;
+        public uint SmoothShading;
     }
 
     public override string ShaderModule => "PathTracer";
@@ -33,6 +37,9 @@ public sealed class PathTracerPass(
         ResourceName.Camera,
         ResourceName.Planes,
         ResourceName.Spheres,
+        ResourceName.Triangles,
+        ResourceName.MeshTransforms,
+        ResourceName.Materials,
         ResourceName.BvhNodes,
         ResourceName.BvhPrimitiveRefs,
     ];
@@ -46,9 +53,12 @@ public sealed class PathTracerPass(
         {
             PlaneCount = ctx.Resources.GetElementCount(ResourceName.Planes),
             SphereCount = ctx.Resources.GetElementCount(ResourceName.Spheres),
+            TriangleCount = ctx.Resources.GetElementCount(ResourceName.Triangles),
             SamplesPerPixel = plan.SamplesPerPixel,
             MaxBounces = options.Value.MaxBounces,
             BvhNodeCount = ctx.Resources.GetElementCount(ResourceName.BvhNodes),
+            DisplayNormals = debug.DisplayNormals ? 1u : 0u,
+            SmoothShading = debug.SmoothShading ? 1u : 0u,
         };
         ctx.Cmd.UpdateBuffer(buffer, 0, @params);
     }

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Pathetic.App;
+using Pathetic.App.Assets;
 using Pathetic.App.Bvh;
 using Pathetic.App.Components;
 using Pathetic.App.Components.Camera;
@@ -27,7 +28,9 @@ AddOptions<RendererOptions>();
 AddOptions<PathTracerOptions>();
 AddOptions<TemporalAccumulationOptions>();
 AddOptions<TonemappingOptions>();
+AddOptions<CameraOptions>();
 
+builder.Services.AddSingleton<RenderDebugSettings>();
 builder.Services.AddSingleton<ConvergenceController>();
 
 builder.Services.AddRenderer(graph => graph
@@ -38,8 +41,13 @@ builder.Services.AddRenderer(graph => graph
 
 builder.Services.AddStructuredBuffer<SpherePrimitive>(ResourceName.Spheres, sparseStorage: true);
 builder.Services.AddStructuredBuffer<PlanePrimitive>(ResourceName.Planes, sparseStorage: true);
+builder.Services.AddStructuredBuffer<TrianglePrimitive>(ResourceName.Triangles, sparseStorage: true);
+builder.Services.AddStructuredBuffer<MeshTransform>(ResourceName.MeshTransforms);
+builder.Services.AddStructuredBuffer<Material>(ResourceName.Materials);
+builder.Services.AddSingleton<MaterialLibrary>();
+builder.Services.AddSingleton<MeshTransformLibrary>();
+builder.Services.AddSingleton<ObjLoader>();
 builder.Services.AddStructuredBuffer<CameraProvider>();
-// builder.Services.AddStructuredBuffer<CirclePrimitive>(ResourceName.Circles, sparseStorage: true);
 
 builder.Services.AddSingleton<SceneBvh>();
 builder.Services.AddSingleton(sp => new BvhBufferUploader<GpuBvhNode>(

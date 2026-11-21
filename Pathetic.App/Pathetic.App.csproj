@@ -6,6 +6,7 @@
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <RuntimeIdentifier>$(NETCoreSdkPortableRuntimeIdentifier)</RuntimeIdentifier>
         <SelfContained>false</SelfContained>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
@@ -27,10 +28,13 @@
         <PackageReference Include="NeoVeldrid.SPIRV" />
         <PackageReference Include="NeoVeldrid.StartupUtilities" />
         <PackageReference Include="Prowl.Slang" />
+        <PackageReference Include="Silk.NET.Assimp" />
+        <PackageReference Include="Ultz.Native.Assimp" />
     </ItemGroup>
 
     <ItemGroup>
         <None Update="Pathetic.ini" CopyToOutputDirectory="PreserveNewest" />
+        <None Update="Assets/**/*" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
     
     <ItemGroup>

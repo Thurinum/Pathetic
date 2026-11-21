@@ -5,20 +5,22 @@ using Pathetic.SceneGraph;
 
 namespace Pathetic.App.Components;
 
-[StructLayout(LayoutKind.Explicit, Size = 36)]
+[StructLayout(LayoutKind.Explicit, Size = 40)]
 public record struct PlanePrimitive
 {
     [FieldOffset(00)] public Vector3 Point;
     [FieldOffset(12)] public Vector3 ExtentX;
     [FieldOffset(24)] public Vector3 ExtentY;
-}   
+    [FieldOffset(36)] public uint MaterialId;
+}
 
-public class PlaneComponent(SparseSet<PlanePrimitive> primitives) : RendererBase<PlanePrimitive>(primitives)
+public class PlaneComponent(SparseSet<PlanePrimitive> primitives, MaterialLibrary materials) : RendererBase<PlanePrimitive>(primitives)
 {
     private Transform _transform = null!;
 
     public float Width { get; set; } = 5.0f;
     public float Height { get; set; } = 5.0f;
+    public Material Material { get; set; } = Material.Default;
 
     protected override void Setup()
     {
@@ -33,7 +35,7 @@ public class PlaneComponent(SparseSet<PlanePrimitive> primitives) : RendererBase
             Point = _transform.Position,
             ExtentX = Vector3.Transform(Vector3.UnitX, _transform.Rotation) * (Width * 0.5f),
             ExtentY = Vector3.Transform(Vector3.UnitY, _transform.Rotation) * (Height * 0.5f),
-
+            MaterialId = materials.GetOrAdd(Material)
         };
     }
 }
