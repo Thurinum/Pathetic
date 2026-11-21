@@ -4,6 +4,7 @@ using Pathetic.App.Assets;
 using Pathetic.App.Components;
 using Pathetic.App.Components.Camera;
 using Pathetic.App.Components.GUI;
+using Pathetic.Renderer.Utils;
 using Pathetic.SceneGraph;
 using Pathetic.SceneGraph.Scenes;
 
@@ -21,7 +22,11 @@ public sealed class App(SceneLoop loop, SceneManager sceneManager, ObjLoader obj
         sceneManager.CreateObject(scene, "youssefAimePasTemporalAccumFix")
             .AddComponent<RenderSettingsComponent>();
 
-        AddSphere(scene, new Vector3(2.0f, -100.5f, 0.0f), 100.0f);
+        var floor = AddPlane(scene, new Vector3(0.0f, -0.5f, 0.0f), Quaternion.FromEuler(new Vector3(-90.0f, 0.0f, 0.0f)));
+        floor.Width = 500.0f;
+        floor.Height = 500.0f;
+        floor.Material = new Material { Albedo = Rgb(0.6f, 0.6f, 0.6f) };
+
         AddSphere(scene, new Vector3(2.0f, -0.2f, 0.0f), 0.7f);
         AddSphere(scene, new Vector3(-1.3f, -0.3f, 0.9f), 0.2f);
         AddSphere(scene, new Vector3(-0.2f, 1.0f, 0.0f), 0.7f, Rgb(0.0f, 0.0f, 0.0f), Rgb(1.0f, 0.8f, 0.6f), 15.0f);
@@ -51,7 +56,7 @@ public sealed class App(SceneLoop loop, SceneManager sceneManager, ObjLoader obj
         loop.Run(scene);
     }
     
-    private void AddPlane(Scene scene, Vector3 pos, Quaternion rot)
+    private PlaneComponent AddPlane(Scene scene, Vector3 pos, Quaternion rot)
     {
         var obj = sceneManager.CreateObject(scene, "plane");
         var trans = obj.GetComponent<Transform>();
@@ -63,6 +68,8 @@ public sealed class App(SceneLoop loop, SceneManager sceneManager, ObjLoader obj
         plane.Height = 2f;
 
         // obj.AddComponent<RandomMover>();
+
+        return plane;
     }
 
     private void AddModel(
