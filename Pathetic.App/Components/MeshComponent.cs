@@ -6,7 +6,7 @@ using Pathetic.SceneGraph.Components;
 
 namespace Pathetic.App.Components;
 
-[StructLayout(LayoutKind.Explicit, Size = 76)]
+[StructLayout(LayoutKind.Explicit, Size = 80)]
 public record struct TrianglePrimitive
 {
     [FieldOffset(00)] public Vector3 V0;
@@ -16,19 +16,26 @@ public record struct TrianglePrimitive
     [FieldOffset(48)] public Vector3 N1;
     [FieldOffset(60)] public Vector3 N2;
     [FieldOffset(72)] public uint MaterialId;
+    [FieldOffset(76)] public uint TransformId;
 }
 
 public record struct MeshTriangle(Vector3 V0, Vector3 V1, Vector3 V2, Vector3 N0, Vector3 N1, Vector3 N2);
 
-public class MeshComponent(SparseSet<TrianglePrimitive> triangles, MaterialLibrary materials) : Component
+public class MeshComponent(
+    SparseSet<TrianglePrimitive> triangles,
+    MaterialLibrary materials,
+    MeshTransformLibrary transforms) : Component
 {
     private readonly List<Handle> _handles = [];
     private Vector3 _bakedPosition;
     private Quaternion _bakedRotation = Quaternion.Identity;
     private Vector3 _bakedScale = Vector3.One;
+    private uint _transformId = MeshTransform.None;
 
     public MeshTriangle[] Triangles { get; set; } = [];
     public Material Material { get; set; } = Material.Default;
+
+    public bool KeepLocalGeometry { get; set; }
 
     protected override void Setup()
     {
@@ -47,6 +54,17 @@ public class MeshComponent(SparseSet<TrianglePrimitive> triangles, MaterialLibra
 
     protected override void Cleanup()
     {
+        RemoveTriangles();
+
+        if (_transformId == MeshTransform.None)
+            return;
+
+        transforms.Remove(_transformId);
+        _transformId = MeshTransform.None;
+    }
+
+    private void RemoveTriangles()
+    {
         for (int i = _handles.Count - 1; i >= 0; i--)
         {
             Handle handle = _handles[i];
@@ -60,22 +78,44 @@ public class MeshComponent(SparseSet<TrianglePrimitive> triangles, MaterialLibra
     {
         uint materialId = materials.GetOrAdd(Material);
         Matrix4x4 matrix = BuildMatrix();
-        Matrix4x4 normalMatrix = Matrix4x4.Invert(matrix, out Matrix4x4 inverse)
-            ? Matrix4x4.Transpose(inverse)
-            : Matrix4x4.Identity;
+        bool local = KeepLocalGeometry;
+        uint transformId = MeshTransform.None;
+
+        if (local)
+        {
+            MeshTransform transform = MeshTransform.FromMatrix(matrix);
+
+            if (_transformId == MeshTransform.None)
+                _transformId = transforms.Add(transform);
+            else
+                transforms.Update(_transformId, transform);
+
+            transformId = _transformId;
+        }
+        else if (_transformId != MeshTransform.None)
+        {
+            transforms.Remove(_transformId);
+            _transformId = MeshTransform.None;
+        }
+
+        Matrix4x4 vertexMatrix = local ? Matrix4x4.Identity : matrix;
+        Matrix4x4 normalMatrix = Matrix4x4.Identity;
+
+        if (!local && Matrix4x4.Invert(matrix, out Matrix4x4 inverse))
+            normalMatrix = Matrix4x4.Transpose(inverse);
 
         if (_handles.Count != Triangles.Length)
         {
-            Cleanup();
+            RemoveTriangles();
 
             foreach (MeshTriangle triangle in Triangles)
-                _handles.Add(triangles.Add(ToPrimitive(triangle, matrix, normalMatrix, materialId)));
+                _handles.Add(triangles.Add(ToPrimitive(triangle, vertexMatrix, normalMatrix, materialId, transformId)));
 
             return;
         }
 
         for (int i = 0; i < Triangles.Length; i++)
-            triangles.Update(_handles[i], ToPrimitive(Triangles[i], matrix, normalMatrix, materialId));
+            triangles.Update(_handles[i], ToPrimitive(Triangles[i], vertexMatrix, normalMatrix, materialId, transformId));
     }
 
     private Matrix4x4 BuildMatrix()
@@ -90,7 +130,8 @@ public class MeshComponent(SparseSet<TrianglePrimitive> triangles, MaterialLibra
         MeshTriangle triangle,
         Matrix4x4 matrix,
         Matrix4x4 normalMatrix,
-        uint materialId) => new()
+        uint materialId,
+        uint transformId) => new()
     {
         V0 = Vector3.Transform(triangle.V0, matrix),
         V1 = Vector3.Transform(triangle.V1, matrix),
@@ -98,7 +139,8 @@ public class MeshComponent(SparseSet<TrianglePrimitive> triangles, MaterialLibra
         N0 = TransformNormal(triangle.N0, normalMatrix),
         N1 = TransformNormal(triangle.N1, normalMatrix),
         N2 = TransformNormal(triangle.N2, normalMatrix),
-        MaterialId = materialId
+        MaterialId = materialId,
+        TransformId = transformId
     };
 
     private static Vector3 TransformNormal(Vector3 normal, Matrix4x4 normalMatrix)

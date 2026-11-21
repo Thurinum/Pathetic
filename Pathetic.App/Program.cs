@@ -40,8 +40,10 @@ builder.Services.AddRenderer(graph => graph
 builder.Services.AddStructuredBuffer<SpherePrimitive>(ResourceName.Spheres, sparseStorage: true);
 builder.Services.AddStructuredBuffer<PlanePrimitive>(ResourceName.Planes, sparseStorage: true);
 builder.Services.AddStructuredBuffer<TrianglePrimitive>(ResourceName.Triangles, sparseStorage: true);
+builder.Services.AddStructuredBuffer<MeshTransform>(ResourceName.MeshTransforms);
 builder.Services.AddStructuredBuffer<Material>(ResourceName.Materials);
 builder.Services.AddSingleton<MaterialLibrary>();
+builder.Services.AddSingleton<MeshTransformLibrary>();
 builder.Services.AddSingleton<ObjLoader>();
 builder.Services.AddStructuredBuffer<CameraProvider>();
 

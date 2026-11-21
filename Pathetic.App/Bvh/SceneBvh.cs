@@ -8,7 +8,8 @@ namespace Pathetic.App.Bvh;
 public sealed class SceneBvh(
     StructuredBuffer<SpherePrimitive> spheres,
     StructuredBuffer<PlanePrimitive> planes,
-    StructuredBuffer<TrianglePrimitive> triangles)
+    StructuredBuffer<TrianglePrimitive> triangles,
+    StructuredBuffer<MeshTransform> meshTransforms)
 {
     private const uint PlaneType = 0;
     private const uint SphereType = 1;
@@ -19,6 +20,7 @@ public sealed class SceneBvh(
     private uint _sphereRevision;
     private uint _planeRevision;
     private uint _triangleRevision;
+    private uint _transformRevision;
     private bool _built;
 
     public uint Version { get; private set; }
@@ -29,7 +31,8 @@ public sealed class SceneBvh(
         !_built
         || _sphereRevision != spheres.Revision
         || _planeRevision != planes.Revision
-        || _triangleRevision != triangles.Revision;
+        || _triangleRevision != triangles.Revision
+        || _transformRevision != meshTransforms.Revision;
 
     public void Rebuild()
     {
@@ -52,6 +55,7 @@ public sealed class SceneBvh(
         _sphereRevision = spheres.Revision;
         _planeRevision = planes.Revision;
         _triangleRevision = triangles.Revision;
+        _transformRevision = meshTransforms.Revision;
         _built = true;
         Version++;
     }
@@ -91,6 +95,8 @@ public sealed class SceneBvh(
     private void AppendTriangles(List<BvhPrimitiveRef> references)
     {
         ReadOnlySpan<TrianglePrimitive> source = triangles.Values;
+        ReadOnlySpan<MeshTransform> transforms = meshTransforms.Values;
+
         for (uint i = 0; i < source.Length; i++)
         {
             TrianglePrimitive triangle = source[(int)i];
@@ -98,7 +104,27 @@ public sealed class SceneBvh(
             AxisAlignedBoundingBox bounds = AxisAlignedBoundingBox.Empty
                 .Include(triangle.V0).Include(triangle.V1).Include(triangle.V2);
 
+            if (triangle.TransformId != MeshTransform.None && triangle.TransformId < transforms.Length)
+                bounds = TransformBounds(bounds, transforms[(int)triangle.TransformId]);
+
             references.Add(new BvhPrimitiveRef(TriangleType, i, bounds));
         }
+    }
+
+    private static AxisAlignedBoundingBox TransformBounds(AxisAlignedBoundingBox bounds, MeshTransform transform)
+    {
+        AxisAlignedBoundingBox result = AxisAlignedBoundingBox.Empty;
+
+        for (int corner = 0; corner < 8; corner++)
+        {
+            Vector3 point = new(
+                (corner & 1) == 0 ? bounds.Min.X : bounds.Max.X,
+                (corner & 2) == 0 ? bounds.Min.Y : bounds.Max.Y,
+                (corner & 4) == 0 ? bounds.Min.Z : bounds.Max.Z);
+
+            result = result.Include(transform.TransformPoint(point));
+        }
+
+        return result;
     }
 }

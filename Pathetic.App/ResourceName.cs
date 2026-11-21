@@ -14,6 +14,7 @@ public static class ResourceName
     public const string Planes = "planes";
     public const string Triangles = "triangles";
     public const string Materials = "materials";
+    public const string MeshTransforms = "meshTransforms";
     public const string BvhNodes = "bvhNodes";
     public const string BvhPrimitiveRefs = "bvhPrimitiveRefs";
     public const string Circles = "circlePrimitives";

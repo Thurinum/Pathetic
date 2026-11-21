@@ -9,7 +9,7 @@ using Pathetic.SceneGraph.Scenes;
 
 namespace Pathetic.App;
 
-public class App(SceneLoop loop, SceneManager sceneManager, ObjLoader objLoader)
+public sealed class App(SceneLoop loop, SceneManager sceneManager, ObjLoader objLoader)
 {
     public void Run()
     {
@@ -21,12 +21,13 @@ public class App(SceneLoop loop, SceneManager sceneManager, ObjLoader objLoader)
         sceneManager.CreateObject(scene, "youssefAimePasTemporalAccumFix")
             .AddComponent<RenderSettingsComponent>();
 
-        AddSphere(scene, new Vector3(2.0f, -100.5f, 0.0f), 100.0f, Rgb(0.6f, 0.6f, 0.6f));
-        AddSphere(scene, new Vector3(2.0f, 0.2f, 0.0f), 0.7f, Rgb(0.9f, 0.6f, 0.2f));
-        AddSphere(scene, new Vector3(1.3f, -0.3f, 0.9f), 0.2f, Rgb(0.2f, 0.6f, 0.9f));
+        AddSphere(scene, new Vector3(2.0f, -100.5f, 0.0f), 100.0f);
+        AddSphere(scene, new Vector3(2.0f, -0.2f, 0.0f), 0.7f);
+        AddSphere(scene, new Vector3(-1.3f, -0.3f, 0.9f), 0.2f);
         AddSphere(scene, new Vector3(-0.2f, 1.0f, 0.0f), 0.7f, Rgb(0.0f, 0.0f, 0.0f), Rgb(1.0f, 0.8f, 0.6f), 15.0f);
         AddModel(scene, "cube.obj", new Vector3(0.5f, 0.0f, 1.5f), 0.5f);
-        AddModel(scene, "teapot.obj", new Vector3(-2.2f, -0.5f, 1.2f), 0.5f);
+        AddModel(scene, "teapot.obj", new Vector3(-2.2f, -0.5f, 3.2f), 1f, Quaternion.CreateFromAxisAngle(Vector3.UnitY, -0.35f));
+        AddModel(scene, "cube.obj", new Vector3(1.4f, -0.35f, 1.0f), 0.15f, Quaternion.CreateFromAxisAngle(Vector3.UnitY, 0.6f), keepLocalGeometry: true);
         
         var camera = sceneManager.CreateObject(scene, "camera");
         camera.AddComponent<CameraComponent>();
@@ -64,14 +65,30 @@ public class App(SceneLoop loop, SceneManager sceneManager, ObjLoader objLoader)
         // obj.AddComponent<RandomMover>();
     }
 
-    private void AddModel(Scene scene, string model, Vector3 position, float scale)
+    private void AddModel(
+        Scene scene,
+        string model,
+        Vector3 position,
+        float scale,
+        Quaternion? rotation = null,
+        bool keepLocalGeometry = false)
     {
         var obj = sceneManager.CreateObject(scene, model);
         obj.Transform.Position = position;
         obj.Transform.Scale = new Vector3(scale);
 
-        objLoader.Initialize(obj.AddComponent<MeshComponent>(), model);
+        if (rotation is { } orientation)
+            obj.Transform.Rotation = orientation;
+
+        var mesh = obj.AddComponent<MeshComponent>();
+        mesh.KeepLocalGeometry = keepLocalGeometry;
+
+        objLoader.Initialize(mesh, model);
+        mesh.Material = new Material { Albedo = RandomColor() };
     }
+
+    private static RgbaByte RandomColor() =>
+        new((byte)Random.Shared.Next(64, 256), (byte)Random.Shared.Next(64, 256), (byte)Random.Shared.Next(64, 256), 255);
 
     private static RgbaByte Rgb(float r, float g, float b) =>
         new((byte)MathF.Round(r * 255.0f), (byte)MathF.Round(g * 255.0f), (byte)MathF.Round(b * 255.0f), 255);
@@ -80,7 +97,7 @@ public class App(SceneLoop loop, SceneManager sceneManager, ObjLoader objLoader)
         Scene scene,
         Vector3 position,
         float radius,
-        RgbaByte albedo,
+        RgbaByte albedo = default,
         RgbaByte emission = default,
         float emissionStrength = 1.0f)
     {
@@ -92,7 +109,7 @@ public class App(SceneLoop loop, SceneManager sceneManager, ObjLoader objLoader)
         sphere.Radius = radius;
         sphere.Material = new Material
         {
-            Albedo = albedo,
+            Albedo = albedo == default ? RandomColor() : albedo,
             Emission = emission,
             EmissionStrength = emissionStrength
         };

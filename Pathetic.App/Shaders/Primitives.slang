@@ -31,6 +31,31 @@ public struct Triangle
     public float3 N1;
     public float3 N2;
     public uint MaterialId;
+    public uint TransformId;
+}
+
+public static const uint NoTransform = 0xFFFFFFFFu;
+
+public struct MeshTransform
+{
+    public float3 InverseX;
+    public float3 InverseY;
+    public float3 InverseZ;
+    public float3 InverseOffset;
+    public float3 NormalX;
+    public float3 NormalY;
+    public float3 NormalZ;
+    public float3 ForwardX;
+    public float3 ForwardY;
+    public float3 ForwardZ;
+    public float3 ForwardOffset;
+};
+
+StructuredBuffer<MeshTransform, ScalarDataLayout> meshTransforms;
+
+float3 TransformDirection(float3 v, float3 x, float3 y, float3 z)
+{
+    return v.x * x + v.y * y + v.z * z;
 }
 
 // Unpacks a packed RgbaByte into normalized 0..1 components.
@@ -140,21 +165,33 @@ public HitResult IntersectPlane(float3 origin, float3 dir, Plane p, float tMin, 
 
 public HitResult IntersectTriangle(float3 origin, float3 dir, Triangle tri, float tMin, float tMax)
 {
+    float3 localOrigin = origin;
+    float3 localDir = dir;
+    MeshTransform transform = {};
+    bool transformed = tri.TransformId != NoTransform;
+
+    if (transformed)
+    {
+        transform = meshTransforms[tri.TransformId];
+        localOrigin = TransformDirection(origin, transform.InverseX, transform.InverseY, transform.InverseZ) + transform.InverseOffset;
+        localDir = TransformDirection(dir, transform.InverseX, transform.InverseY, transform.InverseZ);
+    }
+
     float3 edge1 = tri.V1 - tri.V0;
     float3 edge2 = tri.V2 - tri.V0;
-    float3 p = cross(dir, edge2);
+    float3 p = cross(localDir, edge2);
     float det = dot(edge1, p);
     if (abs(det) < 1e-8)
         return HitResult.Miss();
 
     float invDet = 1.0 / det;
-    float3 s = origin - tri.V0;
+    float3 s = localOrigin - tri.V0;
     float u = dot(s, p) * invDet;
     if (u < 0.0 || u > 1.0)
         return HitResult.Miss();
 
     float3 q = cross(s, edge1);
-    float v = dot(dir, q) * invDet;
+    float v = dot(localDir, q) * invDet;
     if (v < 0.0 || u + v > 1.0)
         return HitResult.Miss();
 
@@ -167,6 +204,12 @@ public HitResult IntersectTriangle(float3 origin, float3 dir, Triangle tri, floa
     float3 nInterp = (1.0 - u - v) * tri.N0 + u * tri.N1 + v * tri.N2;
     float nInterpLength = length(nInterp);
     nInterp = nInterpLength > 1e-8 ? nInterp / nInterpLength : n;
+
+    if (transformed)
+    {
+        n = normalize(TransformDirection(n, transform.NormalX, transform.NormalY, transform.NormalZ));
+        nInterp = normalize(TransformDirection(nInterp, transform.NormalX, transform.NormalY, transform.NormalZ));
+    }
 
     float3 nExt = n;
     if (dot(n, dir) > 0)
