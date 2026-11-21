@@ -1,18 +1,19 @@
+using Pathetic.App.Assets;
 using Pathetic.SceneGraph;
 using Pathetic.SceneGraph.Scenes;
 
 namespace Pathetic.App.Scenes;
 
-public sealed class SceneFactory(SceneManager sceneManager, IScene definition)
+public sealed class SceneFactory(SceneManager sceneManager, ObjLoader objLoader, IEnumerable<ISceneDefinition> definitions)
 {
-    public Scene Create()
-    {
-        Scene scene = sceneManager.CreateScene();
+    public IReadOnlyList<ISceneDefinition> Definitions { get; } = [.. definitions];
 
-        var builder = new SceneBuilder(sceneManager, scene);
+    public IReadOnlyList<SceneObject> Populate(Scene scene, ISceneDefinition definition)
+    {
+        var builder = new SceneBuilder(sceneManager, scene, objLoader);
         definition.Build(builder);
         builder.AddCamera(definition.Camera);
 
-        return scene;
+        return builder.Created;
     }
 }

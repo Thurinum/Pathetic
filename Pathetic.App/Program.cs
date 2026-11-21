@@ -2,10 +2,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Pathetic.App;
+using Pathetic.App.Assets;
 using Pathetic.App.Bvh;
 using Pathetic.App.Components;
 using Pathetic.App.Components.Camera;
+using Pathetic.App.Generated;
 using Pathetic.App.Input;
+using Pathetic.App.Profiling;
 using Pathetic.App.RenderPasses;
 using Pathetic.App.Scenes;
 using Pathetic.App.Scenes.Catalog;
@@ -33,19 +36,26 @@ AddOptions<PathTracerOptions>();
 AddOptions<TemporalAccumulationOptions>();
 AddOptions<TonemappingOptions>();
 AddOptions<SceneOptions>();
+AddOptions<CameraOptions>();
 
+builder.Services.AddSingleton<RenderDebugSettings>();
 builder.Services.AddSingleton<ConvergenceController>();
 
 builder.Services.AddRenderer(graph => graph
     // .AddPass<CirclesPass>()
     .AddPass<PathTracerPass>()
     .AddPass<TemporalAccumulationPass>()
-    .Present(ResourceName.PresentColor));
+    .Present(ResourceName.Color));
 
 builder.Services.AddStructuredBuffer<SpherePrimitive>(ResourceName.Spheres, sparseStorage: true);
 builder.Services.AddStructuredBuffer<PlanePrimitive>(ResourceName.Planes, sparseStorage: true);
+builder.Services.AddStructuredBuffer<TrianglePrimitive>(ResourceName.Triangles, sparseStorage: true);
+builder.Services.AddStructuredBuffer<MeshTransform>(ResourceName.MeshTransforms);
+builder.Services.AddStructuredBuffer<Material>(ResourceName.Materials);
+builder.Services.AddSingleton<MaterialLibrary>();
+builder.Services.AddSingleton<MeshTransformLibrary>();
+builder.Services.AddSingleton<ObjLoader>();
 builder.Services.AddStructuredBuffer<CameraProvider>();
-// builder.Services.AddStructuredBuffer<CirclePrimitive>(ResourceName.Circles, sparseStorage: true);
 
 builder.Services.AddSingleton<SceneBvh>();
 builder.Services.AddSingleton(sp => new BvhBufferUploader<GpuBvhNode>(
@@ -61,7 +71,11 @@ builder.Services.AddSingleton<IResourceUploader>(sp => sp.GetRequiredService<Bvh
 
 builder.Services.AddSceneGraph();
 builder.Services.AddScene<DefaultScene>();
-builder.Services.AddProfiling();
+builder.Services.AddScene<OneWeekendScene>();
+builder.Services.AddScene<SphereFieldScene>();
+builder.Services.AddScene<SphereflakeScene>();
+builder.Services.AddScene<CornellBoxScene>();
+builder.Services.AddProfiling<ShaderCounterLayout, PathTracerStats>();
 
 var inputActions = new InputActions();
 builder.Services.AddSingleton(inputActions);

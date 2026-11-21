@@ -10,38 +10,91 @@ public sealed partial class FenceGpuTimer(
     ShaderCounterStats counterStats,
     IEnumerable<IShaderCounterReadback> counterReadbacks) : IGpuTimer, IDisposable
 {
+    private const string FinalLabel = "Present";
+
     private static readonly ActivitySource Source = new(ProfilingName.SourceName);
 
-    private Fence? _fence;
+    private readonly List<Submission> _submissions = [];
+    private readonly Stack<Fence> _idle = new();
+    private readonly List<Fence> _all = [];
 
-    public void Lap(GraphicsDevice device, CommandList cmd, string label)
+    private bool _deviceLogged;
+    private DateTimeOffset _frameStart;
+
+    public void Record(GraphicsDevice device, CommandList cmd, string label)
     {
-        if (_fence is null)
+        if (!_deviceLogged)
         {
-            _fence = device.ResourceFactory.CreateFence(false);
+            _deviceLogged = true;
             LogDevice(device);
         }
 
-        DateTimeOffset start = DateTimeOffset.UtcNow;
-        long startTicks = TimeProvider.System.GetTimestamp();
-        foreach (IShaderCounterReadback readback in counterReadbacks)
-            readback.Record(device, cmd);
+        if (_submissions.Count == 0)
+            _frameStart = DateTimeOffset.UtcNow;
+
+        Fence fence = RentFence(device);
+        long submittedAt = TimeProvider.System.GetTimestamp();
 
         cmd.End();
-        device.SubmitCommands(cmd, _fence);
-        device.WaitForFence(_fence);
-        _fence.Reset();
-        TimeSpan elapsed = TimeProvider.System.GetElapsedTime(startTicks);
-
-        foreach (IShaderCounterReadback readback in counterReadbacks)
-            counterStats.Update(readback.Resolve(device), elapsed);
-
-        using Activity? span = Source.StartActivity(
-            ProfilingName.GpuSpanPrefix + label, ActivityKind.Internal, parentContext: default, startTime: start);
-        span?.SetEndTime((start + elapsed).UtcDateTime);
+        device.SubmitCommands(cmd, fence);
+        _submissions.Add(new Submission(label, fence, submittedAt));
 
         cmd.Begin();
         cmd.SetFramebuffer(device.SwapchainFramebuffer);
+    }
+
+    public void Publish(GraphicsDevice device, CommandList cmd)
+    {
+        if (_submissions.Count == 0)
+            return;
+
+        foreach (IShaderCounterReadback readback in counterReadbacks)
+            readback.Record(device, cmd);
+
+        Record(device, cmd, FinalLabel);
+
+        long frameStart = _submissions[0].SubmittedAt;
+        long previousDone = frameStart;
+
+        foreach (Submission submission in _submissions)
+        {
+            device.WaitForFence(submission.Fence);
+            long done = TimeProvider.System.GetTimestamp();
+
+            // The GPU runs submissions in order, so a workload starts when the previous one ends or when it was submitted.
+            long began = Math.Max(previousDone, submission.SubmittedAt);
+            EmitSpan(submission.Label, frameStart, began, done);
+
+            previousDone = done;
+            submission.Fence.Reset();
+            _idle.Push(submission.Fence);
+        }
+
+        TimeSpan gpuTime = TimeProvider.System.GetElapsedTime(frameStart, previousDone);
+        _submissions.Clear();
+
+        foreach (IShaderCounterReadback readback in counterReadbacks)
+            counterStats.Update(readback.Resolve(device), gpuTime);
+    }
+
+    private void EmitSpan(string label, long frameStart, long began, long done)
+    {
+        DateTimeOffset start = _frameStart + TimeProvider.System.GetElapsedTime(frameStart, began);
+        TimeSpan duration = TimeProvider.System.GetElapsedTime(began, done);
+
+        using Activity? span = Source.StartActivity(
+            ProfilingName.GpuSpanPrefix + label, ActivityKind.Internal, parentContext: default, startTime: start);
+        span?.SetEndTime((start + duration).UtcDateTime);
+    }
+
+    private Fence RentFence(GraphicsDevice device)
+    {
+        if (_idle.TryPop(out Fence? fence))
+            return fence;
+
+        fence = device.ResourceFactory.CreateFence(false);
+        _all.Add(fence);
+        return fence;
     }
 
     private void LogDevice(GraphicsDevice device)
@@ -50,7 +103,13 @@ public sealed partial class FenceGpuTimer(
         LogDevice(device.DeviceName, device.VendorName, device.BackendType, device.ApiVersion, device.IsDebugActive, driver);
     }
 
-    public void Dispose() => _fence?.Dispose();
+    public void Dispose()
+    {
+        foreach (Fence fence in _all)
+            fence.Dispose();
+    }
+
+    private readonly record struct Submission(string Label, Fence Fence, long SubmittedAt);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "GPU {Name} ({Vendor}), {Backend} {Api}, validation {Validation}, driver {Driver}")]
     private partial void LogDevice(string name, string vendor, GraphicsBackend backend, GraphicsApiVersion api, bool validation, string driver);

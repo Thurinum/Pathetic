@@ -38,22 +38,47 @@ void BuildOrthonormalBasis(float3 normal, out float3 tangent, out float3 bitange
 
 public float3 RandomBounceDirection(float3 normal, inout Rng rng)
 {
-    float randHeight = rng.Next();
-    float randTurn = rng.Next();
-    
-    float height = randHeight; // 0 ..1 
-    float angleAround = (2 * float.getPi()) * randTurn; // 0.. 360
-    
-    float ringRadius = sqrt(max(0.0, 1.0 - height * height));
-    
-    float3 localDir = float3(
-        ringRadius * cos(angleAround),
-        ringRadius * sin(angleAround),
-        height
-    );
-    // localDir to worldDir
+    float radiusRandom = rng.Next();
+    float angleRandom = rng.Next();
+
+    float radius = sqrt(radiusRandom);
+    float angle = 2.0 * float.getPi() * angleRandom;
+    float height = sqrt(max(0.0, 1.0 - radiusRandom));
+
     float3 tangent, bitangent;
     BuildOrthonormalBasis(normal, tangent, bitangent);
-    return tangent * localDir.x + bitangent * localDir.y + normal * localDir.z;
-    
+    return tangent * (radius * cos(angle)) + bitangent * (radius * sin(angle)) + normal * height;
+}
+
+public float3 RandomUniformHemisphereDirection(float3 normal, inout Rng rng)
+{
+    float heightRandom = rng.Next();
+    float angleRandom = rng.Next();
+
+    float height = heightRandom;
+    float radius = sqrt(max(0.0, 1.0 - height * height));
+    float angle = 2.0 * float.getPi() * angleRandom;
+
+    float3 tangent, bitangent;
+    BuildOrthonormalBasis(normal, tangent, bitangent);
+    return tangent * (radius * cos(angle)) + bitangent * (radius * sin(angle)) + normal * height;
+}
+
+public float2 StratifiedPoint(uint cellIndex, uint cellsPerAxis, inout Rng rng)
+{
+    float2 cell = float2(cellIndex % cellsPerAxis, cellIndex / cellsPerAxis);
+    return (cell + float2(rng.Next(), rng.Next())) / cellsPerAxis;
+}
+
+public void ShuffleCells(out uint cells[64], uint count, inout Rng rng)
+{
+    for (uint index = 0; index < count; ++index)
+        cells[index] = index;
+    for (uint last = count - 1; last > 0; --last)
+    {
+        uint other = min((uint)(rng.Next() * (last + 1)), last);
+        uint swapped = cells[last];
+        cells[last] = cells[other];
+        cells[other] = swapped;
+    }
 }

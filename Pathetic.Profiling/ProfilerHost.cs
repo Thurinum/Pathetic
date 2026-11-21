@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Pathetic.Profiling.Statistics;
+using Pathetic.Profiling.Tracing;
 
 namespace Pathetic.Profiling;
 
@@ -18,8 +19,8 @@ internal sealed partial class ProfilerHost : IHostedService, IDisposable
     private readonly ShaderCounterStats _shaderCounters;
     private readonly ILogger<ProfilerHost> _logger;
     private readonly ActivityListener _listener;
+    private readonly ChromeTraceWriter? _trace;
 
-    private DateTime? _previousFrameStart;
     private long _lastSummary = TimeProvider.System.GetTimestamp();
 
     public ProfilerHost(IOptions<ProfilerOptions> options, ProfilerStats stats, ShaderCounterStats shaderCounters, ILogger<ProfilerHost> logger)
@@ -28,6 +29,7 @@ internal sealed partial class ProfilerHost : IHostedService, IDisposable
         _stats = stats;
         _shaderCounters = shaderCounters;
         _logger = logger;
+        _trace = _options.Enabled && _options.TraceFile.Length > 0 ? new ChromeTraceWriter(_options.TraceFile) : null;
         _listener = new ActivityListener
         {
             ShouldListenTo = source => source.Name.StartsWith(ProfilingName.SourcePrefix, StringComparison.Ordinal),
@@ -44,33 +46,58 @@ internal sealed partial class ProfilerHost : IHostedService, IDisposable
         return Task.CompletedTask;
     }
 
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        _trace?.Dispose();
+        return Task.CompletedTask;
+    }
 
     private void OnSpanStopped(Activity span)
     {
         string name = span.OperationName;
-        string tags = FormatTags(span);
+        SpanTag[] tags = ReadTags(span);
 
         long occurrences = _stats.Add(name, span.Duration.TotalMilliseconds, tags);
+        _trace?.Write(span);
 
-        if (tags.Length > 0 && occurrences <= TaggedSpanLogLimit)
-            LogTaggedSpan(name, span.Duration.TotalMilliseconds, tags);
+        if (tags.Length > 0 && occurrences <= TaggedSpanLogLimit && _logger.IsEnabled(LogLevel.Information))
+#pragma warning disable CA1873 // Guarded by the IsEnabled check above.
+            LogTaggedSpan(name, span.Duration.TotalMilliseconds, FormatTags(tags));
+#pragma warning restore CA1873
 
         if (span.GetTagItem(ProfilingName.FrameTag) is not null)
-            OnFrameStarted(span.StartTimeUtc);
+            OnFrameEnded();
     }
 
-    private static string FormatTags(Activity span) =>
-        string.Join(' ', span.TagObjects
-            .Where(tag => tag.Key != ProfilingName.FrameTag)
-            .Select(tag => $"{tag.Key}={tag.Value}"));
-
-    private void OnFrameStarted(DateTime start)
+    // Runs for every span, so it avoids LINQ and only allocates when the span has tags.
+    private static SpanTag[] ReadTags(Activity span)
     {
-        if (_previousFrameStart is { } previous)
-            _stats.AddFrame((start - previous).TotalMilliseconds);
+        int count = 0;
+        foreach (KeyValuePair<string, object?> tag in span.TagObjects)
+        {
+            if (tag.Key != ProfilingName.FrameTag)
+                count++;
+        }
 
-        _previousFrameStart = start;
+        if (count == 0)
+            return [];
+
+        var tags = new SpanTag[count];
+        int next = 0;
+        foreach (KeyValuePair<string, object?> tag in span.TagObjects)
+        {
+            if (tag.Key != ProfilingName.FrameTag)
+                tags[next++] = new SpanTag(tag.Key, $"{tag.Value}");
+        }
+
+        return tags;
+    }
+
+    private static string FormatTags(IEnumerable<SpanTag> tags) => string.Join(' ', tags.Select(tag => $"{tag.Key}={tag.Value}"));
+
+    private void OnFrameEnded()
+    {
+        _stats.AddFrame();
 
         if (TimeProvider.System.GetElapsedTime(_lastSummary) >= SummaryInterval)
             LogSummaryNow();
@@ -86,12 +113,17 @@ internal sealed partial class ProfilerHost : IHostedService, IDisposable
         IEnumerable<string> counters = _shaderCounters.Rows().Select(row => $"  {row.Name,-44} {row.Value}");
         IEnumerable<string> spans = snapshot.Spans.Take(SummarySpanCount)
             .Select(span => $"  {span.Name,-44} {span.MeanMs,9:F3} ms  max {span.MaxMs,9:F3}");
-        IEnumerable<string> state = snapshot.Spans.Where(span => span.Tags.Length > 0).Select(span => $"  {span.Name,-44} {span.Tags}");
+        IEnumerable<string> state = snapshot.Spans.Where(span => span.Tags.Count > 0)
+            .Select(span => $"  {span.Name,-44} {FormatTags(span.Tags)}");
         string rows = string.Join(Environment.NewLine, counters.Concat(spans).Concat(state));
         LogSummary(snapshot.Fps, snapshot.FrameMeanMs, rows);
     }
 
-    public void Dispose() => _listener.Dispose();
+    public void Dispose()
+    {
+        _listener.Dispose();
+        _trace?.Dispose();
+    }
 
     [LoggerMessage(Level = LogLevel.Information, Message = "{Span}: {Ms:F2} ms  {Tags}")]
     private partial void LogTaggedSpan(string span, double ms, string tags);

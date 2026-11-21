@@ -19,7 +19,7 @@ public sealed class SlangCompiler
     private readonly Session _session;
     public const string EntryPointName = "main";
 
-    public SlangCompiler(IOptions<RendererOptions> options, IOptions<ProfilerOptions> profiler)
+    public SlangCompiler(IOptions<RendererOptions> options, IOptions<ProfilerOptions> profiler, IShaderCounterLayout counters)
     {
         _options = options.Value;
         
@@ -34,7 +34,7 @@ public sealed class SlangCompiler
         {
             Targets = [target],
             SearchPaths = [shadersDirectory, "./"],
-            PreprocessorMacros = profiler.Value.Enabled ? [.. ShaderCounterMacros.All.Select(ToMacro)] : null
+            PreprocessorMacros = profiler.Value.Enabled ? [.. counters.Macros.Select(ToMacro)] : null
         };
 
         _session = GlobalSession.CreateSession(sessionDescription);

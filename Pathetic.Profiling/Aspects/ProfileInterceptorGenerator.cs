@@ -20,6 +20,14 @@ public sealed class ProfileInterceptorGenerator : IIncrementalGenerator
     private static readonly SymbolDisplayFormat MethodFormat = SymbolDisplayFormat.FullyQualifiedFormat
         .AddMemberOptions(SymbolDisplayMemberOptions.IncludeParameters | SymbolDisplayMemberOptions.IncludeContainingType);
 
+    private static readonly DiagnosticDescriptor UnreadableTag = new(
+        id: "PATHPROF001",
+        title: "Profile tag cannot be read",
+        messageFormat: "[ProfileTag] on '{0}' would be silently ignored because {1}",
+        category: "Pathetic.Profiling",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         IncrementalValueProvider<bool> enabled = context.ParseOptionsProvider
@@ -36,6 +44,45 @@ public sealed class ProfileInterceptorGenerator : IIncrementalGenerator
             if (isEnabled && !woven.IsDefaultOrEmpty)
                 output.AddSource("ProfileInterceptors.g.cs", SourceText.From(Writer.Write(woven), System.Text.Encoding.UTF8));
         });
+
+        IncrementalValueProvider<ImmutableArray<TagProblem>> problems = context.SyntaxProvider
+            .ForAttributeWithMetadataName(
+                $"{typeof(ProfileTagAttribute).Namespace}.{nameof(ProfileTagAttribute)}",
+                static (node, _) => node is PropertyDeclarationSyntax,
+                FindTagProblem)
+            .Where(static problem => problem is not null)
+            .Select(static (problem, _) => problem!)
+            .Collect();
+
+        context.RegisterSourceOutput(problems.Combine(enabled), static (output, input) =>
+        {
+            (ImmutableArray<TagProblem> found, bool isEnabled) = input;
+            if (!isEnabled)
+                return;
+
+            foreach (TagProblem problem in found)
+                output.ReportDiagnostic(Diagnostic.Create(UnreadableTag, problem.ToLocation(), problem.Property, problem.Reason));
+        });
+    }
+
+    // A tag that cannot be read would compile fine and then be skipped, so it is rejected instead.
+    private static TagProblem? FindTagProblem(GeneratorAttributeSyntaxContext context, CancellationToken cancellation)
+    {
+        var property = (IPropertySymbol)context.TargetSymbol;
+        Compilation compilation = context.SemanticModel.Compilation;
+
+        string? reason = property switch
+        {
+            { IsStatic: true } => "it is static",
+            { GetMethod: null } => "it has no getter",
+            { GetMethod: { } getter } when !IsCallableFromGeneratedCode(getter, compilation) => "its getter is not accessible from the same assembly (make it internal or public)",
+            _ => null,
+        };
+
+        Location location = property.Locations[0];
+        return reason is null
+            ? null
+            : new TagProblem(property.Name, reason, location.SourceTree?.FilePath ?? string.Empty, location.SourceSpan, location.GetLineSpan().Span);
     }
 
     private static ImmutableArray<CallSite> Analyze(GeneratorSyntaxContext context, CancellationToken cancellation)
@@ -134,9 +181,10 @@ public sealed class ProfileInterceptorGenerator : IIncrementalGenerator
                     .Select(attribute => new ResultTag($"{attribute.ConstructorArguments[0].Value}", property.Name)))];
 
     private static bool IsReadableFromGeneratedCode(IPropertySymbol property, Compilation compilation) =>
-        !property.IsStatic
-        && property.GetMethod is { } getter
+        property is { IsStatic: false, GetMethod: { } getter }
         && compilation.IsSymbolAccessibleWithin(getter, compilation.Assembly);
+
+    private static string Literal(string value) => SymbolDisplay.FormatLiteral(value, quote: true);
 
     private static class Writer
     {
@@ -164,7 +212,7 @@ public sealed class ProfileInterceptorGenerator : IIncrementalGenerator
                 {
                     internal static class ProfileInterceptors
                     {
-                        private static readonly global::System.Diagnostics.ActivitySource Source = new("{{ProfilingName.SourceName}}");
+                        private static readonly global::System.Diagnostics.ActivitySource Source = new({{Literal(ProfilingName.SourceName)}});
 
                 {{string.Join("\n", interceptors)}}
                     }
@@ -177,7 +225,7 @@ public sealed class ProfileInterceptorGenerator : IIncrementalGenerator
             CallSite site = sites[0];
             bool returnsValue = site.ReturnType != Void;
             string locations = string.Join("\n", sites.Select(s =>
-                $"        [global::System.Runtime.CompilerServices.InterceptsLocation({s.LocationVersion}, \"{s.LocationData}\")]"));
+                $"        [global::System.Runtime.CompilerServices.InterceptsLocation({s.LocationVersion}, {Literal(s.LocationData)})]"));
             string parameters = string.Join(", ", site.Parameters.Select(p => $"{p.Declaration}{p.Type} {p.Name}")
                 .Prepend(site.IsStatic ? null : $"this {site.ReceiverType} {Self}")
                 .OfType<string>());
@@ -188,7 +236,7 @@ public sealed class ProfileInterceptorGenerator : IIncrementalGenerator
                 {{locations}}
                         internal static {{site.ReturnType}} {{site.MethodName}}_{{index}}({{parameters}})
                         {
-                            using global::System.Diagnostics.Activity? {{Span}} = Source.StartActivity("{{site.OperationName}}");
+                            using global::System.Diagnostics.Activity? {{Span}} = Source.StartActivity({{Literal(site.OperationName)}});
                 {{Lines(site.IsFrame ? [Tag(ProfilingName.FrameTag, "true")] : [])}}
                             {{(returnsValue ? $"var {Result} = {call}" : call)}};
                 {{Lines(site.ResultTags.Select(tag => Tag(tag.TagName, $"{Self}.{tag.PropertyName}")))}}
@@ -198,7 +246,7 @@ public sealed class ProfileInterceptorGenerator : IIncrementalGenerator
                 """;
         }
 
-        private static string Tag(string name, string value) => $"{Span}?.SetTag(\"{name}\", {value});";
+        private static string Tag(string name, string value) => $"{Span}?.SetTag({Literal(name)}, {value});";
 
         private static string Lines(IEnumerable<string> statements) =>
             string.Join("\n", statements.Select(statement => $"            {statement}"));
@@ -214,6 +262,11 @@ public sealed class ProfileInterceptorGenerator : IIncrementalGenerator
     private sealed record Parameter(string Type, string Name, string Declaration, string Argument);
 
     private sealed record ResultTag(string TagName, string PropertyName);
+
+    private sealed record TagProblem(string Property, string Reason, string FilePath, TextSpan Span, LinePositionSpan LineSpan)
+    {
+        public Location ToLocation() => Location.Create(FilePath, Span, LineSpan);
+    }
 
     private sealed record CallSite(
         string Key,

@@ -2,8 +2,6 @@ module Camera;
 
 import Random;
 
-static const float Pi = 3.14159265358979323846;
-
 public struct Camera
 {
     public float3 Origin;    
@@ -22,7 +20,7 @@ public struct Ray
     public float3 Direction;
 }
 
-public Ray BuildPrimaryRay(Camera camera, inout Rng rng, uint2 pixel, uint2 frameSize, float2 jitter)
+public Ray BuildPrimaryRay(Camera camera, uint2 pixel, uint2 frameSize, float2 jitter, float2 apertureUnitSquarePoint)
 {
     float aspect = frameSize.x / (float)frameSize.y;
     float2 screenUV  = (float2(pixel) + jitter) / float2(frameSize);
@@ -34,7 +32,7 @@ public Ray BuildPrimaryRay(Camera camera, inout Rng rng, uint2 pixel, uint2 fram
     
     // le thin layer dof
     float3 focusPoint = camera.Origin + camera.FocusDistance * eyeToImagePlane;
-    float2 apertureSample = SampleAperture(camera, rng);
+    float2 apertureSample = SampleAperture(camera, apertureUnitSquarePoint);
     float3 rayOrigin = camera.Origin + apertureSample.x * camera.Right + apertureSample.y * camera.Up;
     float3 rayDir = normalize(focusPoint - rayOrigin);
     
@@ -44,9 +42,9 @@ public Ray BuildPrimaryRay(Camera camera, inout Rng rng, uint2 pixel, uint2 fram
     return ray;
 }
 
-float2 SampleAperture(Camera camera, inout Rng rng)
+float2 SampleAperture(Camera camera, float2 unitSquarePoint)
 {
-    float angle = 2.0 * Pi * rng.Next();
-    float radius = sqrt(rng.Next()); // pour uniformite dans l'aire du cercle
+    float radius = sqrt(unitSquarePoint.x);
+    float angle = 2.0 * float.getPi() * unitSquarePoint.y;
     return float2(radius * cos(angle), radius * sin(angle)) * camera.ApertureRadius;
 }

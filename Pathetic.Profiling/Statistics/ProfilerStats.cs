@@ -1,71 +1,137 @@
 using System.Collections.Concurrent;
+using Microsoft.Extensions.Options;
 
 namespace Pathetic.Profiling.Statistics;
 
-public sealed class ProfilerStats
+public sealed class ProfilerStats(IOptions<ProfilerOptions> options)
 {
-    private const int WindowSize = 240;
+    private const int MaxEntriesPerSeries = 1 << 16;
+    private const double EmaWeight = 0.2;
 
     private sealed class Series
     {
-        private readonly ConcurrentQueue<double> _recent = new();
+        private readonly Queue<(long At, double Ms)> _entries = new();
+        private readonly Lock _gate = new();
 
         public long Count { get; private set; }
         public double Last { get; private set; }
-        public string Tags { get; private set; } = string.Empty;
+        public IReadOnlyList<SpanTag> Tags { get; private set; } = [];
         public long LastSeen { get; private set; }
 
-        public double[] Recent => [.. _recent];
+        /// <summary>Exponential moving average of the time between two occurrences, in milliseconds. Zero until known.</summary>
+        public double IntervalMs { get; private set; }
 
-        public void Add(double ms, string tags)
+        public void Add(double ms, IReadOnlyList<SpanTag> tags, long windowStart)
         {
-            _recent.Enqueue(ms);
-            while (_recent.Count > WindowSize)
-                _recent.TryDequeue(out _);
+            long now = TimeProvider.System.GetTimestamp();
 
-            Count++;
-            Last = ms;
-            Tags = tags;
-            LastSeen = TimeProvider.System.GetTimestamp();
+            lock (_gate)
+            {
+                if (Count > 0)
+                {
+                    double interval = TimeProvider.System.GetElapsedTime(LastSeen, now).TotalMilliseconds;
+                    IntervalMs = IntervalMs == 0 ? interval : IntervalMs + EmaWeight * (interval - IntervalMs);
+                }
+
+                _entries.Enqueue((now, ms));
+                Prune(windowStart);
+
+                Count++;
+                Last = ms;
+                Tags = tags;
+                LastSeen = now;
+            }
+        }
+
+        public double[] Window(long windowStart)
+        {
+            lock (_gate)
+            {
+                Prune(windowStart);
+                return [.. _entries.Select(entry => entry.Ms)];
+            }
+        }
+
+        private void Prune(long windowStart)
+        {
+            while (_entries.Count > 0 && (_entries.Peek().At < windowStart || _entries.Count > MaxEntriesPerSeries))
+                _entries.Dequeue();
         }
     }
 
+    private readonly int _windowFrames = options.Value.WindowFrames;
     private readonly ConcurrentDictionary<string, Series> _series = new();
-    private readonly Series _frames = new();
+    private readonly Lock _frameGate = new();
+    private readonly Queue<long> _boundaries = new();
+    private readonly Queue<double> _frameMs = new();
 
-    internal long Add(string span, double ms, string tags)
+    private long _windowStart;
+
+    internal long Add(string span, double ms, IReadOnlyList<SpanTag> tags)
     {
         Series series = _series.GetOrAdd(span, _ => new Series());
-        series.Add(ms, tags);
+        series.Add(ms, tags, Volatile.Read(ref _windowStart));
         return series.Count;
     }
 
-    internal void AddFrame(double ms) => _frames.Add(ms, tags: string.Empty);
+    /// <summary>Marks the end of a frame. Statistics only cover the last <see cref="ProfilerOptions.WindowFrames"/> of them.</summary>
+    internal void AddFrame()
+    {
+        long now = TimeProvider.System.GetTimestamp();
+
+        lock (_frameGate)
+        {
+            if (_boundaries.Count > 0)
+            {
+                _frameMs.Enqueue(TimeProvider.System.GetElapsedTime(_boundaries.Last(), now).TotalMilliseconds);
+                if (_frameMs.Count > _windowFrames)
+                    _frameMs.Dequeue();
+            }
+
+            _boundaries.Enqueue(now);
+            if (_boundaries.Count > _windowFrames + 1)
+                _boundaries.Dequeue();
+
+            Volatile.Write(ref _windowStart, _boundaries.Count > _windowFrames ? _boundaries.Peek() : 0);
+        }
+    }
 
     public ProfilerSnapshot Snapshot()
     {
-        double[] frames = _frames.Recent;
+        double[] frames;
+        lock (_frameGate)
+            frames = [.. _frameMs];
+
         double frameMean = frames.DefaultIfEmpty().Average();
-        List<SpanStats> spans = [.. _series.Select(entry => ToStats(entry.Key, entry.Value))];
+        long windowStart = Volatile.Read(ref _windowStart);
+        TimeSpan windowDuration = TimeSpan.FromMilliseconds(frameMean * frames.Length);
+        List<(SpanStats Stats, long LastSeen)> spans =
+            [.. _series.Select(entry => ToStats(entry.Key, entry.Value, windowStart, frames.Length, windowDuration))];
 
         return new ProfilerSnapshot(
             Fps: frameMean > 0 ? TimeSpan.FromSeconds(1) / TimeSpan.FromMilliseconds(frameMean) : 0,
             FrameMeanMs: frameMean,
             FrameHistoryMs: [.. frames.Select(ms => (float)ms)],
-            Spans: [.. spans.Where(span => !span.IsEvent).OrderByDescending(span => span.MeanMs)],
-            Events: [.. spans.Where(span => span.IsEvent).OrderBy(span => span.Age)]);
+            Spans: [.. spans.Where(span => !span.Stats.IsEvent).Select(span => span.Stats).OrderByDescending(span => span.MeanMs)],
+            Events: [.. spans.Where(span => span.Stats.IsEvent).OrderByDescending(span => span.LastSeen).Select(span => span.Stats)]);
     }
 
-    private SpanStats ToStats(string name, Series series)
+    private static (SpanStats, long) ToStats(string name, Series series, long windowStart, int frameCount, TimeSpan windowDuration)
     {
-        double[] recent = series.Recent;
-        return new SpanStats(
+        double[] recent = series.Window(windowStart);
+        TimeSpan age = TimeProvider.System.GetElapsedTime(series.LastSeen);
+        TimeSpan interval = TimeSpan.FromMilliseconds(series.IntervalMs);
+
+        // Something is an event, rather than recurring work, when it does not keep up with the profiled window.
+        bool isEvent = series.Count < 2 || recent.Length == 0 || interval > windowDuration || age > windowDuration;
+
+        return (new SpanStats(
             name,
             series.Last,
-            recent.DefaultIfEmpty().Average(),
-            recent.DefaultIfEmpty().Max(),
-            CallsPerFrame: _frames.Count > 0 ? (double)series.Count / _frames.Count : 0,
+            recent.Length > 0 ? recent.Average() : series.Last,
+            recent.Length > 0 ? recent.Max() : series.Last,
+            CallsPerFrame: frameCount > 0 ? (double)recent.Length / frameCount : 0,
             series.Tags,
-            Age: TimeProvider.System.GetElapsedTime(series.LastSeen));
+            isEvent), series.LastSeen);
     }
 }

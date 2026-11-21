@@ -1,10 +1,9 @@
 using System.Numerics;
 using NeoVeldrid;
-using static Pathetic.App.Scenes.SceneBuilder;
 
 namespace Pathetic.App.Scenes.Catalog;
 
-public sealed class SphereflakeScene : IScene
+public sealed class SphereflakeScene : ISceneDefinition
 {
     private const int MaxDepth = 4;
     private const float ChildScale = 1f / 3f;
@@ -16,14 +15,14 @@ public sealed class SphereflakeScene : IScene
 
     private static readonly RgbaByte[] DepthColors =
     [
-        Rgb(0.9f, 0.9f, 0.9f), Rgb(0.9f, 0.3f, 0.3f), Rgb(0.9f, 0.7f, 0.2f), Rgb(0.3f, 0.8f, 0.4f), Rgb(0.3f, 0.5f, 0.9f),
+        RgbaByte.Rgb(0.9f, 0.9f, 0.9f), RgbaByte.Rgb(0.9f, 0.3f, 0.3f), RgbaByte.Rgb(0.9f, 0.7f, 0.2f), RgbaByte.Rgb(0.3f, 0.8f, 0.4f), RgbaByte.Rgb(0.3f, 0.5f, 0.9f),
     ];
 
-    public CameraPose Camera { get; } = new(new Vector3(0, RootHeight, 0), Distance: 9, ElevationDegrees: 15);
+    public OrbitCameraDefinition Camera { get; } = new(new Vector3(0, RootHeight, 0), Distance: 9, ElevationDegrees: 15);
 
     public void Build(SceneBuilder builder)
     {
-        builder.AddSphere(new(0, -GroundRadius, 0), GroundRadius, Rgb(0.5f, 0.5f, 0.5f));
+        builder.AddSphere(new(0, -GroundRadius, 0), GroundRadius, RgbaByte.Rgb(0.5f, 0.5f, 0.5f));
         AddFlake(builder, new Vector3(0, RootHeight, 0), 1f, Vector3.UnitY, depth: 0);
     }
 

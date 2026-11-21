@@ -42,7 +42,7 @@ internal sealed class RenderGraph(
             RenderGraphPipelineFactory.UpdateResourceSet(entry.State, entry.Pass, device, resources);
         }
 
-        gpuTimer.Lap(device, cmd, UploadLabel);
+        gpuTimer.Record(device, cmd, UploadLabel);
 
         bool debugMarkers = device.Features.CommandListDebugMarkers;
         foreach (var entry in passes)
@@ -58,11 +58,13 @@ internal sealed class RenderGraph(
             if (debugMarkers)
                 cmd.PopDebugGroup();
 
-            gpuTimer.Lap(device, cmd, entry.Name);
+            gpuTimer.Record(device, cmd, entry.Name);
         }
 
         var presentTexture = resources.GetResource<Texture>(texture);
         ctx.Cmd.CopyTexture(presentTexture, ctx.Target);
+
+        gpuTimer.Publish(device, cmd);
 
         _frameIndex++;
     }

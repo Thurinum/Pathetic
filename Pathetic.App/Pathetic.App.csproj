@@ -6,6 +6,7 @@
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <RuntimeIdentifier>$(NETCoreSdkPortableRuntimeIdentifier)</RuntimeIdentifier>
         <SelfContained>false</SelfContained>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
@@ -16,6 +17,8 @@
     <ItemGroup>
         <ProjectReference Include="..\Pathetic.Profiling\Pathetic.Profiling.csproj" OutputItemType="Analyzer" />
         <Using Include="Pathetic.Profiling.Aspects" />
+        <ProjectReference Include="..\Pathetic.Shaders.Generators\Pathetic.Shaders.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <AdditionalFiles Include="Shaders\**\*.slang" />
     </ItemGroup>
 
     <ItemGroup>
@@ -32,10 +35,13 @@
         <PackageReference Include="NeoVeldrid.SPIRV" />
         <PackageReference Include="NeoVeldrid.StartupUtilities" />
         <PackageReference Include="Prowl.Slang" />
+        <PackageReference Include="Silk.NET.Assimp" />
+        <PackageReference Include="Ultz.Native.Assimp" />
     </ItemGroup>
 
     <ItemGroup>
         <None Update="Pathetic.ini" CopyToOutputDirectory="PreserveNewest" />
+        <None Update="Assets/**/*" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
     
     <ItemGroup>
