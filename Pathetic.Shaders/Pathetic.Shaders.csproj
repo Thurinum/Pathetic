@@ -10,6 +10,9 @@
     <ItemGroup>
         <Content Include="Shaders/**/*.slang" CopyToOutputDirectory="PreserveNewest" />
 
+        <Compile Include="@(Content->'$(SlangOutDir)/gen/%(Filename).g.cs')" Link="Generated/%(Filename).g.cs" Visible="false" />
+        <Compile Include="$(SlangOutDir)/gen/ResourceRefs.g.cs" Link="Generated/ResourceRefs.g.cs" Visible="false" />
+
         <ProjectReference Include="..\Pathetic.Slang.Tool\Pathetic.Slang.Tool.csproj"
                           ReferenceOutputAssembly="false"
                           Private="false"
@@ -31,15 +34,6 @@
             Inputs="@(Content);@(_SlangTool)"
             Outputs="@(Content->'$(SlangOutDir)/%(Filename).json');@(Content->'$(SlangOutDir)/gen/%(Filename).g.cs');$(SlangOutDir)/gen/ResourceRefs.g.cs">
         <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;@(_SlangTool)&quot; --shaders &quot;$(SlangShadersDir)&quot; --out &quot;$(SlangOutDir)&quot;" />
-    </Target>
-
-    <Target Name="DeclareSlangSources"
-            BeforeTargets="CoreCompile"
-            DependsOnTargets="GenerateSlangAssets">
-        <ItemGroup>
-            <Compile Include="@(Content->'$(SlangOutDir)/gen/%(Filename).g.cs')" />
-            <Compile Include="$(SlangOutDir)/gen/ResourceRefs.g.cs" />
-        </ItemGroup>
     </Target>
 
 </Project>
