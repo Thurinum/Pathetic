@@ -4,28 +4,28 @@ using Pathetic.Renderer.Shaders;
 
 namespace Pathetic.Renderer.Graph;
 
-public sealed class RenderGraphPipelineFactory(PrecompiledShaderCache compiler)
+public sealed class RenderGraphPipelineFactory(PrecompiledShaderLibrary shaders)
 {
     public PassRenderState Build(GraphicsDevice device, RenderPass pass)
     {
-        ShaderCompilationResult compiled = compiler.CompileComputeShader(pass.ShaderModule);
-        ShaderDescription shaderDesc = new(ShaderStages.Compute, compiled.Code, PrecompiledShaderCache.EntryPointName);
+        ShaderCompilationResult module = shaders.LoadComputeShader(pass.ShaderModule);
+        ShaderDescription shaderDesc = new(ShaderStages.Compute, module.Code, PrecompiledShaderLibrary.EntryPointName);
         using Shader shader = device.ResourceFactory.CreateShader(shaderDesc);
 
-        var bindings = compiled.Reflection
+        var bindings = module.Reflection
             .Select(r => new ResourceLayoutElementDescription(r.Name, r.Kind, ShaderStages.Compute))
             .ToArray();
 
         ResourceLayoutDescription layoutDesc = new(bindings);
         ResourceLayout layout = device.ResourceFactory.CreateResourceLayout(layoutDesc);
 
-        (uint x, uint y, uint z) = compiled.GroupSize;
+        (uint x, uint y, uint z) = module.GroupSize;
         ComputePipelineDescription psoDesc = new(shader, layout, x, y, z);
         Pipeline pso = device.ResourceFactory.CreateComputePipeline(psoDesc);
 
         var state = new PassRenderState
         {
-            ThreadGroupSize = compiled.GroupSize,
+            ThreadGroupSize = module.GroupSize,
             Layout = layout,
             Bindings = bindings,
             Pipeline = pso

@@ -44,7 +44,7 @@ public static class ServiceCollectionExtensions
         
         public IServiceCollection AddRenderer(Action<RenderGraphSpecBuilder> configureGraph)
         {
-            services.AddSingleton<PrecompiledShaderCache>();
+            services.AddSingleton<PrecompiledShaderLibrary>();
             services.AddSingleton<RenderPassFactory>();
             services.AddSingleton<RenderGraphPipelineFactory>();
             services.AddSingleton<RenderGraphFactory>();

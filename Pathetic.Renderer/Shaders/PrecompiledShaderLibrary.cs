@@ -11,7 +11,7 @@ public readonly record struct ShaderCompilationResult(
     UIntVector3 GroupSize,
     IReadOnlyList<ShaderBinding> Reflection);
 
-public sealed class PrecompiledShaderCache
+public sealed class PrecompiledShaderLibrary
 {
     public const string EntryPointName = "main";
 
@@ -23,13 +23,13 @@ public sealed class PrecompiledShaderCache
     private readonly RendererOptions _options;
     private readonly Lazy<IReadOnlyDictionary<string, string>> _files;
 
-    public PrecompiledShaderCache(IOptions<RendererOptions> options)
+    public PrecompiledShaderLibrary(IOptions<RendererOptions> options)
     {
         _options = options.Value;
         _files = new Lazy<IReadOnlyDictionary<string, string>>(LoadIndex);
     }
 
-    public ShaderCompilationResult CompileComputeShader(string moduleName)
+    public ShaderCompilationResult LoadComputeShader(string moduleName)
     {
         string directory = CompiledDirectory;
 
