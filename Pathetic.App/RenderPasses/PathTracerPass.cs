@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using NeoVeldrid;
 using Pathetic.Renderer.Graph;
 using Pathetic.Renderer.Resources;
+using SlangGen = Pathetic.Generated.Slang;
 
 namespace Pathetic.App.RenderPasses;
 
@@ -24,24 +25,24 @@ public sealed class PathTracerPass(
         public uint SmoothShading;
     }
 
-    public override string ShaderModule => "PathTracer";
+    public override string ShaderModule => SlangGen.PathTracer.Resources.ModuleName;
 
     public override IReadOnlyList<IResourceSpec> Resources { get; } =
     [
-        new TextureSpec(ResourceName.PathTracerColor, PixelFormat.R32_G32_B32_A32_Float, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
-        UniformBufferSpec.Of<Params>(ResourceName.Params),
+        new TextureSpec(SlangGen.PathTracer.Resources.pathTracerColor, PixelFormat.R32_G32_B32_A32_Float, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
+        UniformBufferSpec.Of<Params>(SlangGen.PathTracer.Resources.@params),
     ];
 
     public override IReadOnlyList<string> Inputs { get; } =
     [
-        ResourceName.Camera,
-        ResourceName.Planes,
-        ResourceName.Spheres,
-        ResourceName.Triangles,
-        ResourceName.MeshTransforms,
-        ResourceName.Materials,
-        ResourceName.BvhNodes,
-        ResourceName.BvhPrimitiveRefs,
+        SlangGen.PathTracer.Resources.camera,
+        SlangGen.PathTracer.Resources.planes,
+        SlangGen.PathTracer.Resources.spheres,
+        SlangGen.PathTracer.Resources.triangles,
+        SlangGen.Primitives.Resources.meshTransforms,
+        SlangGen.PathTracer.Resources.materials,
+        SlangGen.PathTracer.Resources.bvhNodes,
+        SlangGen.PathTracer.Resources.bvhPrimitiveRefs,
     ];
 
     public override void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
@@ -51,12 +52,12 @@ public sealed class PathTracerPass(
 
         Params @params = new()
         {
-            PlaneCount = ctx.Resources.GetElementCount(ResourceName.Planes),
-            SphereCount = ctx.Resources.GetElementCount(ResourceName.Spheres),
-            TriangleCount = ctx.Resources.GetElementCount(ResourceName.Triangles),
+            PlaneCount = ctx.Resources.GetElementCount(SlangGen.PathTracer.Resources.planes),
+            SphereCount = ctx.Resources.GetElementCount(SlangGen.PathTracer.Resources.spheres),
+            TriangleCount = ctx.Resources.GetElementCount(SlangGen.PathTracer.Resources.triangles),
             SamplesPerPixel = plan.SamplesPerPixel,
             MaxBounces = options.Value.MaxBounces,
-            BvhNodeCount = ctx.Resources.GetElementCount(ResourceName.BvhNodes),
+            BvhNodeCount = ctx.Resources.GetElementCount(SlangGen.PathTracer.Resources.bvhNodes),
             DisplayNormals = debug.DisplayNormals ? 1u : 0u,
             SmoothShading = debug.SmoothShading ? 1u : 0u,
         };

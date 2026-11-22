@@ -1,6 +1,7 @@
-﻿using NeoVeldrid;
+using NeoVeldrid;
 using Pathetic.Renderer.Graph;
 using Pathetic.Renderer.Resources;
+using SlangGen = Pathetic.Generated.Slang;
 
 namespace Pathetic.App.Components.Camera;
 
@@ -20,7 +21,7 @@ public sealed class CameraProvider : IResourceUploader
 
     public IReadOnlyList<IResourceSpec> Resources { get; } =
     [
-        UniformBufferSpec.Of<CameraData>(ResourceName.Camera)
+        UniformBufferSpec.Of<CameraData>(SlangGen.PathTracer.Resources.camera)
     ];
 
     public SceneChange DirtyChanges => _dirty;

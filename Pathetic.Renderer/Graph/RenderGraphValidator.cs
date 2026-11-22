@@ -47,15 +47,6 @@ internal static class RenderGraphValidator
                     throw new InvalidOperationException($"Pass {passName} declares input '{input}' that shader '{shader}' does not consume.");
             }
 
-            foreach (var sampler in entry.Pass.Resources.OfType<SamplerSpec>())
-            {
-                if (!bindings.TryGetValue(sampler.Name, out var binding))
-                    throw new InvalidOperationException($"Pass {passName} declares sampler '{sampler.Name}' that shader '{shader}' does not consume.");
-
-                if (binding.Kind != ResourceKind.Sampler)
-                    throw new InvalidOperationException($"Pass {passName} sampler '{sampler.Name}': shader '{shader}' declares {binding.Kind}, expected {ResourceKind.Sampler}.");
-            }
-
             foreach (var binding in bindings.Values)
             {
                 if (declared.Contains(binding.Name))

@@ -2,6 +2,7 @@ using Microsoft.Extensions.Options;
 using NeoVeldrid;
 using Pathetic.Renderer.Graph;
 using Pathetic.Renderer.Resources;
+using SlangGen = Pathetic.Generated.Slang;
 
 namespace Pathetic.App.RenderPasses;
 
@@ -17,18 +18,18 @@ public sealed class TemporalAccumulationPass(
         public uint MaxFrames;
     }
 
-    public override string ShaderModule => "TemporalAccumulation";
+    public override string ShaderModule => SlangGen.TemporalAccumulation.Resources.ModuleName;
 
     public override IReadOnlyList<IResourceSpec> Resources { get; } =
     [
-        new TextureSpec(ResourceName.PresentColor, PixelFormat.B8_G8_R8_A8_UNorm, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
-        new TextureSpec(ResourceName.AccumImage, PixelFormat.R32_G32_B32_A32_Float, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
-        UniformBufferSpec.Of<Params>(ResourceName.Params),
+        new TextureSpec(SlangGen.TemporalAccumulation.Resources.color, PixelFormat.B8_G8_R8_A8_UNorm, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
+        new TextureSpec(SlangGen.TemporalAccumulation.Resources.accumImage, PixelFormat.R32_G32_B32_A32_Float, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
+        UniformBufferSpec.Of<Params>(SlangGen.TemporalAccumulation.Resources.@params),
     ];
 
     public override IReadOnlyList<string> Inputs { get; } =
     [
-        ResourceName.PathTracerColor,
+        SlangGen.TemporalAccumulation.Resources.pathTracerColor,
     ];
 
     public override void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)

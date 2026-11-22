@@ -8,6 +8,7 @@ using Pathetic.App.Components;
 using Pathetic.App.Components.Camera;
 using Pathetic.App.Input;
 using Pathetic.App.RenderPasses;
+using SlangGen = Pathetic.Generated.Slang;
 using Pathetic.Input;
 using Pathetic.Renderer;
 using Pathetic.Renderer.Bvh;
@@ -37,13 +38,13 @@ builder.Services.AddRenderer(graph => graph
     // .AddPass<CirclesPass>()
     .AddPass<PathTracerPass>()
     .AddPass<TemporalAccumulationPass>()
-    .Present(ResourceName.PresentColor));
+    .Present(SlangGen.TemporalAccumulation.Resources.color));
 
-builder.Services.AddStructuredBuffer<SpherePrimitive>(ResourceName.Spheres, sparseStorage: true);
-builder.Services.AddStructuredBuffer<PlanePrimitive>(ResourceName.Planes, sparseStorage: true);
-builder.Services.AddStructuredBuffer<TrianglePrimitive>(ResourceName.Triangles, sparseStorage: true);
-builder.Services.AddStructuredBuffer<MeshTransform>(ResourceName.MeshTransforms);
-builder.Services.AddStructuredBuffer<Material>(ResourceName.Materials);
+builder.Services.AddStructuredBuffer<SpherePrimitive>(SlangGen.PathTracer.Resources.spheres, sparseStorage: true);
+builder.Services.AddStructuredBuffer<PlanePrimitive>(SlangGen.PathTracer.Resources.planes, sparseStorage: true);
+builder.Services.AddStructuredBuffer<TrianglePrimitive>(SlangGen.PathTracer.Resources.triangles, sparseStorage: true);
+builder.Services.AddStructuredBuffer<MeshTransform>(SlangGen.Primitives.Resources.meshTransforms);
+builder.Services.AddStructuredBuffer<Material>(SlangGen.PathTracer.Resources.materials);
 builder.Services.AddSingleton<MaterialLibrary>();
 builder.Services.AddSingleton<MeshTransformLibrary>();
 builder.Services.AddSingleton<ObjLoader>();
@@ -51,12 +52,12 @@ builder.Services.AddStructuredBuffer<CameraProvider>();
 
 builder.Services.AddSingleton<SceneBvh>();
 builder.Services.AddSingleton(sp => new BvhBufferUploader<GpuBvhNode>(
-    ResourceName.BvhNodes,
+    SlangGen.PathTracer.Resources.bvhNodes,
     sp.GetRequiredService<SceneBvh>(),
     scene => scene.Nodes));
 builder.Services.AddSingleton<IResourceUploader>(sp => sp.GetRequiredService<BvhBufferUploader<GpuBvhNode>>());
 builder.Services.AddSingleton(sp => new BvhBufferUploader<GpuBvhPrimitiveRef>(
-    ResourceName.BvhPrimitiveRefs,
+    SlangGen.PathTracer.Resources.bvhPrimitiveRefs,
     sp.GetRequiredService<SceneBvh>(),
     scene => scene.PrimitiveRefs));
 builder.Services.AddSingleton<IResourceUploader>(sp => sp.GetRequiredService<BvhBufferUploader<GpuBvhPrimitiveRef>>());

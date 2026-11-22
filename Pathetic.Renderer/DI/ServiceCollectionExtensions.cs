@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Pathetic.Generated.Slang;
 using Pathetic.Renderer.Buffers;
 using Pathetic.Renderer.Graph;
 using Pathetic.Renderer.Resources;
@@ -27,13 +28,13 @@ public static class ServiceCollectionExtensions
         /// <param name="capacity">How many elements the buffer can hold.</param>
         /// <typeparam name="T"></typeparam>
         public void AddStructuredBuffer<T>(
-            string name,
+            BufferRef name,
             bool sparseStorage = false,
             bool resizable = true,
             bool dynamic = true,
             uint capacity = 256) where T : unmanaged, IEquatable<T>
         {
-            var buffer = new StructuredBuffer<T>(name, resizable, dynamic, capacity, 64);
+            var buffer = new StructuredBuffer<T>(name.Value, resizable, dynamic, capacity, 64);
             services.AddSingleton(buffer);
             services.AddSingleton<IResourceUploader>(buffer);
 
