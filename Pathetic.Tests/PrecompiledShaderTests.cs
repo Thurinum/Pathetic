@@ -61,10 +61,10 @@ public sealed class PrecompiledShaderTests
 
         Assert.NotNull(root);
 
-        string source = Path.Combine(root, "Pathetic.Shaders", "obj", "slang");
+        string source = Path.Combine(root, "Pathetic.App", "obj", "slang");
         string destination = Path.Combine(AppContext.BaseDirectory, "Shaders", "Compiled");
 
-        Assert.True(Directory.Exists(source), $"Compiled shader directory '{source}' does not exist. Build Pathetic.Shaders first.");
+        Assert.True(Directory.Exists(source), $"Compiled shader directory '{source}' does not exist. Build Pathetic.App first.");
 
         Directory.CreateDirectory(destination);
 

@@ -304,8 +304,6 @@ internal sealed class Reflector(string targetNamespace)
         string codeDir = Path.Combine(outDir, "gen");
         Directory.CreateDirectory(codeDir);
 
-        File.WriteAllText(Path.Combine(codeDir, "ResourceRefs.g.cs"), SourceEmitter.EmitRefs(targetNamespace));
-
         IndexJson index = new() { Namespace = targetNamespace };
 
         foreach (ModuleJson module in _modules.Values.OrderBy(static module => module.Module, StringComparer.Ordinal))

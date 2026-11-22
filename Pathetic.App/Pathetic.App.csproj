@@ -7,13 +7,23 @@
         <RuntimeIdentifier>$(NETCoreSdkPortableRuntimeIdentifier)</RuntimeIdentifier>
         <SelfContained>false</SelfContained>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <SlangShadersDir>$(MSBuildProjectDirectory)/Assets/Shaders</SlangShadersDir>
+        <SlangSearchDirs>$(MSBuildProjectDirectory)/../Pathetic.Renderer/Shaders</SlangSearchDirs>
         <CopySlangAssets>true</CopySlangAssets>
     </PropertyGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Pathetic.Renderer\Pathetic.Renderer.csproj" />
         <ProjectReference Include="..\Pathetic.SceneGraph\Pathetic.SceneGraph.csproj" />
-        <ProjectReference Include="..\Pathetic.Shaders\Pathetic.Shaders.csproj" />
+        <ProjectReference Include="..\Pathetic.Slang.Tool\Pathetic.Slang.Tool.csproj"
+                          ReferenceOutputAssembly="false"
+                          Private="false"
+                          GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <SlangShader Include="Assets/Shaders/**/*.slang" Visible="false" />
+        <None Remove="Assets/Shaders/**/*.slang" />
     </ItemGroup>
 
     <ItemGroup>

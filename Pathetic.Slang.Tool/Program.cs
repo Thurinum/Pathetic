@@ -15,6 +15,13 @@ Option<string> output = new("--out")
     Required = true,
 };
 
+Option<string[]> search = new("--search")
+{
+    Description = "Additional directories used to resolve imports.",
+    Arity = ArgumentArity.OneOrMore,
+    AllowMultipleArgumentsPerToken = true,
+};
+
 Option<string> targetNamespace = new("--namespace")
 {
     Description = "Namespace of the generated types.",
@@ -23,6 +30,7 @@ Option<string> targetNamespace = new("--namespace")
 
 RootCommand root = new("Reflects Slang modules into C#, a runtime manifest and SPIR-V blobs.");
 root.Options.Add(shaders);
+root.Options.Add(search);
 root.Options.Add(output);
 root.Options.Add(targetNamespace);
 
@@ -30,7 +38,9 @@ root.SetAction(parseResult =>
 {
     try
     {
-        ShaderSet shaderSet = ShaderSet.Discover(parseResult.GetValue(shaders)!.Select(Path.GetFullPath));
+        ShaderSet shaderSet = ShaderSet.Discover(
+            parseResult.GetValue(shaders)!.Select(Path.GetFullPath),
+            (parseResult.GetValue(search) ?? []).Select(Path.GetFullPath));
         string outDir = Path.GetFullPath(parseResult.GetValue(output)!);
 
         Directory.CreateDirectory(outDir);

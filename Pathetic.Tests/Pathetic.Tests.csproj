@@ -14,7 +14,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Pathetic.Renderer\Pathetic.Renderer.csproj" />
-        <ProjectReference Include="..\Pathetic.Shaders\Pathetic.Shaders.csproj" />
+        <ProjectReference Include="..\Pathetic.App\Pathetic.App.csproj" />
     </ItemGroup>
 
 </Project>
