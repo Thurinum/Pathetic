@@ -4,12 +4,10 @@
         <OutputType>Exe</OutputType>
         <RootNamespace>Pathetic.Slang.Tool</RootNamespace>
         <SelfContained>false</SelfContained>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Prowl.Slang" />
-        <PackageReference Include="Silk.NET.SPIRV.Reflect" />
     </ItemGroup>
 
 </Project>

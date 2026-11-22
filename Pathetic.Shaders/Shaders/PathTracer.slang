@@ -32,13 +32,13 @@ struct BvhStackEntry
 
 RWTexture2D<float4> pathTracerColor;
 ConstantBuffer<Camera> camera;
-StructuredBuffer<Plane, ScalarDataLayout> planes;
-StructuredBuffer<Sphere, ScalarDataLayout> spheres;
-StructuredBuffer<Triangle, ScalarDataLayout> triangles;
-StructuredBuffer<Material, ScalarDataLayout> materials;
+StructuredBuffer<Plane> planes;
+StructuredBuffer<Sphere> spheres;
+StructuredBuffer<Triangle> triangles;
+StructuredBuffer<Material> materials;
 ConstantBuffer<Params> params;
-StructuredBuffer<BvhNode, ScalarDataLayout> bvhNodes;
-StructuredBuffer<BvhPrimitiveRef, ScalarDataLayout> bvhPrimitiveRefs;
+StructuredBuffer<BvhNode> bvhNodes;
+StructuredBuffer<BvhPrimitiveRef> bvhPrimitiveRefs;
 
 public HitResult TraceBvh(Ray ray)
 {

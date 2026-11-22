@@ -103,22 +103,13 @@ internal static class SourceEmitter
         {
             writer.Line();
 
-            if (type.HasGpuLayout && type.Size is int size)
-                writer.Line($"[StructLayout(LayoutKind.Explicit, Size = {size})]");
-            else
-                writer.Line("[StructLayout(LayoutKind.Sequential)]");
-
+            writer.Line($"[StructLayout(LayoutKind.Explicit, Size = {type.Size})]");
             writer.Line($"public record struct {Identifier.Escape(type.Name)}");
             writer.Open("{");
-
-            if (type.HasGpuLayout && type.Size is int sizeInBytes)
-                writer.Line($"public const int SizeInBytes = {sizeInBytes};");
+            writer.Line($"public const int SizeInBytes = {type.Size};");
 
             foreach (FieldJson field in type.Fields)
-            {
-                string attribute = type.HasGpuLayout ? $"[FieldOffset({field.Offset})] " : "";
-                writer.Line($"{attribute}public {field.CsType} {Identifier.Escape(field.Name)};");
-            }
+                writer.Line($"[FieldOffset({field.Offset})] public {field.CsType} {Identifier.Escape(field.Name)};");
 
             writer.Close("}");
         }

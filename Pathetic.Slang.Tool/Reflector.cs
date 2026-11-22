@@ -4,30 +4,6 @@ using Prowl.Slang;
 
 namespace Pathetic.Slang.Tool;
 
-internal sealed class ExportedField
-{
-    public required string Name { get; init; }
-    public required TypeKind Kind { get; init; }
-    public required ScalarType Scalar { get; init; }
-    public required string TypeName { get; init; }
-    public required bool IsArray { get; init; }
-    public required bool IsEnum { get; init; }
-    public required int Elements { get; init; }
-}
-
-internal sealed class ExportedType
-{
-    public required string Module { get; init; }
-    public required string Name { get; init; }
-    public required List<ExportedField> Fields { get; init; }
-}
-
-internal sealed class ObservedLayout
-{
-    public required string Module { get; init; }
-    public required StructLayout Layout { get; init; }
-}
-
 internal sealed class Reflector
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -38,8 +14,6 @@ internal sealed class Reflector
     };
 
     private readonly string _namespace;
-    private readonly List<ExportedType> _exportedTypes = [];
-    private readonly List<ObservedLayout> _observedLayouts = [];
     private readonly Dictionary<string, ModuleJson> _modules = new(StringComparer.Ordinal);
     private readonly Dictionary<string, byte[]> _code = new(StringComparer.Ordinal);
 
@@ -60,9 +34,6 @@ internal sealed class Reflector
 
         foreach (ShaderFile file in shaders.Files)
             ReflectModule(session, file);
-
-        foreach (ModuleJson module in _modules.Values)
-            ResolveTypes(module);
 
         WriteOutput(outDir);
     }
@@ -147,37 +118,33 @@ internal sealed class Reflector
         TypeLayoutReflection layout = session.GetTypeLayout(type, 0, LayoutRules.Default, out DiagnosticInfo diagnostics);
         ThrowOnErrors(diagnostics, file.Path);
 
-        List<ExportedField> fields = [];
+        List<FieldJson> fields = [];
+        int end = 0;
+        int alignment = 1;
 
         foreach (VariableLayoutReflection fieldLayout in layout.Fields)
         {
             TypeReflection fieldType = fieldLayout.Variable.Type;
             TypeLayoutReflection fieldTypeLayout = fieldLayout.TypeLayout;
+            int offset = (int)fieldLayout.GetOffset(ParameterCategory.Uniform);
 
-            fields.Add(new ExportedField
+            end = Math.Max(end, offset + (int)fieldTypeLayout.GetSize(ParameterCategory.Uniform));
+            alignment = Math.Max(alignment, (int)fieldTypeLayout.GetAlignment(ParameterCategory.Uniform));
+
+            fields.Add(new FieldJson
             {
                 Name = fieldLayout.Name,
-                Kind = fieldType.Kind,
-                Scalar = fieldTypeLayout.ScalarType,
-                TypeName = fieldType.Name,
-                IsArray = fieldType.Kind == TypeKind.Array || fieldTypeLayout.IsArray,
-                IsEnum = !Enum.IsDefined(fieldType.Kind),
-                Elements = (int)fieldTypeLayout.ColumnCount,
+                Offset = offset,
+                CsType = MapFieldType(file.ModuleName, declaration.Name, fieldLayout),
+                EnumType = Enum.IsDefined(fieldType.Kind) ? null : fieldType.Name,
             });
         }
-
-        _exportedTypes.Add(new ExportedType
-        {
-            Module = file.ModuleName,
-            Name = declaration.Name,
-            Fields = fields,
-        });
 
         json.Types.Add(new TypeJson
         {
             Name = declaration.Name,
-            HasGpuLayout = false,
-            Fields = [],
+            Size = (end + alignment - 1) / alignment * alignment,
+            Fields = fields,
         });
     }
 
@@ -235,159 +202,47 @@ internal sealed class Reflector
 
         _code[file.OutputStem] = code;
 
-        foreach (StructLayout layout in SpirvLayouts.Read(code))
-            _observedLayouts.Add(new ObservedLayout { Module = file.ModuleName, Layout = layout });
     }
 
-    private void ResolveTypes(ModuleJson module)
+    private static string MapFieldType(string module, string typeName, VariableLayoutReflection fieldLayout)
     {
-        foreach (TypeJson type in module.Types)
-        {
-            ExportedType exported = _exportedTypes.Single(candidate => candidate.Module == module.Module && candidate.Name == type.Name);
+        TypeReflection fieldType = fieldLayout.Variable.Type;
+        TypeLayoutReflection fieldTypeLayout = fieldLayout.TypeLayout;
+        string fieldName = fieldLayout.Name;
 
-            StructLayout? layout = ResolveLayout(exported);
+        if (fieldType.Kind == TypeKind.Array || fieldTypeLayout.IsArray)
+            throw new ToolException($"Exported type '{module}.{typeName}' field '{fieldName}' is an array, which is not supported yet.");
 
-            type.Fields.AddRange(MapFields(exported));
+        if (fieldType.Kind == TypeKind.Matrix)
+            throw new ToolException($"Exported type '{module}.{typeName}' field '{fieldName}' is a matrix, which is not supported yet.");
 
-            if (layout is null)
-            {
-                type.HasGpuLayout = false;
-                type.Size = null;
-                continue;
-            }
-
-            type.HasGpuLayout = true;
-            type.Size = layout.Size;
-
-            for (int i = 0; i < type.Fields.Count; i++)
-            {
-                FieldJson field = type.Fields[i];
-                type.Fields[i] = new FieldJson
-                {
-                    Name = field.Name,
-                    Offset = layout.Offsets[i],
-                    CsType = field.CsType,
-                    EnumType = field.EnumType,
-                };
-            }
-        }
-    }
-
-    private StructLayout? ResolveLayout(ExportedType type)
-    {
-        List<StructLayout> candidates = [];
-
-        foreach (ObservedLayout observed in _observedLayouts)
-        {
-            if (!IsLayoutCandidate(observed.Layout.Name, type.Name))
-                continue;
-
-            if (observed.Layout.Offsets.Length != type.Fields.Count)
-                continue;
-
-            candidates.Add(observed.Layout);
-        }
-
-        if (candidates.Count == 0)
-        {
-            StructLayout? named = null;
-
-            foreach (ObservedLayout observed in _observedLayouts)
-            {
-                if (IsLayoutCandidate(observed.Layout.Name, type.Name))
-                {
-                    named = observed.Layout;
-                    break;
-                }
-            }
-
-            if (named is not null)
-            {
-                throw new ToolException(
-                    $"Exported type '{type.Module}.{type.Name}' has {type.Fields.Count} field(s) but the only matching SPIR-V layout '{named.Name}' has {named.Offsets.Length} member(s).");
-            }
-
-            return null;
-        }
-
-        StructLayout first = candidates[0];
-
-        foreach (StructLayout candidate in candidates)
-        {
-            if (!candidate.Offsets.AsSpan().SequenceEqual(first.Offsets))
-            {
-                throw new ToolException(
-                    $"Exported type '{type.Module}.{type.Name}' has conflicting layouts: " +
-                    $"[{string.Join(", ", first.Offsets)}] vs [{string.Join(", ", candidate.Offsets)}].");
-            }
-        }
-
-        return first;
-    }
-
-    private static bool IsLayoutCandidate(string spirvName, string typeName)
-    {
-        if (string.Equals(spirvName, typeName, StringComparison.Ordinal))
-            return true;
-
-        return spirvName.Length > typeName.Length
-            && spirvName.StartsWith(typeName, StringComparison.Ordinal)
-            && spirvName[typeName.Length] == '_';
-    }
-
-    private List<FieldJson> MapFields(ExportedType type)
-    {
-        List<FieldJson> fields = [];
-
-        foreach (ExportedField field in type.Fields)
-        {
-            fields.Add(new FieldJson
-            {
-                Name = field.Name,
-                Offset = 0,
-                CsType = MapFieldType(type, field),
-                EnumType = field.IsEnum ? field.TypeName : null,
-            });
-        }
-
-        return fields;
-    }
-
-    private string MapFieldType(ExportedType owner, ExportedField field)
-    {
-        if (field.IsArray)
-            throw new ToolException($"Exported type '{owner.Module}.{owner.Name}' field '{field.Name}' is an array, which is not supported yet.");
-
-        if (field.Kind == TypeKind.Matrix)
-            throw new ToolException($"Exported type '{owner.Module}.{owner.Name}' field '{field.Name}' is a matrix, which is not supported yet.");
-
-        if (field.IsEnum)
+        if (!Enum.IsDefined(fieldType.Kind))
             return "int";
 
-        if (field.Kind == TypeKind.Vector)
+        if (fieldType.Kind == TypeKind.Vector)
         {
-            if (field.Scalar != ScalarType.Float32)
-                throw new ToolException($"Exported type '{owner.Module}.{owner.Name}' field '{field.Name}' is a non-float vector, which is not supported yet.");
+            if (fieldTypeLayout.ScalarType != ScalarType.Float32)
+                throw new ToolException($"Exported type '{module}.{typeName}' field '{fieldName}' is a non-float vector, which is not supported yet.");
 
-            return field.Elements switch
+            return fieldTypeLayout.ColumnCount switch
             {
                 2 => "global::System.Numerics.Vector2",
                 3 => "global::System.Numerics.Vector3",
                 4 => "global::System.Numerics.Vector4",
-                _ => throw new ToolException($"Exported type '{owner.Module}.{owner.Name}' field '{field.Name}' has an unsupported vector width ({field.Elements})."),
+                _ => throw new ToolException($"Exported type '{module}.{typeName}' field '{fieldName}' has an unsupported vector width ({fieldTypeLayout.ColumnCount})."),
             };
         }
 
-        if (field.Kind == TypeKind.Scalar)
-            return MapScalar(owner, field);
+        if (fieldType.Kind == TypeKind.Scalar)
+            return MapScalar(module, typeName, fieldName, fieldTypeLayout.ScalarType);
 
-        if (field.Kind == TypeKind.Struct)
-            throw new ToolException($"Exported type '{owner.Module}.{owner.Name}' field '{field.Name}' is a nested struct, which is not supported yet.");
+        if (fieldType.Kind == TypeKind.Struct)
+            throw new ToolException($"Exported type '{module}.{typeName}' field '{fieldName}' is a nested struct, which is not supported yet.");
 
-        throw new ToolException($"Exported type '{owner.Module}.{owner.Name}' field '{field.Name}' has unsupported Slang type '{field.TypeName}' (kind {field.Kind}).");
+        throw new ToolException($"Exported type '{module}.{typeName}' field '{fieldName}' has unsupported Slang type '{fieldType.Name}' (kind {fieldType.Kind}).");
     }
 
-    private static string MapScalar(ExportedType owner, ExportedField field) => field.Scalar switch
+    private static string MapScalar(string module, string typeName, string fieldName, ScalarType scalar) => scalar switch
     {
         ScalarType.Float32 => "float",
         ScalarType.Float64 => "double",
@@ -400,7 +255,7 @@ internal sealed class Reflector
         ScalarType.Int8 => "sbyte",
         ScalarType.UInt8 => "byte",
         ScalarType.Bool => "bool",
-        _ => throw new ToolException($"Exported type '{owner.Module}.{owner.Name}' field '{field.Name}' uses unsupported scalar '{field.Scalar}'."),
+        _ => throw new ToolException($"Exported type '{module}.{typeName}' field '{fieldName}' uses unsupported scalar '{scalar}'."),
     };
 
     private static bool IsResourceType(TypeKind kind) => kind is

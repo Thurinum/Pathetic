@@ -34,8 +34,7 @@ internal sealed class ParameterJson
 internal sealed class TypeJson
 {
     public required string Name { get; init; }
-    public int? Size { get; set; }
-    public bool HasGpuLayout { get; set; }
+    public required int Size { get; init; }
     public List<FieldJson> Fields { get; init; } = [];
 }
 

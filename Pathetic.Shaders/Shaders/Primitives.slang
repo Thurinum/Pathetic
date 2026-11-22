@@ -55,7 +55,7 @@ public struct MeshTransform
     public float3 ForwardOffset;
 };
 
-StructuredBuffer<MeshTransform, ScalarDataLayout> meshTransforms;
+StructuredBuffer<MeshTransform> meshTransforms;
 
 float3 TransformDirection(float3 v, float3 x, float3 y, float3 z)
 {
