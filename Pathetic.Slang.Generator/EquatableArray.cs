@@ -39,12 +39,15 @@ internal readonly struct EquatableArray<T> : IEquatable<EquatableArray<T>>, IEnu
 
     public override int GetHashCode()
     {
-        HashCode hash = new();
+        unchecked
+        {
+            int hash = 17;
 
-        foreach (T item in this)
-            hash.Add(item);
+            foreach (T item in this)
+                hash = (hash * 31) + (item is null ? 0 : item.GetHashCode());
 
-        return hash.ToHashCode();
+            return hash;
+        }
     }
 
     public IEnumerator<T> GetEnumerator()

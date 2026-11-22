@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 namespace Pathetic.Slang.Generator;
 
 internal sealed record SlangModuleModel(
@@ -28,11 +26,6 @@ internal sealed record ParsedModule(string Path, SlangModuleModel? Model, string
 
 internal static class ModuleParser
 {
-    private static readonly JsonSerializerOptions Options = new()
-    {
-        PropertyNameCaseInsensitive = true,
-    };
-
     public static ParsedModule Parse(string path, string? json)
     {
         if (json is null)
@@ -40,62 +33,86 @@ internal static class ModuleParser
 
         try
         {
-            ModuleDto? dto = JsonSerializer.Deserialize<ModuleDto>(json, Options);
+            if (JsonReader.Parse(json) is not JsonObject root)
+                return new ParsedModule(path, null, "root value is not an object");
 
-            if (dto is null || string.IsNullOrWhiteSpace(dto.Module))
+            string module = OptionalString(root, "module") ?? "";
+
+            if (module.Length == 0)
                 return new ParsedModule(path, null, "missing 'module' property");
 
             SlangModuleModel model = new(
-                dto.Module,
-                string.IsNullOrWhiteSpace(dto.Namespace) ? "Pathetic.Generated.Slang" : dto.Namespace,
-                EquatableArray<TypeModel>.From((dto.Types ?? []).Select(static type => new TypeModel(
-                    type.Name,
-                    type.Size,
-                    type.HasGpuLayout,
-                    EquatableArray<FieldModel>.From((type.Fields ?? []).Select(static field => new FieldModel(
-                        field.Name,
-                        field.Offset,
-                        field.CsType,
-                        field.EnumType)))))),
-                EquatableArray<BindingModel>.From((dto.Bindings ?? []).Select(static binding => new BindingModel(
-                    binding.Name,
-                    binding.Kind))));
+                module,
+                OptionalString(root, "namespace") ?? "Pathetic.Generated.Slang",
+                EquatableArray<TypeModel>.From(ReadTypes(root)),
+                EquatableArray<BindingModel>.From(ReadBindings(root)));
 
             return new ParsedModule(path, model, null);
         }
-        catch (JsonException exception)
+        catch (FormatException exception)
         {
             return new ParsedModule(path, null, exception.Message);
         }
     }
 
-    private sealed class ModuleDto
+    private static IEnumerable<TypeModel> ReadTypes(JsonObject root)
     {
-        public string Module { get; set; } = "";
-        public string Namespace { get; set; } = "";
-        public List<TypeDto>? Types { get; set; }
-        public List<BindingDto>? Bindings { get; set; }
+        if (root["types"] is not JsonArray types)
+            yield break;
+
+        foreach (JsonValue item in types.Items)
+        {
+            if (item is not JsonObject type)
+                continue;
+
+            yield return new TypeModel(
+                OptionalString(type, "name") ?? "",
+                OptionalInt(type, "size"),
+                OptionalBool(type, "hasGpuLayout"),
+                EquatableArray<FieldModel>.From(ReadFields(type)));
+        }
     }
 
-    private sealed class TypeDto
+    private static IEnumerable<FieldModel> ReadFields(JsonObject type)
     {
-        public string Name { get; set; } = "";
-        public int? Size { get; set; }
-        public bool HasGpuLayout { get; set; }
-        public List<FieldDto>? Fields { get; set; }
+        if (type["fields"] is not JsonArray fields)
+            yield break;
+
+        foreach (JsonValue item in fields.Items)
+        {
+            if (item is not JsonObject field)
+                continue;
+
+            yield return new FieldModel(
+                OptionalString(field, "name") ?? "",
+                OptionalInt(field, "offset") ?? 0,
+                OptionalString(field, "csType") ?? "",
+                OptionalString(field, "enumType"));
+        }
     }
 
-    private sealed class FieldDto
+    private static IEnumerable<BindingModel> ReadBindings(JsonObject root)
     {
-        public string Name { get; set; } = "";
-        public int Offset { get; set; }
-        public string CsType { get; set; } = "";
-        public string? EnumType { get; set; }
+        if (root["bindings"] is not JsonArray bindings)
+            yield break;
+
+        foreach (JsonValue item in bindings.Items)
+        {
+            if (item is not JsonObject binding)
+                continue;
+
+            yield return new BindingModel(
+                OptionalString(binding, "name") ?? "",
+                OptionalString(binding, "kind") ?? "");
+        }
     }
 
-    private sealed class BindingDto
-    {
-        public string Name { get; set; } = "";
-        public string Kind { get; set; } = "";
-    }
+    private static string? OptionalString(JsonObject value, string name) =>
+        value[name] is JsonString text ? text.Value : null;
+
+    private static int? OptionalInt(JsonObject value, string name) =>
+        value[name] is JsonNumber number ? (int)number.Value : null;
+
+    private static bool OptionalBool(JsonObject value, string name) =>
+        value[name] is JsonBool boolean && boolean.Value;
 }
