@@ -11,11 +11,6 @@
     <ItemGroup>
         <Content Include="Shaders/**/*.slang" CopyToOutputDirectory="Always" />
 
-        <SlangJson Include="@(Content->'$(SlangOutDir)/%(Filename).json')" />
-        <SlangGenerated Include="$(SlangOutDir)/gen/ResourceRefs.g.cs" />
-        <SlangGenerated Include="@(Content->'$(SlangOutDir)/gen/%(Filename).g.cs')" />
-        <AdditionalFiles Include="@(SlangGenerated)" />
-
         <ProjectReference Include="..\Pathetic.Slang.Generator\Pathetic.Slang.Generator.csproj"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false" />
@@ -29,8 +24,17 @@
             BeforeTargets="CoreCompile"
             DependsOnTargets="ResolveProjectReferences"
             Inputs="@(Content);$(SlangToolPath)"
-            Outputs="@(SlangJson);@(SlangGenerated)">
+            Outputs="@(Content->'$(SlangOutDir)/%(Filename).json');@(Content->'$(SlangOutDir)/gen/%(Filename).g.cs');$(SlangOutDir)/gen/ResourceRefs.g.cs">
         <Exec Command="dotnet &quot;$(SlangToolPath)&quot; --shaders &quot;$(SlangShadersDir)&quot; --out &quot;$(SlangOutDir)&quot;" />
+    </Target>
+
+    <Target Name="DeclareSlangSources"
+            BeforeTargets="CoreCompile"
+            DependsOnTargets="GenerateSlangAssets">
+        <ItemGroup>
+            <AdditionalFiles Include="@(Content->'$(SlangOutDir)/gen/%(Filename).g.cs')" />
+            <AdditionalFiles Include="$(SlangOutDir)/gen/ResourceRefs.g.cs" />
+        </ItemGroup>
     </Target>
 
 </Project>
