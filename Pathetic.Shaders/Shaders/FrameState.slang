@@ -1,5 +1,7 @@
 module FrameState;
 
+import Export;
+
 [Flags]
 public enum SceneChange
 {
@@ -10,6 +12,7 @@ public enum SceneChange
     Parameters = 1 << 3,
 }
 
+[Export]
 public struct FrameState
 {
     public uint FrameIndex;

@@ -1,4 +1,4 @@
-﻿// PCG hash-based random number generator.
+// PCG hash-based random number generator.
 // Source: "Hash Functions for GPU Rendering" (Jarzynski & Olano, JCGT 2020)
 // https://jcgt.org/published/0009/03/02/
 // https://www.reedbeta.com/blog/hash-functions-for-gpu-rendering/

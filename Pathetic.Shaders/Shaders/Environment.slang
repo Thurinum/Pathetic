@@ -1,4 +1,4 @@
-﻿module Environment;
+module Environment;
 
 public float3 Sky(float3 dir) 
 {

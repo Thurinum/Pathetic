@@ -1,5 +1,7 @@
 module Primitives;
 
+import Export;
+
 public enum PrimitiveType {
     Plane = 0u,
     Sphere = 1u,
@@ -7,6 +9,7 @@ public enum PrimitiveType {
     None = 1000u,
 }
 
+[Export]
 public struct Sphere
 {
     public float3 Center;
@@ -14,6 +17,7 @@ public struct Sphere
     public uint MaterialId;
 }
 
+[Export]
 public struct Plane
 {
     public float3 Center;
@@ -22,6 +26,7 @@ public struct Plane
     public uint MaterialId;
 }
 
+[Export]
 public struct Triangle
 {
     public float3 V0;
@@ -34,6 +39,7 @@ public struct Triangle
     public uint TransformId;
 }
 
+[Export]
 public struct MeshTransform
 {
     public float3 InverseX;
@@ -56,6 +62,7 @@ float3 TransformDirection(float3 v, float3 x, float3 y, float3 z)
     return v.x * x + v.y * y + v.z * z;
 }
 
+[Export]
 public struct HitResult 
 {
     public float T;

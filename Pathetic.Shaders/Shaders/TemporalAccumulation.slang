@@ -1,6 +1,9 @@
 module TemporalAccumulation;
+
+import Export;
 import Tonemapping.Tonemap;
 
+[Export]
 struct Params 
 { 
     uint Reset; 

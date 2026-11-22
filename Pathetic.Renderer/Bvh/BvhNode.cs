@@ -1,5 +1,5 @@
 using System.Numerics;
-using System.Runtime.InteropServices;
+using SlangGen = Pathetic.Generated.Slang;
 
 namespace Pathetic.Renderer.Bvh;
 
@@ -17,20 +17,20 @@ public sealed class BvhNode
     public BvhNode? Right { get; init; }
     public List<BvhPrimitiveRef>? Primitives { get; init; }
 
-    public uint Flatten(List<GpuBvhNode> nodes, List<GpuBvhPrimitiveRef> primitiveRefs)
+    public uint Flatten(List<SlangGen.Bvh.BvhNode> nodes, List<SlangGen.Bvh.BvhPrimitiveRef> primitiveRefs)
     {
         return FlattenInternal(this, nodes, primitiveRefs);
     }
 
     private uint FlattenInternal(
         BvhNode node,
-        List<GpuBvhNode> nodes,
-        List<GpuBvhPrimitiveRef> primitiveRefs)
+        List<SlangGen.Bvh.BvhNode> nodes,
+        List<SlangGen.Bvh.BvhPrimitiveRef> primitiveRefs)
     {
         uint nodeIndex = (uint)nodes.Count;
         nodes.Add(default);
 
-        GpuBvhNode gpuNode = new()
+        SlangGen.Bvh.BvhNode gpuNode = new()
         {
             Min = node.Bounds.Min,
             Max = node.Bounds.Max,
@@ -43,9 +43,9 @@ public sealed class BvhNode
             gpuNode.FirstPrimitive = (uint)primitiveRefs.Count;
             gpuNode.PrimitiveCount = (uint)node.Primitives.Count;
 
-            primitiveRefs.AddRange(node.Primitives.Select(primitive => new GpuBvhPrimitiveRef
+            primitiveRefs.AddRange(node.Primitives.Select(primitive => new SlangGen.Bvh.BvhPrimitiveRef
             {
-                Type = primitive.Type,
+                Type = (int)primitive.Type,
                 Index = primitive.Index
             }));
         }
@@ -62,25 +62,5 @@ public sealed class BvhNode
         nodes[(int)nodeIndex] = gpuNode;
         return nodeIndex;
     }
-}
-#endregion
-
-#region GPU
-[StructLayout(LayoutKind.Explicit, Size = 40)]
-public struct GpuBvhNode
-{
-    [FieldOffset(0)]  public Vector3 Min;
-    [FieldOffset(12)] public Vector3 Max;
-    [FieldOffset(24)] public uint Left;
-    [FieldOffset(28)] public uint Right;
-    [FieldOffset(32)] public uint FirstPrimitive;
-    [FieldOffset(36)] public uint PrimitiveCount;
-}
-
-[StructLayout(LayoutKind.Explicit, Size = 8)]
-public struct GpuBvhPrimitiveRef
-{
-    [FieldOffset(0)] public uint Type;
-    [FieldOffset(4)] public uint Index;
 }
 #endregion

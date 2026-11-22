@@ -61,31 +61,30 @@ internal sealed class SpirvModule
 
             uint pointeeId = pointer.ElementId;
 
-            if (!_structMembers.TryGetValue(pointeeId, out uint[]? members) || members.Length != 1)
+            if (!_structMembers.TryGetValue(pointeeId, out uint[]? members))
                 continue;
 
-            uint innerId = members[0];
-
-            if (!_types.TryGetValue(innerId, out SpirvType? inner))
-                continue;
-
-            uint elementId;
+            uint elementId = pointeeId;
             int? stride = null;
 
-            if (inner.Class is SpirvTypeClass.Array or SpirvTypeClass.RuntimeArray)
+            if (members.Length == 1)
             {
-                elementId = inner.ElementId;
+                uint innerId = members[0];
 
-                if (_arrayStrides.TryGetValue(innerId, out int arrayStride))
-                    stride = arrayStride;
-            }
-            else if (inner.Class == SpirvTypeClass.Struct)
-            {
-                elementId = innerId;
-            }
-            else
-            {
-                continue;
+                if (!_types.TryGetValue(innerId, out SpirvType? inner))
+                    continue;
+
+                if (inner.Class is SpirvTypeClass.Array or SpirvTypeClass.RuntimeArray)
+                {
+                    elementId = inner.ElementId;
+
+                    if (_arrayStrides.TryGetValue(innerId, out int arrayStride))
+                        stride = arrayStride;
+                }
+                else if (inner.Class == SpirvTypeClass.Struct)
+                {
+                    elementId = innerId;
+                }
             }
 
             if (!_structMembers.TryGetValue(elementId, out uint[]? elementMembers))

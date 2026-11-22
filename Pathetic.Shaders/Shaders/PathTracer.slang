@@ -1,5 +1,7 @@
 module PathTracer;
 
+import Export;
+
 import Primitives;
 import Materials;
 import Camera;
@@ -9,6 +11,7 @@ import Environment;
 import FrameState;
 import Bvh;
 
+[Export]
 struct Params
 {
     uint PlaneCount;

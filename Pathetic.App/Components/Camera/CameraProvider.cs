@@ -7,10 +7,10 @@ namespace Pathetic.App.Components.Camera;
 
 public sealed class CameraProvider : IResourceUploader
 {
-    private CameraData _data;
+    private SlangGen.Camera.Camera _data;
     private SceneChange _dirty = SceneChange.All;
 
-    public void Set(in CameraData data)
+    public void Set(in SlangGen.Camera.Camera data)
     {
         if (data.Equals(_data))
             return;
@@ -21,7 +21,7 @@ public sealed class CameraProvider : IResourceUploader
 
     public IReadOnlyList<IResourceSpec> Resources { get; } =
     [
-        UniformBufferSpec.Of<CameraData>(SlangGen.PathTracer.Resources.camera)
+        UniformBufferSpec.Of<SlangGen.Camera.Camera>(SlangGen.PathTracer.Resources.camera)
     ];
 
     public SceneChange DirtyChanges => _dirty;

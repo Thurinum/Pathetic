@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using Pathetic.SceneGraph;
 using Pathetic.SceneGraph.Components;
+using SlangGen = Pathetic.Generated.Slang;
 
 namespace Pathetic.App.Components.Camera;
 
@@ -22,10 +23,10 @@ public class CameraComponent(CameraProvider provider, IOptions<CameraOptions> op
         float fovRadians = float.DegreesToRadians(FovDegrees);
         float tanHalfFovRad = MathF.Tan(fovRadians * 0.5f);
         
-        CameraData cameraData = new()
+        SlangGen.Camera.Camera cameraData = new()
         {
             Origin = _transform.Position,
-            TanHalfFOV = tanHalfFovRad,
+            TanHalfFov = tanHalfFovRad,
             ApertureRadius = ApertureRadius,
             FocusDistance = FocusDistance,
             

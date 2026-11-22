@@ -1,7 +1,10 @@
 module Camera;
 
+import Export;
+
 import Random;
 
+[Export]
 public struct Camera
 {
     public float3 Origin;    
@@ -14,6 +17,7 @@ public struct Camera
     float ApertureRadius;
 };
        
+[Export]
 public struct Ray
 {
     public float3 Origin;

@@ -4,6 +4,7 @@
         <RootNamespace>Pathetic.Shaders</RootNamespace>
         <SlangShadersDir>$(MSBuildProjectDirectory)/Shaders</SlangShadersDir>
         <SlangOutDir>$(BaseIntermediateOutputPath)slang</SlangOutDir>
+        <SlangToolPath>$(MSBuildThisFileDirectory)../Pathetic.Slang.Tool/bin/$(Configuration)/net11.0/Pathetic.Slang.Tool.dll</SlangToolPath>
         <NoWarn>$(NoWarn);CS1591</NoWarn>
     </PropertyGroup>
 
@@ -25,15 +26,9 @@
     <Target Name="GenerateSlangAssets"
             BeforeTargets="CoreCompile"
             DependsOnTargets="ResolveProjectReferences"
-            Inputs="@(SlangShader)"
+            Inputs="@(SlangShader);$(SlangToolPath)"
             Outputs="@(SlangJson)">
-        <MSBuild Projects="..\Pathetic.Slang.Tool\Pathetic.Slang.Tool.csproj"
-                 Targets="GetTargetPath"
-                 Properties="Configuration=$(Configuration)"
-                 RemoveProperties="RuntimeIdentifier;SelfContained">
-            <Output TaskParameter="TargetOutputs" ItemName="_SlangToolPath" />
-        </MSBuild>
-        <Exec Command="dotnet &quot;@(_SlangToolPath)&quot; --shaders &quot;$(SlangShadersDir)&quot; --out &quot;$(SlangOutDir)&quot;" />
+        <Exec Command="dotnet &quot;$(SlangToolPath)&quot; --shaders &quot;$(SlangShadersDir)&quot; --out &quot;$(SlangOutDir)&quot;" />
     </Target>
 
 </Project>

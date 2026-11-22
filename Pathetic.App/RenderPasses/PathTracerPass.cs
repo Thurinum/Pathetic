@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using Microsoft.Extensions.Options;
 using NeoVeldrid;
 using Pathetic.Renderer.Graph;
@@ -12,25 +11,12 @@ public sealed class PathTracerPass(
     ConvergenceController convergence,
     RenderDebugSettings debug) : RenderPass
 {
-    [StructLayout(LayoutKind.Sequential)]
-    private struct Params
-    {
-        public uint PlaneCount;
-        public uint SphereCount;
-        public uint TriangleCount;
-        public uint SamplesPerPixel;
-        public uint MaxBounces;
-        public uint BvhNodeCount;
-        public uint DisplayNormals;
-        public uint SmoothShading;
-    }
-
     public override string ShaderModule => SlangGen.PathTracer.Resources.ModuleName;
 
     public override IReadOnlyList<IResourceSpec> Resources { get; } =
     [
         new TextureSpec(SlangGen.PathTracer.Resources.pathTracerColor, PixelFormat.R32_G32_B32_A32_Float, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
-        UniformBufferSpec.Of<Params>(SlangGen.PathTracer.Resources.@params),
+        UniformBufferSpec.Of<SlangGen.PathTracer.Params>(SlangGen.PathTracer.Resources.@params),
     ];
 
     public override IReadOnlyList<string> Inputs { get; } =
@@ -50,7 +36,7 @@ public sealed class PathTracerPass(
         ConvergencePlan plan = convergence.GetPlan(ctx.FrameIndex, ctx.Resources.SceneRevision);
         Enabled = plan.RunPathTracer;
 
-        Params @params = new()
+        SlangGen.PathTracer.Params @params = new()
         {
             PlaneCount = ctx.Resources.GetElementCount(SlangGen.PathTracer.Resources.planes),
             SphereCount = ctx.Resources.GetElementCount(SlangGen.PathTracer.Resources.spheres),

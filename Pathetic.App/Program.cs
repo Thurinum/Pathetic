@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Pathetic.App;
@@ -40,10 +40,10 @@ builder.Services.AddRenderer(graph => graph
     .AddPass<TemporalAccumulationPass>()
     .Present(SlangGen.TemporalAccumulation.Resources.color));
 
-builder.Services.AddStructuredBuffer<SpherePrimitive>(SlangGen.PathTracer.Resources.spheres, sparseStorage: true);
-builder.Services.AddStructuredBuffer<PlanePrimitive>(SlangGen.PathTracer.Resources.planes, sparseStorage: true);
-builder.Services.AddStructuredBuffer<TrianglePrimitive>(SlangGen.PathTracer.Resources.triangles, sparseStorage: true);
-builder.Services.AddStructuredBuffer<MeshTransform>(SlangGen.Primitives.Resources.meshTransforms);
+builder.Services.AddStructuredBuffer<SlangGen.Primitives.Sphere>(SlangGen.PathTracer.Resources.spheres, sparseStorage: true);
+builder.Services.AddStructuredBuffer<SlangGen.Primitives.Plane>(SlangGen.PathTracer.Resources.planes, sparseStorage: true);
+builder.Services.AddStructuredBuffer<SlangGen.Primitives.Triangle>(SlangGen.PathTracer.Resources.triangles, sparseStorage: true);
+builder.Services.AddStructuredBuffer<SlangGen.Primitives.MeshTransform>(SlangGen.Primitives.Resources.meshTransforms);
 builder.Services.AddStructuredBuffer<Material>(SlangGen.PathTracer.Resources.materials);
 builder.Services.AddSingleton<MaterialLibrary>();
 builder.Services.AddSingleton<MeshTransformLibrary>();
@@ -51,16 +51,16 @@ builder.Services.AddSingleton<ObjLoader>();
 builder.Services.AddStructuredBuffer<CameraProvider>();
 
 builder.Services.AddSingleton<SceneBvh>();
-builder.Services.AddSingleton(sp => new BvhBufferUploader<GpuBvhNode>(
+builder.Services.AddSingleton(sp => new BvhBufferUploader<SlangGen.Bvh.BvhNode>(
     SlangGen.PathTracer.Resources.bvhNodes,
     sp.GetRequiredService<SceneBvh>(),
     scene => scene.Nodes));
-builder.Services.AddSingleton<IResourceUploader>(sp => sp.GetRequiredService<BvhBufferUploader<GpuBvhNode>>());
-builder.Services.AddSingleton(sp => new BvhBufferUploader<GpuBvhPrimitiveRef>(
+builder.Services.AddSingleton<IResourceUploader>(sp => sp.GetRequiredService<BvhBufferUploader<SlangGen.Bvh.BvhNode>>());
+builder.Services.AddSingleton(sp => new BvhBufferUploader<SlangGen.Bvh.BvhPrimitiveRef>(
     SlangGen.PathTracer.Resources.bvhPrimitiveRefs,
     sp.GetRequiredService<SceneBvh>(),
     scene => scene.PrimitiveRefs));
-builder.Services.AddSingleton<IResourceUploader>(sp => sp.GetRequiredService<BvhBufferUploader<GpuBvhPrimitiveRef>>());
+builder.Services.AddSingleton<IResourceUploader>(sp => sp.GetRequiredService<BvhBufferUploader<SlangGen.Bvh.BvhPrimitiveRef>>());
 
 builder.Services.AddSceneGraph();
 

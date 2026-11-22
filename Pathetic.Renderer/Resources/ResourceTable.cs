@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using NeoVeldrid;
 using Pathetic.Renderer.Graph;
@@ -20,7 +20,7 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
 
     public ResourceTable()
     {
-        Declare(UniformBufferSpec.Of<FrameState>(SlangGen.FrameState.Resources.frameState));
+        Declare(UniformBufferSpec.Of<SlangGen.FrameState.FrameState>(SlangGen.FrameState.Resources.frameState));
     }
 
     private SceneChange _pendingChanges;
@@ -98,11 +98,11 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
         }
 
         // Hard-coded and deliberately last: shaders must observe this frame's revision.
-        ctx.Cmd.UpdateBuffer(GetResource<DeviceBuffer>(SlangGen.FrameState.Resources.frameState), 0, new FrameState
+        ctx.Cmd.UpdateBuffer(GetResource<DeviceBuffer>(SlangGen.FrameState.Resources.frameState), 0, new SlangGen.FrameState.FrameState
         {
             FrameIndex = ctx.FrameIndex,
             DeltaTime = ctx.DeltaTime,
-            SceneRevision = SceneRevision
+            SceneRevision = (int)SceneRevision
         });
 
         return _reallocated;

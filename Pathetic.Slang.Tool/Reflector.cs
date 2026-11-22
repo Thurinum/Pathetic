@@ -122,8 +122,18 @@ internal sealed class Reflector
                 return loaded;
         }
 
-        Module module = session.LoadModuleFromSourceString(file.ModuleName, file.Path, source, out DiagnosticInfo diagnostics);
-        ThrowOnErrors(diagnostics, file.Path);
+        Module module;
+
+        try
+        {
+            module = session.LoadModuleFromSourceString(file.ModuleName, file.Path, source, out DiagnosticInfo diagnostics);
+            ThrowOnErrors(diagnostics, file.Path);
+        }
+        catch (CompilationException exception)
+        {
+            throw new ToolException($"{file.Path}: {exception.Message}");
+        }
+
         return module;
     }
 

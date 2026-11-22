@@ -1,9 +1,12 @@
+import Export;
+
 struct Circle 
 {
     float2 Position01;
     float Radius;
 }
 
+[Export]
 struct Params
 {
     uint Count;
