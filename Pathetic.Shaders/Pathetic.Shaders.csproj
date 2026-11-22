@@ -9,12 +9,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <SlangShader Include="Shaders/**/*.slang" />
-        <Content Include="Shaders/**/*" CopyToOutputDirectory="Always" />
+        <Content Include="Shaders/**/*.slang" CopyToOutputDirectory="Always" />
 
-        <SlangJson Include="@(SlangShader->'$(SlangOutDir)/%(Filename).json')" />
+        <SlangJson Include="@(Content->'$(SlangOutDir)/%(Filename).json')" />
         <SlangGenerated Include="$(SlangOutDir)/gen/ResourceRefs.g.cs" />
-        <SlangGenerated Include="@(SlangShader->'$(SlangOutDir)/gen/%(Filename).g.cs')" />
+        <SlangGenerated Include="@(Content->'$(SlangOutDir)/gen/%(Filename).g.cs')" />
         <AdditionalFiles Include="@(SlangGenerated)" />
 
         <ProjectReference Include="..\Pathetic.Slang.Generator\Pathetic.Slang.Generator.csproj"
@@ -29,7 +28,7 @@
     <Target Name="GenerateSlangAssets"
             BeforeTargets="CoreCompile"
             DependsOnTargets="ResolveProjectReferences"
-            Inputs="@(SlangShader);$(SlangToolPath)"
+            Inputs="@(Content);$(SlangToolPath)"
             Outputs="@(SlangJson);@(SlangGenerated)">
         <Exec Command="dotnet &quot;$(SlangToolPath)&quot; --shaders &quot;$(SlangShadersDir)&quot; --out &quot;$(SlangOutDir)&quot;" />
     </Target>
