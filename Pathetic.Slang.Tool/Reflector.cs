@@ -291,7 +291,26 @@ internal sealed class Reflector
         }
 
         if (candidates.Count == 0)
+        {
+            StructLayout? named = null;
+
+            foreach (ObservedLayout observed in _observedLayouts)
+            {
+                if (IsLayoutCandidate(observed.Layout.Name, type.Name))
+                {
+                    named = observed.Layout;
+                    break;
+                }
+            }
+
+            if (named is not null)
+            {
+                throw new ToolException(
+                    $"Exported type '{type.Module}.{type.Name}' has {type.Fields.Count} field(s) but the only matching SPIR-V layout '{named.Name}' has {named.Offsets.Length} member(s).");
+            }
+
             return null;
+        }
 
         StructLayout first = candidates[0];
 

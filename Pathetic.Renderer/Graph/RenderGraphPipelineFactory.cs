@@ -1,15 +1,15 @@
-﻿using NeoVeldrid;
+using NeoVeldrid;
 using Pathetic.Renderer.Resources;
 using Pathetic.Renderer.Shaders;
 
 namespace Pathetic.Renderer.Graph;
 
-public sealed class RenderGraphPipelineFactory(SlangCompiler compiler)
+public sealed class RenderGraphPipelineFactory(PrecompiledShaderCache compiler)
 {
     public PassRenderState Build(GraphicsDevice device, RenderPass pass)
     {
         ShaderCompilationResult compiled = compiler.CompileComputeShader(pass.ShaderModule);
-        ShaderDescription shaderDesc = new(ShaderStages.Compute, compiled.Code, SlangCompiler.EntryPointName);
+        ShaderDescription shaderDesc = new(ShaderStages.Compute, compiled.Code, PrecompiledShaderCache.EntryPointName);
         using Shader shader = device.ResourceFactory.CreateShader(shaderDesc);
 
         var bindings = compiled.Reflection

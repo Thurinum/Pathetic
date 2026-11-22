@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>Pathetic.Tests</RootNamespace>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="xunit" />
+        <PackageReference Include="xunit.runner.visualstudio" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Pathetic.Renderer\Pathetic.Renderer.csproj" />
+        <ProjectReference Include="..\Pathetic.Shaders\Pathetic.Shaders.csproj" />
+        <ProjectReference Include="..\Pathetic.Slang.Generator\Pathetic.Slang.Generator.csproj" />
+    </ItemGroup>
+
+</Project>

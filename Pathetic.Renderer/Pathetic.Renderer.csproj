@@ -12,7 +12,6 @@
       <PackageReference Include="NeoVeldrid" />
       <PackageReference Include="NeoVeldrid.ImGui" />
       <PackageReference Include="NeoVeldrid.StartupUtilities" />
-      <PackageReference Include="Prowl.Slang" />
     </ItemGroup>
 
     <ItemGroup>

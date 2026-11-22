@@ -29,7 +29,6 @@
         <PackageReference Include="NeoVeldrid.ImGui" />
         <PackageReference Include="NeoVeldrid.SPIRV" />
         <PackageReference Include="NeoVeldrid.StartupUtilities" />
-        <PackageReference Include="Prowl.Slang" />
         <PackageReference Include="Silk.NET.Assimp" />
         <PackageReference Include="Ultz.Native.Assimp" />
     </ItemGroup>

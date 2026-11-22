@@ -20,6 +20,7 @@
                           ReferenceOutputAssembly="false" />
         <ProjectReference Include="..\Pathetic.Slang.Tool\Pathetic.Slang.Tool.csproj"
                           ReferenceOutputAssembly="false"
+                          Private="false"
                           GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained" />
     </ItemGroup>
 

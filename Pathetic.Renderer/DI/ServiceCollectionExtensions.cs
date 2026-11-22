@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Pathetic.Generated.Slang;
 using Pathetic.Renderer.Buffers;
@@ -44,7 +44,7 @@ public static class ServiceCollectionExtensions
         
         public IServiceCollection AddRenderer(Action<RenderGraphSpecBuilder> configureGraph)
         {
-            services.AddSingleton<SlangCompiler>();
+            services.AddSingleton<PrecompiledShaderCache>();
             services.AddSingleton<RenderPassFactory>();
             services.AddSingleton<RenderGraphPipelineFactory>();
             services.AddSingleton<RenderGraphFactory>();
