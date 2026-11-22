@@ -4,7 +4,7 @@ using Prowl.Slang;
 
 namespace Pathetic.Slang.Tool;
 
-internal sealed class Reflector
+internal sealed class Reflector(string targetNamespace)
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -13,14 +13,8 @@ internal sealed class Reflector
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
-    private readonly string _namespace;
     private readonly Dictionary<string, ModuleJson> _modules = new(StringComparer.Ordinal);
     private readonly Dictionary<string, byte[]> _code = new(StringComparer.Ordinal);
-
-    public Reflector(string targetNamespace)
-    {
-        _namespace = targetNamespace;
-    }
 
     public void Run(ShaderSet shaders, string outDir)
     {
@@ -46,7 +40,7 @@ internal sealed class Reflector
         ModuleJson json = new()
         {
             Module = file.ModuleName,
-            Namespace = _namespace,
+            Namespace = targetNamespace,
             SourceFile = file.Path,
         };
 
@@ -310,15 +304,15 @@ internal sealed class Reflector
         string codeDir = Path.Combine(outDir, "gen");
         Directory.CreateDirectory(codeDir);
 
-        File.WriteAllText(Path.Combine(codeDir, "ResourceRefs.g.cs"), SourceEmitter.EmitRefs(_namespace));
+        File.WriteAllText(Path.Combine(codeDir, "ResourceRefs.g.cs"), SourceEmitter.EmitRefs(targetNamespace));
 
-        IndexJson index = new() { Namespace = _namespace };
+        IndexJson index = new() { Namespace = targetNamespace };
 
         foreach (ModuleJson module in _modules.Values.OrderBy(static module => module.Module, StringComparer.Ordinal))
         {
             string stem = Path.GetFileNameWithoutExtension(module.SourceFile);
             File.WriteAllText(Path.Combine(outDir, stem + ".json"), JsonSerializer.Serialize(module, JsonOptions));
-            File.WriteAllText(Path.Combine(codeDir, stem + ".g.cs"), SourceEmitter.EmitModule(_namespace, module));
+            File.WriteAllText(Path.Combine(codeDir, stem + ".g.cs"), SourceEmitter.EmitModule(targetNamespace, module));
 
             if (_code.TryGetValue(stem, out byte[]? code))
                 File.WriteAllBytes(Path.Combine(outDir, stem + ".spv"), code);

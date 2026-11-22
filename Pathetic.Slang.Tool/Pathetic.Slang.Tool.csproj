@@ -8,6 +8,7 @@
 
     <ItemGroup>
         <PackageReference Include="Prowl.Slang" />
+        <PackageReference Include="System.CommandLine" />
     </ItemGroup>
 
 </Project>
