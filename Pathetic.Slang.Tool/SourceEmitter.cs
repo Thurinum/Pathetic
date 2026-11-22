@@ -62,38 +62,54 @@ internal static class SourceEmitter
             writer.Line();
         }
 
-        writer.Line($"namespace {targetNamespace}");
-        writer.Open("{");
-        writer.Line($"public static class {Identifier.Escape(module.Module)}Resources");
-        writer.Open("{");
-        writer.Line($"public const string ModuleName = \"{module.Module}\";");
+        List<BindingJson> bindings = module.Bindings;
 
-        if (module.Bindings.Count > 0)
-            writer.Line();
+        if (module.Pipeline is not null)
+            bindings = [.. bindings.Where(binding => module.Pipeline.Parameters.Any(parameter => parameter.Name == binding.Name))];
 
-        foreach (BindingJson binding in module.Bindings)
+        if (module.Pipeline is not null || bindings.Count > 0)
         {
-            ResolveToken(binding.Kind, out string token);
-            writer.Line($"public static readonly {token} {Identifier.Escape(binding.Name)} = new(\"{binding.Name}\");");
+            writer.Line($"namespace {targetNamespace}.Resources");
+            writer.Open("{");
+            writer.Line($"public static class {Identifier.Escape(module.Module)}");
+            writer.Open("{");
+            writer.Line($"public const string ModuleName = \"{module.Module}\";");
+
+            if (bindings.Count > 0)
+                writer.Line();
+
+            foreach (BindingJson binding in bindings)
+            {
+                ResolveToken(binding.Kind, out string token);
+                writer.Line($"public static readonly {token} {Identifier.Escape(binding.Name)} = new(\"{binding.Name}\");");
+            }
+
+            writer.Close("}");
+            writer.Close("}");
+            writer.Line();
         }
 
-        writer.Close("}");
-
-        foreach (TypeJson type in module.Types)
+        if (module.Types.Count > 0)
         {
-            writer.Line();
-            writer.Line($"[StructLayout(LayoutKind.Explicit, Size = {type.Size})]");
-            writer.Line($"public record struct {Identifier.Escape(type.Name)}");
+            writer.Line($"namespace {targetNamespace}");
             writer.Open("{");
-            writer.Line($"public const int SizeInBytes = {type.Size};");
 
-            foreach (FieldJson field in type.Fields)
-                writer.Line($"[FieldOffset({field.Offset})] public {field.CsType} {Identifier.Escape(field.Name)};");
+            foreach (TypeJson type in module.Types)
+            {
+                writer.Line();
+                writer.Line($"[StructLayout(LayoutKind.Explicit, Size = {type.Size})]");
+                writer.Line($"public record struct {Identifier.Escape(type.Name)}");
+                writer.Open("{");
+                writer.Line($"public const int SizeInBytes = {type.Size};");
+
+                foreach (FieldJson field in type.Fields)
+                    writer.Line($"[FieldOffset({field.Offset})] public {field.CsType} {Identifier.Escape(field.Name)};");
+
+                writer.Close("}");
+            }
 
             writer.Close("}");
         }
-
-        writer.Close("}");
 
         return writer.ToString();
     }

@@ -20,7 +20,7 @@ public sealed class CameraProvider : IResourceUploader
 
     public IReadOnlyList<IResourceSpec> Resources { get; } =
     [
-        UniformBufferSpec.Of<GPUType.Camera>(GPUType.PathTracerResources.camera)
+        UniformBufferSpec.Of<GPUType.Camera>(GPUType.Resources.PathTracer.camera)
     ];
 
     public SceneChange DirtyChanges => _dirty;

@@ -37,13 +37,13 @@ builder.Services.AddRenderer(graph => graph
     // .AddPass<CirclesPass>()
     .AddPass<PathTracerPass>()
     .AddPass<TemporalAccumulationPass>()
-    .Present(GPUType.TemporalAccumulationResources.color));
+    .Present(GPUType.Resources.TemporalAccumulation.color));
 
-builder.Services.AddStructuredBuffer<GPUType.Sphere>(GPUType.PathTracerResources.spheres, sparseStorage: true);
-builder.Services.AddStructuredBuffer<GPUType.Plane>(GPUType.PathTracerResources.planes, sparseStorage: true);
-builder.Services.AddStructuredBuffer<GPUType.Triangle>(GPUType.PathTracerResources.triangles, sparseStorage: true);
-builder.Services.AddStructuredBuffer<GPUType.MeshTransform>(GPUType.PrimitivesResources.meshTransforms);
-builder.Services.AddStructuredBuffer<Material>(GPUType.PathTracerResources.materials);
+builder.Services.AddStructuredBuffer<GPUType.Sphere>(GPUType.Resources.PathTracer.spheres, sparseStorage: true);
+builder.Services.AddStructuredBuffer<GPUType.Plane>(GPUType.Resources.PathTracer.planes, sparseStorage: true);
+builder.Services.AddStructuredBuffer<GPUType.Triangle>(GPUType.Resources.PathTracer.triangles, sparseStorage: true);
+builder.Services.AddStructuredBuffer<GPUType.MeshTransform>(GPUType.Resources.Primitives.meshTransforms);
+builder.Services.AddStructuredBuffer<Material>(GPUType.Resources.PathTracer.materials);
 builder.Services.AddSingleton<MaterialLibrary>();
 builder.Services.AddSingleton<MeshTransformLibrary>();
 builder.Services.AddSingleton<ObjLoader>();
@@ -51,12 +51,12 @@ builder.Services.AddStructuredBuffer<CameraProvider>();
 
 builder.Services.AddSingleton<SceneBvh>();
 builder.Services.AddSingleton(sp => new BvhBufferUploader<GPUType.BvhNode>(
-    GPUType.PathTracerResources.bvhNodes,
+    GPUType.Resources.PathTracer.bvhNodes,
     sp.GetRequiredService<SceneBvh>(),
     scene => scene.Nodes));
 builder.Services.AddSingleton<IResourceUploader>(sp => sp.GetRequiredService<BvhBufferUploader<GPUType.BvhNode>>());
 builder.Services.AddSingleton(sp => new BvhBufferUploader<GPUType.BvhPrimitiveRef>(
-    GPUType.PathTracerResources.bvhPrimitiveRefs,
+    GPUType.Resources.PathTracer.bvhPrimitiveRefs,
     sp.GetRequiredService<SceneBvh>(),
     scene => scene.PrimitiveRefs));
 builder.Services.AddSingleton<IResourceUploader>(sp => sp.GetRequiredService<BvhBufferUploader<GPUType.BvhPrimitiveRef>>());
