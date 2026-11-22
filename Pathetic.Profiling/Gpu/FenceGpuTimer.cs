@@ -15,9 +15,9 @@ public sealed partial class FenceGpuTimer(
     private static readonly ActivitySource Source = new(ProfilingName.SourceName);
 
     private readonly List<Submission> _submissions = [];
-    private readonly Stack<Fence> _idle = new();
-    private readonly List<Fence> _all = [];
+    private readonly List<Fence> _fences = [];
 
+    private int _fencesInUse;
     private bool _deviceLogged;
     private DateTimeOffset _frameStart;
 
@@ -67,8 +67,9 @@ public sealed partial class FenceGpuTimer(
 
             previousDone = done;
             submission.Fence.Reset();
-            _idle.Push(submission.Fence);
         }
+
+        _fencesInUse = 0;
 
         TimeSpan gpuTime = TimeProvider.System.GetElapsedTime(frameStart, previousDone);
         _submissions.Clear();
@@ -89,12 +90,10 @@ public sealed partial class FenceGpuTimer(
 
     private Fence RentFence(GraphicsDevice device)
     {
-        if (_idle.TryPop(out Fence? fence))
-            return fence;
+        if (_fencesInUse == _fences.Count)
+            _fences.Add(device.ResourceFactory.CreateFence(false));
 
-        fence = device.ResourceFactory.CreateFence(false);
-        _all.Add(fence);
-        return fence;
+        return _fences[_fencesInUse++];
     }
 
     private void LogDevice(GraphicsDevice device)
@@ -105,7 +104,7 @@ public sealed partial class FenceGpuTimer(
 
     public void Dispose()
     {
-        foreach (Fence fence in _all)
+        foreach (Fence fence in _fences)
             fence.Dispose();
     }
 
