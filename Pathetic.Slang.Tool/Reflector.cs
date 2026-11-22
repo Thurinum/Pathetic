@@ -230,14 +230,12 @@ internal sealed class Reflector
 
         json.Pipeline = pipeline;
 
-        Memory<byte> code = linked.GetEntryPointCode(IntPtr.Zero, IntPtr.Zero, out DiagnosticInfo codeDiagnostics);
+        byte[] code = linked.GetEntryPointCode(IntPtr.Zero, IntPtr.Zero, out DiagnosticInfo codeDiagnostics).ToArray();
         ThrowOnErrors(codeDiagnostics, file.Path);
 
-        _code[file.OutputStem] = code.ToArray();
+        _code[file.OutputStem] = code;
 
-        SpirvModule spirv = SpirvModule.Parse(System.Runtime.InteropServices.MemoryMarshal.Cast<byte, uint>(code.Span));
-
-        foreach (StructLayout layout in spirv.BufferElementLayouts())
+        foreach (StructLayout layout in SpirvLayouts.Read(code))
             _observedLayouts.Add(new ObservedLayout { Module = file.ModuleName, Layout = layout });
     }
 
@@ -454,14 +452,18 @@ internal sealed class Reflector
     {
         Directory.CreateDirectory(outDir);
 
+        string codeDir = Path.Combine(outDir, "gen");
+        Directory.CreateDirectory(codeDir);
+
+        File.WriteAllText(Path.Combine(codeDir, "ResourceRefs.g.cs"), SourceEmitter.EmitRefs(_namespace));
+
         IndexJson index = new() { Namespace = _namespace };
 
         foreach (ModuleJson module in _modules.Values.OrderBy(static module => module.Module, StringComparer.Ordinal))
         {
-            string path = Path.Combine(outDir, module.SourceFile is null ? module.Module + ".json" : Path.GetFileNameWithoutExtension(module.SourceFile) + ".json");
-            File.WriteAllText(path, JsonSerializer.Serialize(module, JsonOptions));
-
-            string stem = Path.GetFileNameWithoutExtension(path);
+            string stem = Path.GetFileNameWithoutExtension(module.SourceFile);
+            File.WriteAllText(Path.Combine(outDir, stem + ".json"), JsonSerializer.Serialize(module, JsonOptions));
+            File.WriteAllText(Path.Combine(codeDir, stem + ".g.cs"), SourceEmitter.EmitModule(_namespace, module));
 
             if (_code.TryGetValue(stem, out byte[]? code))
                 File.WriteAllBytes(Path.Combine(outDir, stem + ".spv"), code);

@@ -2,8 +2,6 @@
 
     <PropertyGroup>
         <RootNamespace>Pathetic.Shaders</RootNamespace>
-        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
         <SlangShadersDir>$(MSBuildProjectDirectory)/Shaders</SlangShadersDir>
         <SlangOutDir>$(BaseIntermediateOutputPath)slang</SlangOutDir>
         <SlangToolPath>$(MSBuildThisFileDirectory)../Pathetic.Slang.Tool/bin/$(Configuration)/net11.0/Pathetic.Slang.Tool.dll</SlangToolPath>
@@ -11,11 +9,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <SlangShader Include="Shaders/**/*.slang" Exclude="Shaders/include/**" />
+        <SlangShader Include="Shaders/**/*.slang" />
         <Content Include="Shaders/**/*" CopyToOutputDirectory="Always" />
 
         <SlangJson Include="@(SlangShader->'$(SlangOutDir)/%(Filename).json')" />
-        <AdditionalFiles Include="@(SlangJson)" />
+        <SlangGenerated Include="$(SlangOutDir)/gen/ResourceRefs.g.cs" />
+        <SlangGenerated Include="@(SlangShader->'$(SlangOutDir)/gen/%(Filename).g.cs')" />
+        <AdditionalFiles Include="@(SlangGenerated)" />
 
         <ProjectReference Include="..\Pathetic.Slang.Generator\Pathetic.Slang.Generator.csproj"
                           OutputItemType="Analyzer"
@@ -30,7 +30,7 @@
             BeforeTargets="CoreCompile"
             DependsOnTargets="ResolveProjectReferences"
             Inputs="@(SlangShader);$(SlangToolPath)"
-            Outputs="@(SlangJson)">
+            Outputs="@(SlangJson);@(SlangGenerated)">
         <Exec Command="dotnet &quot;$(SlangToolPath)&quot; --shaders &quot;$(SlangShadersDir)&quot; --out &quot;$(SlangOutDir)&quot;" />
     </Target>
 
