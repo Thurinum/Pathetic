@@ -3,6 +3,7 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
         <LangVersion>latest</LangVersion>
+        <AssemblyName>Pathetic.Slang.SourceGenerator</AssemblyName>
         <RootNamespace>Pathetic.Slang.Generator</RootNamespace>
         <IsRoslynComponent>true</IsRoslynComponent>
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>

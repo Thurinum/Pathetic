@@ -2,11 +2,11 @@
 
     <PropertyGroup>
         <RootNamespace>Pathetic.Shaders</RootNamespace>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
         <SlangShadersDir>$(MSBuildProjectDirectory)/Shaders</SlangShadersDir>
         <SlangOutDir>$(BaseIntermediateOutputPath)slang</SlangOutDir>
         <SlangToolPath>$(MSBuildThisFileDirectory)../Pathetic.Slang.Tool/bin/$(Configuration)/net11.0/Pathetic.Slang.Tool.dll</SlangToolPath>
-        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
         <NoWarn>$(NoWarn);CS1591</NoWarn>
     </PropertyGroup>
 
