@@ -1,15 +1,5 @@
 ﻿namespace Pathetic.Renderer.Shaders;
 
-public enum ShaderResourceKind
-{
-    Texture,
-    MutableTexture,
-    Sampler,
-    UniformBuffer,
-    Buffer,
-    MutableBuffer,
-}
-
 public readonly record struct ShaderParameter(string Name, ShaderResourceKind Kind, uint Space, uint Binding);
 
 public sealed class ShaderModule

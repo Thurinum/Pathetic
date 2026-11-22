@@ -1,5 +1,15 @@
 ﻿namespace Pathetic.Renderer.Shaders.Generator;
 
+internal enum BindingKind
+{
+    Texture,
+    MutableTexture,
+    Sampler,
+    UniformBuffer,
+    Buffer,
+    MutableBuffer,
+}
+
 internal sealed class ModuleModel
 {
     public required string Module { get; init; }
@@ -18,13 +28,13 @@ internal sealed class PipelineModel
 internal sealed class BindingModel
 {
     public required string Name { get; init; }
-    public required string Kind { get; init; }
+    public required BindingKind Kind { get; init; }
 }
 
 internal sealed class ParameterModel
 {
     public required string Name { get; init; }
-    public required string Kind { get; init; }
+    public required BindingKind Kind { get; init; }
     public required uint Space { get; init; }
     public required uint Binding { get; init; }
 }

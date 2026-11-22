@@ -79,10 +79,7 @@ internal static class SourceEmitter
                 writer.Line();
 
             foreach (BindingModel binding in bindings)
-            {
-                ResolveToken(binding.Kind, out string token);
-                writer.Line($"public static readonly {token} {Identifier.Escape(binding.Name)} = new(\"{binding.Name}\");");
-            }
+                writer.Line($"public static readonly {binding.Kind}Ref {Identifier.Escape(binding.Name)} = new(\"{binding.Name}\");");
 
             writer.Close("}");
             writer.Close("}");
@@ -123,6 +120,14 @@ internal static class SourceEmitter
         writer.Line();
         writer.Line("namespace Pathetic.Renderer.Shaders");
         writer.Open("{");
+        writer.Line("public enum ShaderResourceKind");
+        writer.Open("{");
+
+        foreach (BindingKind kind in Enum.GetValues<BindingKind>())
+            writer.Line($"{kind},");
+
+        writer.Close("}");
+        writer.Line();
         writer.Line("public static class ShaderModules");
         writer.Open("{");
         writer.Line("public static readonly IReadOnlyDictionary<string, ShaderModule> All = new Dictionary<string, ShaderModule>(StringComparer.Ordinal)");
@@ -143,7 +148,7 @@ internal static class SourceEmitter
             writer.Open("[");
 
             foreach (ParameterModel parameter in pipeline.Parameters)
-                writer.Line($"new ShaderParameter(\"{parameter.Name}\", ShaderResourceKind.{ResolveRuntimeKind(parameter.Kind)}, {parameter.Space}, {parameter.Binding}),");
+                writer.Line($"new ShaderParameter(\"{parameter.Name}\", ShaderResourceKind.{parameter.Kind}, {parameter.Space}, {parameter.Binding}),");
 
             writer.Close("],");
             writer.Close("},");
@@ -159,29 +164,4 @@ internal static class SourceEmitter
 
         return writer.ToString();
     }
-
-    private static void ResolveToken(string kind, out string token)
-    {
-        token = kind switch
-        {
-            "Texture" => "TextureRef",
-            "MutableTexture" => "MutableTextureRef",
-            "Sampler" => "SamplerRef",
-            "UniformBuffer" => "UniformBufferRef",
-            "BufferRead" => "BufferRef",
-            "BufferReadWrite" => "MutableBufferRef",
-            _ => throw new SlangInteropException($"Unsupported binding kind '{kind}'."),
-        };
-    }
-
-    private static string ResolveRuntimeKind(string kind) => kind switch
-    {
-        "Texture" => "Texture",
-        "MutableTexture" => "MutableTexture",
-        "Sampler" => "Sampler",
-        "UniformBuffer" => "UniformBuffer",
-        "BufferRead" => "Buffer",
-        "BufferReadWrite" => "MutableBuffer",
-        _ => throw new SlangInteropException($"Unsupported shader parameter kind '{kind}'."),
-    };
 }

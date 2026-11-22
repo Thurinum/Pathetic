@@ -1,5 +1,6 @@
 ﻿using System.CommandLine;
 using Pathetic.Renderer.Shaders.Generator;
+using Prowl.Slang;
 
 Option<string[]> shaders = new("--shaders")
 {
@@ -49,9 +50,28 @@ root.SetAction(parseResult =>
         Console.WriteLine($"Pathetic.Renderer.Shaders.Generator: {shaderSet.Files.Count} module(s) written to '{outDir}'.");
         return 0;
     }
+    catch (ShaderCompilationException exception)
+    {
+        Console.Error.WriteLine(exception.Message);
+        return 1;
+    }
+    catch (CompilationException exception)
+    {
+        Console.Error.WriteLine(DiagnosticText.Format(exception.Message));
+        return 1;
+    }
     catch (SlangInteropException exception)
     {
         Console.Error.WriteLine($"error PATSLANG: {exception.Message}");
+        return 1;
+    }
+    catch (Exception exception)
+    {
+        Console.Error.WriteLine($"error PATSLANG: {exception.GetType().Name}: {exception.Message}");
+
+        if (exception.StackTrace is { Length: > 0 } stackTrace)
+            Console.Error.WriteLine(stackTrace);
+
         return 1;
     }
 });
