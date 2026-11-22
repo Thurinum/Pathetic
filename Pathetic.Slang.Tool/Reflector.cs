@@ -13,6 +13,7 @@ internal sealed class Reflector(string targetNamespace)
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
+    private readonly HashSet<string> _cpuTypeNames = new(StringComparer.Ordinal);
     private readonly Dictionary<string, ModuleJson> _modules = new(StringComparer.Ordinal);
     private readonly Dictionary<string, byte[]> _code = new(StringComparer.Ordinal);
 
@@ -105,9 +106,13 @@ internal sealed class Reflector(string targetNamespace)
     private void TryExportType(Session session, ShaderFile file, ModuleJson json, DeclReflection declaration)
     {
         TypeReflection type = declaration.Type;
+        string? cpuTypeName = GetCPUTypeName(type);
 
-        if (!HasCPUTypeAttribute(type))
+        if (cpuTypeName is null)
             return;
+
+        if (!_cpuTypeNames.Add(cpuTypeName))
+            throw new ToolException($"Two [CPUType] declarations emit '{cpuTypeName}'; give one an explicit name with [CPUType(\"...\")].");
 
         TypeLayoutReflection layout = session.GetTypeLayout(type, 0, LayoutRules.Default, out DiagnosticInfo diagnostics);
         ThrowOnErrors(diagnostics, file.Path);
@@ -136,21 +141,24 @@ internal sealed class Reflector(string targetNamespace)
 
         json.Types.Add(new TypeJson
         {
-            Name = declaration.Name,
+            Name = cpuTypeName,
             Size = (end + alignment - 1) / alignment * alignment,
             Fields = fields,
         });
     }
 
-    private static bool HasCPUTypeAttribute(TypeReflection type)
+    private static string? GetCPUTypeName(TypeReflection type)
     {
         foreach (Prowl.Slang.Attribute attribute in type.UserAttributes)
         {
-            if (string.Equals(attribute.Name, "CPUType", StringComparison.OrdinalIgnoreCase))
-                return true;
+            if (!string.Equals(attribute.Name, "CPUType", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            string? uniqueName = attribute.ArgumentCount > 0 ? attribute.GetArgumentValueString(0) : null;
+            return string.IsNullOrWhiteSpace(uniqueName) ? type.Name : uniqueName;
         }
 
-        return false;
+        return null;
     }
 
     private void ReflectPipeline(Session session, ShaderFile file, Module module, ModuleJson json)

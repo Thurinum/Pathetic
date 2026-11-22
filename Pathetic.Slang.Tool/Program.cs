@@ -25,7 +25,7 @@ Option<string[]> search = new("--search")
 Option<string> targetNamespace = new("--namespace")
 {
     Description = "Namespace of the generated types.",
-    DefaultValueFactory = _ => "Pathetic.Generated.Slang",
+    DefaultValueFactory = _ => "Pathetic.Generated.GPUTypes",
 };
 
 RootCommand root = new("Reflects Slang modules into C#, a runtime manifest and SPIR-V blobs.");

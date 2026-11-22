@@ -9,7 +9,7 @@ namespace Pathetic.App.Components;
 public record struct MeshTriangle(Vector3 V0, Vector3 V1, Vector3 V2, Vector3 N0, Vector3 N1, Vector3 N2);
 
 public class MeshComponent(
-    SparseSet<GPUType.Primitives.Triangle> triangles,
+    SparseSet<GPUType.Triangle> triangles,
     MaterialLibrary materials,
     MeshTransformLibrary transforms) : Component
 {
@@ -70,7 +70,7 @@ public class MeshComponent(
             * Matrix4x4.CreateTranslation(transform.Position);
     }
 
-    private static GPUType.Primitives.Triangle ToPrimitive(MeshTriangle triangle, uint materialId, uint transformId) => new()
+    private static GPUType.Triangle ToPrimitive(MeshTriangle triangle, uint materialId, uint transformId) => new()
     {
         V0 = triangle.V0,
         V1 = triangle.V1,

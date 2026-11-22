@@ -1,4 +1,4 @@
-namespace Pathetic.Generated.Slang;
+namespace Pathetic.Generated.GPUTypes;
 
 public readonly record struct TextureRef(string Value)
 {

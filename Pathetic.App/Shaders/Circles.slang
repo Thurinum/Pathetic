@@ -6,7 +6,7 @@ struct Circle
     float Radius;
 }
 
-[CPUType]
+[CPUType("CirclesParams")]
 struct Params
 {
     uint Count;

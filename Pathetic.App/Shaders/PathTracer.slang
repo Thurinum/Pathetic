@@ -11,7 +11,7 @@ import Environment;
 import FrameState;
 import Bvh;
 
-[CPUType]
+[CPUType("PathTracerParams")]
 struct Params
 {
     uint PlaneCount;

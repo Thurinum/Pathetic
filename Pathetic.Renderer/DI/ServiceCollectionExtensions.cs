@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Pathetic.Generated.Slang;
+using Pathetic.Generated.GPUTypes;
 using Pathetic.Renderer.Buffers;
 using Pathetic.Renderer.Graph;
 using Pathetic.Renderer.Resources;

@@ -13,7 +13,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Using Include="Pathetic.Generated.Slang" Alias="GPUType" />
+        <Using Include="Pathetic.Generated.GPUTypes" Alias="GPUType" />
     </ItemGroup>
 
     <ItemGroup>

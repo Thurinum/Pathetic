@@ -62,9 +62,9 @@ internal static class SourceEmitter
             writer.Line();
         }
 
-        writer.Line($"namespace {targetNamespace}.{Identifier.Escape(module.Module)};");
-        writer.Line();
-        writer.Line("public static class Resources");
+        writer.Line($"namespace {targetNamespace}");
+        writer.Open("{");
+        writer.Line($"public static class {Identifier.Escape(module.Module)}Resources");
         writer.Open("{");
         writer.Line($"public const string ModuleName = \"{module.Module}\";");
 
@@ -82,7 +82,6 @@ internal static class SourceEmitter
         foreach (TypeJson type in module.Types)
         {
             writer.Line();
-
             writer.Line($"[StructLayout(LayoutKind.Explicit, Size = {type.Size})]");
             writer.Line($"public record struct {Identifier.Escape(type.Name)}");
             writer.Open("{");
@@ -93,6 +92,8 @@ internal static class SourceEmitter
 
             writer.Close("}");
         }
+
+        writer.Close("}");
 
         return writer.ToString();
     }
