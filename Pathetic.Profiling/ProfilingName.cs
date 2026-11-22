@@ -9,6 +9,8 @@ public static class ProfilingName
 
     public const string InterceptorNamespace = "Pathetic.Profiling.Generated";
 
+    public const string CountersMacro = "PROFILE_COUNTERS";
+
     public const string FrameTag = "profile.frame";
     public const string GpuSpanPrefix = "Gpu/";
 }

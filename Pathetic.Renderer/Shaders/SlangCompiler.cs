@@ -34,14 +34,12 @@ public sealed class SlangCompiler
         {
             Targets = [target],
             SearchPaths = [shadersDirectory, "./"],
-            PreprocessorMacros = profiler.Value.Enabled ? [.. ShaderCounterMacros.All.Select(ToMacro)] : null
+            PreprocessorMacros = profiler.Value.Enabled ? [new() { Name = ProfilingName.CountersMacro, Value = "1" }] : null
         };
 
         _session = GlobalSession.CreateSession(sessionDescription);
     }
     
-    private static PreprocessorMacroDescription ToMacro((string Name, string Value) macro) => new() { Name = macro.Name, Value = macro.Value };
-
     [Profile]
     public ShaderCompilationResult CompileComputeShader(string moduleName)
     {

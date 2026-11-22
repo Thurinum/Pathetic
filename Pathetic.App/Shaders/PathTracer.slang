@@ -9,6 +9,29 @@ import Environment;
 import FrameState;
 import Bvh;
 
+#ifdef PROFILE_COUNTERS
+struct PathTracerCounters
+{
+    uint Paths;
+    uint Rays;
+    uint RaysBounce1;
+    uint RaysBounce2;
+    uint RaysBounce3Plus;
+    uint RootMisses;
+    uint BoxTests;
+    uint NodeVisits;
+    uint NodeVisitSlots;
+    uint PrimitiveTests;
+    uint MaxStackDepth;
+    uint SkyEscapes;
+    uint Absorbed;
+    uint EmitterHits;
+    uint NanSamples;
+};
+
+RWStructuredBuffer<PathTracerCounters> profileCounters;
+#endif
+
 #include "ProfileCounters.slang"
 
 struct Params
@@ -71,6 +94,7 @@ public HitResult TraceBvh(Ray ray)
 
         BvhNode node = bvhNodes[entry.Node];
         PROFILE_ADD(NodeVisits, 1);
+        PROFILE_WAVE_SLOTS(NodeVisitSlots);
 
         if (node.PrimitiveCount > 0)
         {
@@ -135,7 +159,10 @@ float3 Trace(Ray ray, inout Rng rng)
 
     for (uint bounce = 0; bounce < params.MaxBounces; ++bounce)
     {
-        PROFILE_RAY(bounce);
+        PROFILE_ADD(Rays, 1);
+        PROFILE_ADD(RaysBounce1, bounce == 1 ? 1 : 0);
+        PROFILE_ADD(RaysBounce2, bounce == 2 ? 1 : 0);
+        PROFILE_ADD(RaysBounce3Plus, bounce > 2 ? 1 : 0);
         HitResult bestHit = TraceBvh(ray);
 
         if (!bestHit.IsHit())
@@ -223,8 +250,6 @@ void main(uint3 dispatchThreadId : SV_DispatchThreadID, uint groupIndex : SV_Gro
     pathTracerColor.GetDimensions(frameSize.x, frameSize.y);
 
     uint2 pixel = dispatchThreadId.xy;
-    ProfileBegin(groupIndex);
     if (all(pixel < frameSize))
         RenderPixel(pixel, frameSize);
-    ProfileEnd(groupIndex);
 }

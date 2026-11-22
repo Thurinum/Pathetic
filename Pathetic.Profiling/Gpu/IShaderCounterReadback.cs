@@ -6,5 +6,5 @@ public interface IShaderCounterReadback
 {
     void Record(GraphicsDevice device, CommandList cmd);
 
-    uint[] Resolve(GraphicsDevice device);
+    byte[] Resolve(GraphicsDevice device);
 }

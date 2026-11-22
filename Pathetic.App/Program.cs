@@ -7,6 +7,7 @@ using Pathetic.App.Bvh;
 using Pathetic.App.Components;
 using Pathetic.App.Components.Camera;
 using Pathetic.App.Input;
+using Pathetic.App.Profiling;
 using Pathetic.App.RenderPasses;
 using Pathetic.App.Scenes;
 using Pathetic.App.Scenes.Catalog;
@@ -73,7 +74,7 @@ builder.Services.AddScene<OneWeekendScene>();
 builder.Services.AddScene<SphereFieldScene>();
 builder.Services.AddScene<SphereflakeScene>();
 builder.Services.AddScene<CornellBoxScene>();
-builder.Services.AddProfiling();
+builder.Services.AddProfiling<PathTracerCounterSource>();
 
 var inputActions = new InputActions();
 builder.Services.AddSingleton(inputActions);

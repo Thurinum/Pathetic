@@ -10,13 +10,15 @@ public static class ServiceCollectionExtensions
 {
     extension(IServiceCollection services)
     {
-        public IServiceCollection AddProfiling()
+        /// <typeparam name="TSource">Describes the counters the shaders write.</typeparam>
+        public IServiceCollection AddProfiling<TSource>() where TSource : class, IShaderCounterSource
         {
             services.AddOptions<ProfilerOptions>()
                 .BindConfiguration(ProfilerOptions.Section)
                 .ValidateDataAnnotations()
                 .ValidateOnStart();
 
+            services.Replace(ServiceDescriptor.Singleton<IShaderCounterSource, TSource>());
             services.AddSingleton<ProfilerStats>();
             services.AddSingleton<ShaderCounterStats>();
             services.AddHostedService<ProfilerHost>();

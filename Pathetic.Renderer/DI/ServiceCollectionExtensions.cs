@@ -48,6 +48,7 @@ public static class ServiceCollectionExtensions
         {
 
             services.TryAddSingleton<IGpuTimer, NullGpuTimer>();
+            services.TryAddSingleton<IShaderCounterSource, NullShaderCounterSource>();
             services.AddStructuredBuffer<ShaderCounterBuffer>();
             services.AddSingleton<IShaderCounterReadback>(sp => sp.GetRequiredService<ShaderCounterBuffer>());
             services.AddSingleton<SlangCompiler>();

@@ -1,89 +1,37 @@
+// Counting helpers for the profiler. The including shader declares, before including this file, the counters:
+//
+//   struct MyCounters { uint Rays; ... };            (mirrored by a C# struct with the same fields)
+//   RWStructuredBuffer<MyCounters> profileCounters;
+//
+// and then counts with PROFILE_ADD(Rays, 1). Everything compiles away unless PROFILE_COUNTERS is defined.
 #ifdef PROFILE_COUNTERS
 
-RWStructuredBuffer<uint> profileCounters;
-static uint threadCounts[PROFILE_COUNTER_COUNT];
-groupshared uint groupCounts[PROFILE_COUNTER_COUNT];
+// One atomic per wave instead of one per thread.
+#define PROFILE_ADD(field, amount) \
+    do { \
+        uint profileSum = WaveActiveSum((uint)(amount)); \
+        if (WaveIsFirstLane()) \
+            InterlockedAdd(profileCounters[0].field, profileSum); \
+    } while (false)
 
-bool IsMaxCounter(uint counter)
-{
-    return counter == PROFILE_MaxStackDepth;
-}
+#define PROFILE_MAX(field, value) \
+    do { \
+        uint profileMax = WaveActiveMax((uint)(value)); \
+        if (WaveIsFirstLane()) \
+            InterlockedMax(profileCounters[0].field, profileMax); \
+    } while (false)
 
-void ProfileAdd(uint counter, uint amount)
-{
-    threadCounts[counter] += amount;
-}
-
-void ProfileMax(uint counter, uint value)
-{
-    threadCounts[counter] = max(threadCounts[counter], value);
-}
-
-void ProfileRay(uint bounce)
-{
-    ProfileAdd(PROFILE_Rays, 1);
-
-    if (bounce == 1)
-        ProfileAdd(PROFILE_RaysBounce1, 1);
-    else if (bounce == 2)
-        ProfileAdd(PROFILE_RaysBounce2, 1);
-    else if (bounce > 2)
-        ProfileAdd(PROFILE_RaysBounce3Plus, 1);
-}
-
-void ProfileBegin(uint groupIndex)
-{
-    for (uint i = 0; i < PROFILE_COUNTER_COUNT; ++i)
-        threadCounts[i] = 0;
-
-    if (groupIndex == 0)
-    {
-        for (uint i = 0; i < PROFILE_COUNTER_COUNT; ++i)
-            groupCounts[i] = 0;
-    }
-
-    GroupMemoryBarrierWithGroupSync();
-}
-
-void ProfileEnd(uint groupIndex)
-{
-    uint waveSlots = WaveActiveMax(threadCounts[PROFILE_NodeVisits]) * WaveGetLaneCount();
-    if (WaveIsFirstLane())
-        InterlockedAdd(profileCounters[PROFILE_NodeVisitSlots], waveSlots);
-
-    for (uint i = 0; i < PROFILE_COUNTER_COUNT; ++i)
-    {
-        if (IsMaxCounter(i))
-            InterlockedMax(groupCounts[i], threadCounts[i]);
-        else
-            InterlockedAdd(groupCounts[i], threadCounts[i]);
-    }
-
-    GroupMemoryBarrierWithGroupSync();
-
-    if (groupIndex != 0)
-        return;
-
-    for (uint i = 0; i < PROFILE_COUNTER_COUNT; ++i)
-    {
-        if (IsMaxCounter(i))
-            InterlockedMax(profileCounters[i], groupCounts[i]);
-        else
-            InterlockedAdd(profileCounters[i], groupCounts[i]);
-    }
-}
-
-#define PROFILE_ADD(name, amount) ProfileAdd(PROFILE_##name, amount)
-#define PROFILE_MAX(name, value) ProfileMax(PROFILE_##name, value)
-#define PROFILE_RAY(bounce) ProfileRay(bounce)
+// Adds the size of the wave once, so that (active lanes) / (slots) tells how well the wave is used.
+#define PROFILE_WAVE_SLOTS(field) \
+    do { \
+        if (WaveIsFirstLane()) \
+            InterlockedAdd(profileCounters[0].field, WaveGetLaneCount()); \
+    } while (false)
 
 #else
 
-void ProfileBegin(uint groupIndex) {}
-void ProfileEnd(uint groupIndex) {}
-
-#define PROFILE_ADD(name, amount)
-#define PROFILE_MAX(name, value)
-#define PROFILE_RAY(bounce)
+#define PROFILE_ADD(field, amount)
+#define PROFILE_MAX(field, value)
+#define PROFILE_WAVE_SLOTS(field)
 
 #endif
