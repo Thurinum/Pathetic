@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 using Pathetic.Renderer.Buffers;
 
 namespace Pathetic.App;

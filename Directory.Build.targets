@@ -1,4 +1,4 @@
-<Project>
+﻿<Project>
 
   <PropertyGroup>
     <SlangOutDir Condition="'$(SlangOutDir)' == ''">$(BaseIntermediateOutputPath)slang</SlangOutDir>

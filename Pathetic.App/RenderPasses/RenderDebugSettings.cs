@@ -1,4 +1,4 @@
-namespace Pathetic.App.RenderPasses;
+﻿namespace Pathetic.App.RenderPasses;
 
 public sealed class RenderDebugSettings
 {

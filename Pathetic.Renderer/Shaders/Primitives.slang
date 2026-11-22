@@ -1,4 +1,4 @@
-module Primitives;
+﻿module Primitives;
 
 import CPUType;
 

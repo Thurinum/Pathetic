@@ -1,4 +1,4 @@
-module Accumulation;
+﻿module Accumulation;
 
 public struct Accumulator
 {

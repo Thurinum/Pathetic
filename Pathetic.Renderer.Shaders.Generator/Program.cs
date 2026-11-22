@@ -1,4 +1,4 @@
-using System.CommandLine;
+﻿using System.CommandLine;
 using Pathetic.Renderer.Shaders.Generator;
 
 Option<string[]> shaders = new("--shaders")

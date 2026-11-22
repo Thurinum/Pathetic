@@ -1,4 +1,4 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using NeoVeldrid;
 using Pathetic.Renderer.Shaders.GPUTypes;
 using Pathetic.Renderer.Graph;

@@ -1,4 +1,4 @@
-namespace Pathetic.Renderer.Bvh;
+﻿namespace Pathetic.Renderer.Bvh;
 
 using System.Numerics;
 

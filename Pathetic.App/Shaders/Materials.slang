@@ -1,4 +1,4 @@
-module Materials;
+﻿module Materials;
 
 public struct RgbaByte
 {

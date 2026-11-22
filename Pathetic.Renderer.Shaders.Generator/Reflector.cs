@@ -1,9 +1,12 @@
+﻿using System.Text;
 using Prowl.Slang;
 
 namespace Pathetic.Renderer.Shaders.Generator;
 
 internal sealed class Reflector(string targetNamespace)
 {
+    private static readonly UTF8Encoding Utf8Bom = new(encoderShouldEmitUTF8Identifier: true);
+
     private readonly HashSet<string> _cpuTypeNames = new(StringComparer.Ordinal);
     private readonly Dictionary<string, ModuleModel> _modules = new(StringComparer.Ordinal);
     private readonly Dictionary<string, byte[]> _code = new(StringComparer.Ordinal);
@@ -301,13 +304,13 @@ internal sealed class Reflector(string targetNamespace)
 
         foreach (ModuleModel module in _modules.Values.OrderBy(static module => module.Module, StringComparer.Ordinal))
         {
-            File.WriteAllText(Path.Combine(codeDir, module.OutputStem + ".g.cs"), SourceEmitter.EmitModule(targetNamespace, module));
+            File.WriteAllText(Path.Combine(codeDir, module.OutputStem + ".g.cs"), SourceEmitter.EmitModule(targetNamespace, module), Utf8Bom);
 
             if (_code.TryGetValue(module.OutputStem, out byte[]? code))
                 File.WriteAllBytes(Path.Combine(outDir, module.OutputStem + ".spv"), code);
         }
 
-        File.WriteAllText(Path.Combine(codeDir, "ShaderModules.g.cs"), SourceEmitter.EmitShaderModules(_modules.Values));
+        File.WriteAllText(Path.Combine(codeDir, "ShaderModules.g.cs"), SourceEmitter.EmitShaderModules(_modules.Values), Utf8Bom);
     }
 
     private static void ThrowOnErrors(DiagnosticInfo diagnostics, string path)

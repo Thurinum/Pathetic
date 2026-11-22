@@ -1,4 +1,4 @@
-using Pathetic.Renderer.Buffers;
+﻿using Pathetic.Renderer.Buffers;
 using Pathetic.SceneGraph;
 
 namespace Pathetic.App.Components;

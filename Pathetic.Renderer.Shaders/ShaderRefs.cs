@@ -1,4 +1,4 @@
-#pragma warning disable IDE0130
+﻿#pragma warning disable IDE0130
 // ReSharper disable once CheckNamespace
 namespace Pathetic.Renderer.Shaders.GPUTypes;
 #pragma warning restore IDE0130

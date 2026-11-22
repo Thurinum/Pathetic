@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 using Microsoft.Extensions.Logging;
 using NeoVeldrid.Sdl2;
 using Pathetic.Input;

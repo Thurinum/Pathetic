@@ -1,4 +1,4 @@
-import CPUType;
+﻿import CPUType;
 
 struct Circle 
 {

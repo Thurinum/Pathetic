@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 
 namespace Pathetic.Renderer.Shaders.Generator;
 
@@ -12,7 +12,7 @@ internal sealed class CodeWriter
         if (text.Length > 0)
             _builder.Append(' ', _indent * 4).Append(text);
 
-        _builder.Append('\n');
+        _builder.Append("\r\n");
     }
 
     public void Open(string text)

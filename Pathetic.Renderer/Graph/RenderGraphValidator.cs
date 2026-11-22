@@ -1,4 +1,4 @@
-using NeoVeldrid;
+﻿using NeoVeldrid;
 using Pathetic.Renderer.Resources;
 
 namespace Pathetic.Renderer.Graph;

@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 using Pathetic.App.Assets;
 using Pathetic.Renderer.Buffers;
 using Pathetic.SceneGraph;

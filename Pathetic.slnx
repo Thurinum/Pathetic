@@ -1,4 +1,4 @@
-<Solution>
+﻿<Solution>
   <Project Path="Pathetic.App/Pathetic.App.csproj" />
   <Project Path="Pathetic.Renderer.Shaders/Pathetic.Renderer.Shaders.csproj" />
   <Project Path="Pathetic.Input/Pathetic.Input.csproj" />

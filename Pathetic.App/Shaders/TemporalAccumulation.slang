@@ -1,4 +1,4 @@
-module TemporalAccumulation;
+﻿module TemporalAccumulation;
 
 import CPUType;
 import Tonemapping.Tonemap;

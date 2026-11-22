@@ -1,4 +1,4 @@
-using Pathetic.Renderer;
+﻿using Pathetic.Renderer;
 
 namespace Pathetic.App.RenderPasses;
 

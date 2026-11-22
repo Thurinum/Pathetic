@@ -1,4 +1,4 @@
-namespace Pathetic.Renderer.Shaders;
+﻿namespace Pathetic.Renderer.Shaders;
 
 public enum ShaderResourceKind
 {

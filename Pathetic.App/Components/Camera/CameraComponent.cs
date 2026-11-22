@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 using Microsoft.Extensions.Options;
 using Pathetic.SceneGraph;
 using Pathetic.SceneGraph.Components;
