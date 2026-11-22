@@ -3,7 +3,6 @@ using Pathetic.App.Assets;
 using Pathetic.Renderer.Buffers;
 using Pathetic.SceneGraph;
 using Pathetic.SceneGraph.Components;
-using SlangGen = Pathetic.Generated.Slang;
 
 namespace Pathetic.App.Components;
 

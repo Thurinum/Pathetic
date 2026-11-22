@@ -13,6 +13,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Using Include="Pathetic.Generated.Slang" Alias="SlangGen" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\Pathetic.Renderer\Pathetic.Renderer.csproj" />
         <ProjectReference Include="..\Pathetic.SceneGraph\Pathetic.SceneGraph.csproj" />
         <ProjectReference Include="..\Pathetic.Slang.Tool\Pathetic.Slang.Tool.csproj"

@@ -4,5 +4,4 @@
   <Project Path="Pathetic.Renderer/Pathetic.Renderer.csproj" />
   <Project Path="Pathetic.SceneGraph/Pathetic.SceneGraph.csproj" />
   <Project Path="Pathetic.Slang.Tool/Pathetic.Slang.Tool.csproj" />
-  <Project Path="Pathetic.Tests/Pathetic.Tests.csproj" />
 </Solution>

@@ -8,7 +8,6 @@ using Pathetic.App.Components;
 using Pathetic.App.Components.Camera;
 using Pathetic.App.Input;
 using Pathetic.App.RenderPasses;
-using SlangGen = Pathetic.Generated.Slang;
 using Pathetic.Input;
 using Pathetic.Renderer;
 using Pathetic.Renderer.Bvh;

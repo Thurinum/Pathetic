@@ -2,7 +2,6 @@ using Microsoft.Extensions.Options;
 using NeoVeldrid;
 using Pathetic.Renderer.Graph;
 using Pathetic.Renderer.Resources;
-using SlangGen = Pathetic.Generated.Slang;
 
 namespace Pathetic.App.RenderPasses;
 

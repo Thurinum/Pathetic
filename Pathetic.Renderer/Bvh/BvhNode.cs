@@ -1,5 +1,4 @@
 using System.Numerics;
-using SlangGen = Pathetic.Generated.Slang;
 
 namespace Pathetic.Renderer.Bvh;
 

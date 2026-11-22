@@ -3,7 +3,6 @@ using System.Diagnostics.CodeAnalysis;
 using NeoVeldrid;
 using Pathetic.Renderer.Graph;
 using Pathetic.Renderer.Utils;
-using SlangGen = Pathetic.Generated.Slang;
 
 namespace Pathetic.Renderer.Resources;
 

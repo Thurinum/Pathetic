@@ -1,7 +1,6 @@
-﻿using System.Numerics;
+using System.Numerics;
 using Pathetic.Renderer.Buffers;
 using Pathetic.SceneGraph;
-using SlangGen = Pathetic.Generated.Slang;
 
 namespace Pathetic.App.Components;
 

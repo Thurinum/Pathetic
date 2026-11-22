@@ -1,8 +1,7 @@
-﻿using System.Numerics;
+using System.Numerics;
 using Microsoft.Extensions.Options;
 using Pathetic.SceneGraph;
 using Pathetic.SceneGraph.Components;
-using SlangGen = Pathetic.Generated.Slang;
 
 namespace Pathetic.App.Components.Camera;
 

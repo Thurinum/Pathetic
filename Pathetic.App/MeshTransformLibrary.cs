@@ -1,6 +1,5 @@
 using System.Numerics;
 using Pathetic.Renderer.Buffers;
-using SlangGen = Pathetic.Generated.Slang;
 
 namespace Pathetic.App;
 
