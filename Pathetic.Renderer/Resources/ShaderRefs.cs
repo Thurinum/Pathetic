@@ -1,4 +1,7 @@
+#pragma warning disable IDE0130
+// ReSharper disable once CheckNamespace
 namespace Pathetic.Generated.GPUTypes;
+#pragma warning restore IDE0130
 
 public readonly record struct TextureRef(string Value)
 {

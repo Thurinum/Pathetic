@@ -19,7 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <SlangShader Include="Shaders/**/*.slang" Visible="false" />
+      <SlangShader Include="Shaders/**/*.slang" />
       <None Remove="Shaders/**/*.slang" />
       <ProjectReference Include="..\Pathetic.Slang.Tool\Pathetic.Slang.Tool.csproj"
                         ReferenceOutputAssembly="false"

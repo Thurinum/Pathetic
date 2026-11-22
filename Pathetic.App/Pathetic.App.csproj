@@ -26,7 +26,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <SlangShader Include="Shaders/**/*.slang" Visible="false" />
+        <SlangShader Include="Shaders/**/*.slang" />
         <None Remove="Shaders/**/*.slang" />
     </ItemGroup>
 
