@@ -12,6 +12,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Pathetic.Renderer\Pathetic.Renderer.csproj" />
         <ProjectReference Include="..\Pathetic.SceneGraph\Pathetic.SceneGraph.csproj" />
+        <ProjectReference Include="..\Pathetic.Shaders\Pathetic.Shaders.csproj" />
     </ItemGroup>
 
     <ItemGroup>
@@ -35,13 +36,6 @@
     <ItemGroup>
         <None Update="Pathetic.ini" CopyToOutputDirectory="PreserveNewest" />
         <None Update="Assets/**/*" CopyToOutputDirectory="PreserveNewest" />
-    </ItemGroup>
-    
-    <ItemGroup>
-        <None Remove="Shaders/**/*" />
-        <Content Include="Shaders/**/*">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
     </ItemGroup>
 
 </Project>

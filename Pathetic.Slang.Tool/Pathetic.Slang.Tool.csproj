@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <RootNamespace>Pathetic.Slang.Tool</RootNamespace>
+        <SelfContained>false</SelfContained>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Prowl.Slang" />
+    </ItemGroup>
+
+</Project>

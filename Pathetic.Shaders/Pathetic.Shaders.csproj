@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>Pathetic.Shaders</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Content Include="Shaders/**/*" CopyToOutputDirectory="Always" />
+    </ItemGroup>
+
+</Project>
