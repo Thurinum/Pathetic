@@ -7,7 +7,7 @@
         <RuntimeIdentifier>$(NETCoreSdkPortableRuntimeIdentifier)</RuntimeIdentifier>
         <SelfContained>false</SelfContained>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <SlangShadersDir>$(MSBuildProjectDirectory)/Assets/Shaders</SlangShadersDir>
+        <SlangShadersDir>$(MSBuildProjectDirectory)/Shaders</SlangShadersDir>
         <SlangSearchDirs>$(MSBuildProjectDirectory)/../Pathetic.Renderer/Shaders</SlangSearchDirs>
         <CopySlangAssets>true</CopySlangAssets>
     </PropertyGroup>
@@ -22,8 +22,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <SlangShader Include="Assets/Shaders/**/*.slang" Visible="false" />
-        <None Remove="Assets/Shaders/**/*.slang" />
+        <SlangShader Include="Shaders/**/*.slang" Visible="false" />
+        <None Remove="Shaders/**/*.slang" />
     </ItemGroup>
 
     <ItemGroup>
