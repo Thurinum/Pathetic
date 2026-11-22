@@ -3,6 +3,7 @@ namespace Pathetic.Slang.Tool;
 internal sealed class ModuleJson
 {
     public required string Module { get; init; }
+    public required string Namespace { get; init; }
     public required string SourceFile { get; init; }
     public PipelineJson? Pipeline { get; set; }
     public List<BindingJson> Bindings { get; init; } = [];

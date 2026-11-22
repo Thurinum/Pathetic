@@ -75,6 +75,7 @@ internal sealed class Reflector
         ModuleJson json = new()
         {
             Module = file.ModuleName,
+            Namespace = _namespace,
             SourceFile = file.Path,
         };
 

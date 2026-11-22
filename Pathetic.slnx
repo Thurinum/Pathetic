@@ -5,4 +5,5 @@
   <Project Path="Pathetic.SceneGraph/Pathetic.SceneGraph.csproj" />
   <Project Path="Pathetic.Shaders/Pathetic.Shaders.csproj" />
   <Project Path="Pathetic.Slang.Tool/Pathetic.Slang.Tool.csproj" />
+  <Project Path="Pathetic.Slang.Generator/Pathetic.Slang.Generator.csproj" />
 </Solution>

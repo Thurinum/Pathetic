@@ -1,0 +1,30 @@
+<Project>
+
+  <PropertyGroup>
+    <SlangCompiledSource>$(MSBuildThisFileDirectory)Pathetic.Shaders/obj/slang</SlangCompiledSource>
+  </PropertyGroup>
+
+  <Target Name="CopyPrecompiledSlang"
+          AfterTargets="Build"
+          Condition="'$(CopySlangAssets)' == 'true' and Exists('$(SlangCompiledSource)')">
+    <ItemGroup>
+      <_PrecompiledSlang Include="$(SlangCompiledSource)/*.json;$(SlangCompiledSource)/*.spv" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_PrecompiledSlang)"
+          DestinationFolder="$(OutDir)Shaders/Compiled"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="PublishPrecompiledSlang"
+          AfterTargets="ComputeFilesToPublish"
+          Condition="'$(CopySlangAssets)' == 'true' and Exists('$(SlangCompiledSource)')">
+    <ItemGroup>
+      <_PrecompiledSlangPublish Include="$(SlangCompiledSource)/*.json;$(SlangCompiledSource)/*.spv" />
+      <ResolvedFileToPublish Include="@(_PrecompiledSlangPublish)">
+        <RelativePath>Shaders/Compiled/%(Filename)%(Extension)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
+
+</Project>

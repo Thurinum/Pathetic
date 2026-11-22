@@ -2,6 +2,7 @@
 
     <PropertyGroup>
         <RootNamespace>Pathetic.Renderer</RootNamespace>
+        <CopySlangAssets>true</CopySlangAssets>
     </PropertyGroup>
 
     <ItemGroup>
