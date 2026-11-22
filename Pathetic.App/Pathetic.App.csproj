@@ -15,6 +15,11 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Pathetic.Profiling\Pathetic.Profiling.csproj" OutputItemType="Analyzer" />
+        <Using Include="Pathetic.Profiling.Aspects" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="JetBrains.Annotations" />
         <PackageReference Include="Microsoft.Extensions.Configuration.Ini" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" />

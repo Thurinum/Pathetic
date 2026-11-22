@@ -6,3 +6,5 @@ riderModule.iml
 .idea/
 *.user
 /artifacts/
+
+imgui.ini

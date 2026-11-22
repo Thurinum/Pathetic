@@ -23,6 +23,7 @@ public sealed partial class RenderWindow(IOptions<RendererOptions> options, ILog
     public CommandList CommandList => _cmd ?? throw new InvalidOperationException("RenderWindow is not initialized.");
     public event Action? Resized;
 
+    [Profile]
     public void Initialize()
     {
         var config = options.Value;
@@ -58,6 +59,7 @@ public sealed partial class RenderWindow(IOptions<RendererOptions> options, ILog
         _cmd = _device.ResourceFactory.CreateCommandList();
     }
 
+    [Profile(Frame = true)]
     public InputSnapshot PumpEvents()
     {
         return _window!.PumpEvents();

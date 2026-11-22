@@ -11,6 +11,11 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);PROFILING</DefineConstants>
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);Pathetic.Profiling.Generated</InterceptorsNamespaces>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
   </PropertyGroup>

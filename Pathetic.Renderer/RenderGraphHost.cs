@@ -21,6 +21,7 @@ public sealed class RenderGraphHost(RenderWindow window, IOptions<RenderGraphSpe
         _initialized = true;
     }
 
+    [Profile]
     public void Render(float deltaTime)
     {
         Graph.Render(window.Device, window.CommandList, deltaTime);
