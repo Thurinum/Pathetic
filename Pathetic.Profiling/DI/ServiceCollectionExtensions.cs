@@ -10,20 +10,15 @@ public static class ServiceCollectionExtensions
 {
     extension(IServiceCollection services)
     {
-        /// <typeparam name="TLayout">The generated description of the shader counters.</typeparam>
-        /// <typeparam name="TStats">The class that presents the shader counters.</typeparam>
-        public IServiceCollection AddProfiling<TLayout, TStats>()
-            where TLayout : class, IShaderCounterLayout
-            where TStats : ShaderCounterStats
+        public IServiceCollection AddProfiling()
         {
             services.AddOptions<ProfilerOptions>()
                 .BindConfiguration(ProfilerOptions.Section)
                 .ValidateDataAnnotations()
                 .ValidateOnStart();
 
-            services.Replace(ServiceDescriptor.Singleton<IShaderCounterLayout, TLayout>());
             services.AddSingleton<ProfilerStats>();
-            services.AddSingleton<ShaderCounterStats, TStats>();
+            services.AddSingleton<ShaderCounterStats>();
             services.AddHostedService<ProfilerHost>();
             services.AddSingleton<FenceGpuTimer>();
 

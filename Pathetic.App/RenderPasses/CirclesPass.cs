@@ -17,18 +17,18 @@ public sealed class CirclesPass : RenderPass
 
     public override IReadOnlyList<IResourceSpec> Resources { get; } =
     [
-        new TextureSpec(ResourceName.Circles, PixelFormat.R32_G32_B32_A32_Float, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
+        new TextureSpec(ResourceName.CirclesColor, PixelFormat.R32_G32_B32_A32_Float, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
         UniformBufferSpec.Of<Params>(ResourceName.Params),
     ];
 
     public override IReadOnlyList<string> Inputs { get; } =
     [
-        ResourceName.CirclePrimitives,
+        ResourceName.Circles,
     ];
 
     public override void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
     {
-        uint count = ctx.Resources.GetElementCount(ResourceName.CirclePrimitives);
+        uint count = ctx.Resources.GetElementCount(ResourceName.Circles);
         ctx.Cmd.UpdateBuffer(buffer, 0, new Params { Count = count });
     }
 }

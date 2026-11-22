@@ -3,6 +3,5 @@
   <Project Path="Pathetic.Input/Pathetic.Input.csproj" />
   <Project Path="Pathetic.Profiling/Pathetic.Profiling.csproj" />
   <Project Path="Pathetic.Renderer/Pathetic.Renderer.csproj" />
-  <Project Path="Pathetic.Shaders.Generators/Pathetic.Shaders.Generators.csproj" />
   <Project Path="Pathetic.SceneGraph/Pathetic.SceneGraph.csproj" />
 </Solution>

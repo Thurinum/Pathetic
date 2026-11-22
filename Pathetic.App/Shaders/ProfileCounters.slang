@@ -6,7 +6,7 @@ groupshared uint groupCounts[PROFILE_COUNTER_COUNT];
 
 bool IsMaxCounter(uint counter)
 {
-    return ((PROFILE_MAX_COUNTER_MASK >> counter) & 1u) != 0u;
+    return counter == PROFILE_MaxStackDepth;
 }
 
 void ProfileAdd(uint counter, uint amount)

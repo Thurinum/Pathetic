@@ -17,8 +17,6 @@
     <ItemGroup>
         <ProjectReference Include="..\Pathetic.Profiling\Pathetic.Profiling.csproj" OutputItemType="Analyzer" />
         <Using Include="Pathetic.Profiling.Aspects" />
-        <ProjectReference Include="..\Pathetic.Shaders.Generators\Pathetic.Shaders.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-        <AdditionalFiles Include="Shaders\**\*.slang" />
     </ItemGroup>
 
     <ItemGroup>
