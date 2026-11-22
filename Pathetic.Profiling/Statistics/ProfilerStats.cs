@@ -17,11 +17,12 @@ public sealed class ProfilerStats(IOptions<ProfilerOptions> options)
         public double Last { get; private set; }
         public IReadOnlyList<SpanTag> Tags { get; private set; } = [];
         public long LastSeen { get; private set; }
+        public long LastFrame { get; private set; }
 
         /// <summary>Exponential moving average of the time between two occurrences, in milliseconds. Zero until known.</summary>
         public double IntervalMs { get; private set; }
 
-        public void Add(double ms, IReadOnlyList<SpanTag> tags, long windowStart)
+        public void Add(double ms, IReadOnlyList<SpanTag> tags, long windowStart, long frame)
         {
             long now = TimeProvider.System.GetTimestamp();
 
@@ -40,6 +41,7 @@ public sealed class ProfilerStats(IOptions<ProfilerOptions> options)
                 Last = ms;
                 Tags = tags;
                 LastSeen = now;
+                LastFrame = frame;
             }
         }
 
@@ -66,12 +68,13 @@ public sealed class ProfilerStats(IOptions<ProfilerOptions> options)
     private readonly Queue<double> _frameMs = new();
 
     private long _windowStart;
+    private long _frameCount;
     private long _lastBoundary;
 
     internal long Add(string span, double ms, IReadOnlyList<SpanTag> tags)
     {
         Series series = _series.GetOrAdd(span, _ => new Series());
-        series.Add(ms, tags, Volatile.Read(ref _windowStart));
+        series.Add(ms, tags, Volatile.Read(ref _windowStart), Volatile.Read(ref _frameCount));
         return series.Count;
     }
 
@@ -90,11 +93,12 @@ public sealed class ProfilerStats(IOptions<ProfilerOptions> options)
             }
 
             _lastBoundary = now;
+            Interlocked.Increment(ref _frameCount);
             _boundaries.Enqueue(now);
             if (_boundaries.Count > _windowFrames + 1)
                 _boundaries.Dequeue();
 
-            Volatile.Write(ref _windowStart, _boundaries.Count > _windowFrames ? _boundaries.Peek() : 0);
+            Volatile.Write(ref _windowStart, _boundaries.Peek());
         }
     }
 
@@ -106,9 +110,10 @@ public sealed class ProfilerStats(IOptions<ProfilerOptions> options)
 
         double frameMean = frames.DefaultIfEmpty().Average();
         long windowStart = Volatile.Read(ref _windowStart);
+        long currentFrame = Volatile.Read(ref _frameCount);
         TimeSpan windowDuration = TimeSpan.FromMilliseconds(frameMean * frames.Length);
         List<(SpanStats Stats, long LastSeen)> spans =
-            [.. _series.Select(entry => ToStats(entry.Key, entry.Value, windowStart, frames.Length, windowDuration))];
+            [.. _series.Select(entry => ToStats(entry.Key, entry.Value, windowStart, frames.Length, windowDuration, currentFrame))];
 
         return new ProfilerSnapshot(
             Fps: frameMean > 0 ? TimeSpan.FromSeconds(1) / TimeSpan.FromMilliseconds(frameMean) : 0,
@@ -118,14 +123,14 @@ public sealed class ProfilerStats(IOptions<ProfilerOptions> options)
             Events: [.. spans.Where(span => span.Stats.IsEvent).OrderByDescending(span => span.LastSeen).Select(span => span.Stats)]);
     }
 
-    private static (SpanStats, long) ToStats(string name, Series series, long windowStart, int frameCount, TimeSpan windowDuration)
+    private static (SpanStats, long) ToStats(string name, Series series, long windowStart, int frameCount, TimeSpan windowDuration, long currentFrame)
     {
         double[] recent = series.Window(windowStart);
-        TimeSpan age = TimeProvider.System.GetElapsedTime(series.LastSeen);
         TimeSpan interval = TimeSpan.FromMilliseconds(series.IntervalMs);
 
         // Something is an event, rather than recurring work, when it does not keep up with the profiled window.
-        bool isEvent = series.Count < 2 || recent.Length == 0 || interval > windowDuration || age > windowDuration;
+        bool isEvent = series.Count < 2 || recent.Length == 0 || interval > windowDuration
+                       || currentFrame - series.LastFrame > frameCount;
 
         return (new SpanStats(
             name,

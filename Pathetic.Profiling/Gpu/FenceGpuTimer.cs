@@ -15,6 +15,7 @@ public sealed partial class FenceGpuTimer(
     private static readonly ActivitySource Source = new(ProfilingName.SourceName);
 
     private readonly List<Submission> _submissions = [];
+    private readonly Dictionary<string, TimeSpan> _passTimes = [];
     private readonly List<Fence> _fences = [];
 
     private int _fencesInUse;
@@ -64,6 +65,7 @@ public sealed partial class FenceGpuTimer(
             // The GPU runs submissions in order, so a workload starts when the previous one ends or when it was submitted.
             long began = Math.Max(previousDone, submission.SubmittedAt);
             EmitSpan(submission.Label, frameStart, began, done);
+            _passTimes[submission.Label] = TimeProvider.System.GetElapsedTime(began, done);
 
             previousDone = done;
             submission.Fence.Reset();
@@ -71,11 +73,10 @@ public sealed partial class FenceGpuTimer(
 
         _fencesInUse = 0;
 
-        TimeSpan gpuTime = TimeProvider.System.GetElapsedTime(frameStart, previousDone);
         _submissions.Clear();
 
         foreach (IShaderCounterReadback readback in counterReadbacks)
-            counterStats.Update(readback.Resolve(device), gpuTime);
+            counterStats.Update(readback.Resolve(device), _passTimes);
     }
 
     private void EmitSpan(string label, long frameStart, long began, long done)

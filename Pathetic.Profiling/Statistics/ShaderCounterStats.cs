@@ -8,16 +8,19 @@ public sealed class ShaderCounterStats
 {
     private const double RaysPerMegaray = 1_000_000;
 
+    // The counters are written by this pass, so rates are measured against its own GPU time.
+    private const string CountingPass = "PathTracerPass";
+
     private uint[] _values = [];
     private TimeSpan _gpuTime;
 
-    internal void Update(uint[] values, TimeSpan gpuTime)
+    internal void Update(uint[] values, IReadOnlyDictionary<string, TimeSpan> passTimes)
     {
         if (values.Length == 0)
             return;
 
         _values = values;
-        _gpuTime = gpuTime;
+        _gpuTime = passTimes.GetValueOrDefault(CountingPass);
     }
 
     public IReadOnlyList<ShaderCounterRow> Rows()
