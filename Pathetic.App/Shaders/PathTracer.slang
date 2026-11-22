@@ -1,6 +1,6 @@
 module PathTracer;
 
-import Export;
+import CPUType;
 
 import Primitives;
 import Materials;
@@ -11,7 +11,7 @@ import Environment;
 import FrameState;
 import Bvh;
 
-[Export]
+[CPUType]
 struct Params
 {
     uint PlaneCount;

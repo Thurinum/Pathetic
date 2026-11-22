@@ -1,4 +1,4 @@
-import Export;
+import CPUType;
 
 struct Circle 
 {
@@ -6,7 +6,7 @@ struct Circle
     float Radius;
 }
 
-[Export]
+[CPUType]
 struct Params
 {
     uint Count;

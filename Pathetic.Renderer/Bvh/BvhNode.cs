@@ -16,20 +16,20 @@ public sealed class BvhNode
     public BvhNode? Right { get; init; }
     public List<BvhPrimitiveRef>? Primitives { get; init; }
 
-    public uint Flatten(List<SlangGen.Bvh.BvhNode> nodes, List<SlangGen.Bvh.BvhPrimitiveRef> primitiveRefs)
+    public uint Flatten(List<GPUType.Bvh.BvhNode> nodes, List<GPUType.Bvh.BvhPrimitiveRef> primitiveRefs)
     {
         return FlattenInternal(this, nodes, primitiveRefs);
     }
 
     private uint FlattenInternal(
         BvhNode node,
-        List<SlangGen.Bvh.BvhNode> nodes,
-        List<SlangGen.Bvh.BvhPrimitiveRef> primitiveRefs)
+        List<GPUType.Bvh.BvhNode> nodes,
+        List<GPUType.Bvh.BvhPrimitiveRef> primitiveRefs)
     {
         uint nodeIndex = (uint)nodes.Count;
         nodes.Add(default);
 
-        SlangGen.Bvh.BvhNode gpuNode = new()
+        GPUType.Bvh.BvhNode gpuNode = new()
         {
             Min = node.Bounds.Min,
             Max = node.Bounds.Max,
@@ -42,7 +42,7 @@ public sealed class BvhNode
             gpuNode.FirstPrimitive = (uint)primitiveRefs.Count;
             gpuNode.PrimitiveCount = (uint)node.Primitives.Count;
 
-            primitiveRefs.AddRange(node.Primitives.Select(primitive => new SlangGen.Bvh.BvhPrimitiveRef
+            primitiveRefs.AddRange(node.Primitives.Select(primitive => new GPUType.Bvh.BvhPrimitiveRef
             {
                 Type = (int)primitive.Type,
                 Index = primitive.Index

@@ -106,7 +106,7 @@ internal sealed class Reflector(string targetNamespace)
     {
         TypeReflection type = declaration.Type;
 
-        if (!HasExportAttribute(type))
+        if (!HasCPUTypeAttribute(type))
             return;
 
         TypeLayoutReflection layout = session.GetTypeLayout(type, 0, LayoutRules.Default, out DiagnosticInfo diagnostics);
@@ -142,11 +142,11 @@ internal sealed class Reflector(string targetNamespace)
         });
     }
 
-    private static bool HasExportAttribute(TypeReflection type)
+    private static bool HasCPUTypeAttribute(TypeReflection type)
     {
         foreach (Prowl.Slang.Attribute attribute in type.UserAttributes)
         {
-            if (string.Equals(attribute.Name, "Export", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(attribute.Name, "CPUType", StringComparison.OrdinalIgnoreCase))
                 return true;
         }
 

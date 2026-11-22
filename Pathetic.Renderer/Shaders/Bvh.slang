@@ -1,6 +1,6 @@
 module Bvh;
 
-import Export;
+import CPUType;
 
 import Camera;
 import Primitives;
@@ -12,7 +12,7 @@ public struct BvhIntersection
     public float Far;
 };
 
-[Export]
+[CPUType]
 public struct BvhNode
 {
     float3 Min;
@@ -43,7 +43,7 @@ public struct BvhNode
     }
 };
 
-[Export]
+[CPUType]
 public struct BvhPrimitiveRef
 {
     public PrimitiveType Type;
