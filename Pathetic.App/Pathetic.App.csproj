@@ -7,27 +7,16 @@
         <RuntimeIdentifier>$(NETCoreSdkPortableRuntimeIdentifier)</RuntimeIdentifier>
         <SelfContained>false</SelfContained>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <SlangShadersDir>$(MSBuildProjectDirectory)/Shaders</SlangShadersDir>
-        <SlangSearchDirs>$(MSBuildProjectDirectory)/../Pathetic.Renderer/Shaders</SlangSearchDirs>
-        <CopySlangAssets>true</CopySlangAssets>
     </PropertyGroup>
 
     <ItemGroup>
-        <Using Include="Pathetic.Generated.GPUTypes" Alias="GPUType" />
+        <Using Include="Pathetic.Renderer.Shaders.GPUTypes" Alias="GPUType" />
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Pathetic.Renderer.Shaders\Pathetic.Renderer.Shaders.csproj" />
         <ProjectReference Include="..\Pathetic.Renderer\Pathetic.Renderer.csproj" />
         <ProjectReference Include="..\Pathetic.SceneGraph\Pathetic.SceneGraph.csproj" />
-        <ProjectReference Include="..\Pathetic.Slang.Tool\Pathetic.Slang.Tool.csproj"
-                          ReferenceOutputAssembly="false"
-                          Private="false"
-                          GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <SlangShader Include="Shaders/**/*.slang" />
-        <None Remove="Shaders/**/*.slang" />
     </ItemGroup>
 
     <ItemGroup>

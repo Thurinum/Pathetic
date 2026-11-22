@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>Pathetic.Renderer.Shaders</RootNamespace>
+        <GenerateSlang>true</GenerateSlang>
+        <EmbedSlangAssets>true</EmbedSlangAssets>
+        <SlangShaderDirs>$(MSBuildProjectDirectory)/../Pathetic.App/Shaders;$(MSBuildProjectDirectory)/../Pathetic.Renderer/Shaders</SlangShaderDirs>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <SlangShader Include="$(MSBuildProjectDirectory)/../Pathetic.App/Shaders/**/*.slang;$(MSBuildProjectDirectory)/../Pathetic.Renderer/Shaders/**/*.slang" Visible="false" />
+
+        <ProjectReference Include="..\Pathetic.Renderer.Shaders.Generator\Pathetic.Renderer.Shaders.Generator.csproj"
+                          ReferenceOutputAssembly="false"
+                          Private="false"
+                          GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained" />
+    </ItemGroup>
+
+</Project>

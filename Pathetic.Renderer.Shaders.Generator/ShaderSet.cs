@@ -1,4 +1,4 @@
-namespace Pathetic.Slang.Tool;
+namespace Pathetic.Renderer.Shaders.Generator;
 
 internal sealed class ShaderFile
 {

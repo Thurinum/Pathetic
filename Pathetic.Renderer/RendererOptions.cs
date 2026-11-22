@@ -19,6 +19,4 @@ public sealed record RendererOptions : IConfig
     public int Y { get; init; }
     
     public bool VSync { get; init; }
-    
-    public string ShadersDir { get; init; } = "Shaders";
 }

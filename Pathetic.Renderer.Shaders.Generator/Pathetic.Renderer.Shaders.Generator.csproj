@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <RootNamespace>Pathetic.Slang.Tool</RootNamespace>
+        <RootNamespace>Pathetic.Renderer.Shaders.Generator</RootNamespace>
         <SelfContained>false</SelfContained>
     </PropertyGroup>
 

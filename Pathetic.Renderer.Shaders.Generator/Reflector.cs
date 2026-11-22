@@ -1,20 +1,11 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Prowl.Slang;
 
-namespace Pathetic.Slang.Tool;
+namespace Pathetic.Renderer.Shaders.Generator;
 
 internal sealed class Reflector(string targetNamespace)
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-    };
-
     private readonly HashSet<string> _cpuTypeNames = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, ModuleJson> _modules = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, ModuleModel> _modules = new(StringComparer.Ordinal);
     private readonly Dictionary<string, byte[]> _code = new(StringComparer.Ordinal);
 
     public void Run(ShaderSet shaders, string outDir)
@@ -38,11 +29,10 @@ internal sealed class Reflector(string targetNamespace)
         string source = File.ReadAllText(file.Path);
         Module module = LoadModule(session, file, source);
 
-        ModuleJson json = new()
+        ModuleModel model = new()
         {
             Module = file.ModuleName,
-            Namespace = targetNamespace,
-            SourceFile = file.Path,
+            OutputStem = file.OutputStem,
         };
 
         DeclReflection root = module.GetModuleReflection();
@@ -52,7 +42,7 @@ internal sealed class Reflector(string targetNamespace)
             switch (declaration.Kind)
             {
                 case DeclKind.Struct:
-                    TryExportType(session, file, json, declaration);
+                    TryExportType(session, file, model, declaration);
                     break;
                 case DeclKind.Variable:
                 {
@@ -61,7 +51,7 @@ internal sealed class Reflector(string targetNamespace)
                     if (!IsResourceType(variable.Type.Kind))
                         break;
 
-                    json.Bindings.Add(new BindingJson
+                    model.Bindings.Add(new BindingModel
                     {
                         Name = variable.Name,
                         Kind = ClassifyBinding(variable.Type),
@@ -72,9 +62,9 @@ internal sealed class Reflector(string targetNamespace)
         }
 
         if (module.GetDefinedEntryPointCount() > 0)
-            ReflectPipeline(session, file, module, json);
+            ReflectPipeline(session, file, module, model);
 
-        _modules[file.ModuleName] = json;
+        _modules[file.ModuleName] = model;
     }
 
     private static Module LoadModule(Session session, ShaderFile file, string source)
@@ -103,7 +93,7 @@ internal sealed class Reflector(string targetNamespace)
         return module;
     }
 
-    private void TryExportType(Session session, ShaderFile file, ModuleJson json, DeclReflection declaration)
+    private void TryExportType(Session session, ShaderFile file, ModuleModel model, DeclReflection declaration)
     {
         TypeReflection type = declaration.Type;
         string? cpuTypeName = GetCPUTypeName(type);
@@ -117,29 +107,27 @@ internal sealed class Reflector(string targetNamespace)
         TypeLayoutReflection layout = session.GetTypeLayout(type, 0, LayoutRules.Default, out DiagnosticInfo diagnostics);
         ThrowOnErrors(diagnostics, file.Path);
 
-        List<FieldJson> fields = [];
+        List<FieldModel> fields = [];
         int end = 0;
         int alignment = 1;
 
         foreach (VariableLayoutReflection fieldLayout in layout.Fields)
         {
-            TypeReflection fieldType = fieldLayout.Variable.Type;
             TypeLayoutReflection fieldTypeLayout = fieldLayout.TypeLayout;
             int offset = (int)fieldLayout.GetOffset(ParameterCategory.Uniform);
 
             end = Math.Max(end, offset + (int)fieldTypeLayout.GetSize(ParameterCategory.Uniform));
             alignment = Math.Max(alignment, (int)fieldTypeLayout.GetAlignment(ParameterCategory.Uniform));
 
-            fields.Add(new FieldJson
+            fields.Add(new FieldModel
             {
                 Name = fieldLayout.Name,
                 Offset = offset,
                 CsType = MapFieldType(file.ModuleName, declaration.Name, fieldLayout),
-                EnumType = Enum.IsDefined(fieldType.Kind) ? null : fieldType.Name,
             });
         }
 
-        json.Types.Add(new TypeJson
+        model.Types.Add(new TypeModel
         {
             Name = cpuTypeName,
             Size = (end + alignment - 1) / alignment * alignment,
@@ -161,7 +149,7 @@ internal sealed class Reflector(string targetNamespace)
         return null;
     }
 
-    private void ReflectPipeline(Session session, ShaderFile file, Module module, ModuleJson json)
+    private void ReflectPipeline(Session session, ShaderFile file, Module module, ModuleModel model)
     {
         EntryPoint entryPoint = module.GetDefinedEntryPoint(0);
 
@@ -175,9 +163,8 @@ internal sealed class Reflector(string targetNamespace)
         EntryPointReflection entryPointReflection = program.EntryPoints.First();
         (uint x, uint y, uint z) = entryPointReflection.GetComputeThreadGroupSize();
 
-        PipelineJson pipeline = new()
+        PipelineModel pipeline = new()
         {
-            EntryPoint = entryPointReflection.Name,
             ThreadGroupSize = [x, y, z],
         };
 
@@ -188,7 +175,7 @@ internal sealed class Reflector(string targetNamespace)
             if (parameter.Category != ParameterCategory.DescriptorTableSlot)
                 continue;
 
-            pipeline.Parameters.Add(new ParameterJson
+            pipeline.Parameters.Add(new ParameterModel
             {
                 Name = parameter.Name,
                 Kind = ClassifyBinding(parameter.TypeLayout.GetBindingRangeType(0)),
@@ -197,7 +184,7 @@ internal sealed class Reflector(string targetNamespace)
             });
         }
 
-        json.Pipeline = pipeline;
+        model.Pipeline = pipeline;
 
         byte[] code = linked.GetEntryPointCode(IntPtr.Zero, IntPtr.Zero, out DiagnosticInfo codeDiagnostics).ToArray();
         ThrowOnErrors(codeDiagnostics, file.Path);
@@ -312,21 +299,15 @@ internal sealed class Reflector(string targetNamespace)
         string codeDir = Path.Combine(outDir, "gen");
         Directory.CreateDirectory(codeDir);
 
-        IndexJson index = new() { Namespace = targetNamespace };
-
-        foreach (ModuleJson module in _modules.Values.OrderBy(static module => module.Module, StringComparer.Ordinal))
+        foreach (ModuleModel module in _modules.Values.OrderBy(static module => module.Module, StringComparer.Ordinal))
         {
-            string stem = Path.GetFileNameWithoutExtension(module.SourceFile);
-            File.WriteAllText(Path.Combine(outDir, stem + ".json"), JsonSerializer.Serialize(module, JsonOptions));
-            File.WriteAllText(Path.Combine(codeDir, stem + ".g.cs"), SourceEmitter.EmitModule(targetNamespace, module));
+            File.WriteAllText(Path.Combine(codeDir, module.OutputStem + ".g.cs"), SourceEmitter.EmitModule(targetNamespace, module));
 
-            if (_code.TryGetValue(stem, out byte[]? code))
-                File.WriteAllBytes(Path.Combine(outDir, stem + ".spv"), code);
-
-            index.Modules.Add(new IndexEntryJson { Module = module.Module, File = stem });
+            if (_code.TryGetValue(module.OutputStem, out byte[]? code))
+                File.WriteAllBytes(Path.Combine(outDir, module.OutputStem + ".spv"), code);
         }
 
-        File.WriteAllText(Path.Combine(outDir, "index.json"), JsonSerializer.Serialize(index, JsonOptions));
+        File.WriteAllText(Path.Combine(codeDir, "ShaderModules.g.cs"), SourceEmitter.EmitShaderModules(_modules.Values));
     }
 
     private static void ThrowOnErrors(DiagnosticInfo diagnostics, string path)

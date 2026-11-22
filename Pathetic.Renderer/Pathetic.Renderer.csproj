@@ -2,11 +2,14 @@
 
     <PropertyGroup>
         <RootNamespace>Pathetic.Renderer</RootNamespace>
-        <SlangShadersDir>$(MSBuildProjectDirectory)/Shaders</SlangShadersDir>
     </PropertyGroup>
 
     <ItemGroup>
-      <Using Include="Pathetic.Generated.GPUTypes" Alias="GPUType" />
+      <Using Include="Pathetic.Renderer.Shaders.GPUTypes" Alias="GPUType" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Pathetic.Renderer.Shaders\Pathetic.Renderer.Shaders.csproj" />
     </ItemGroup>
 
     <ItemGroup>
@@ -16,15 +19,6 @@
       <PackageReference Include="NeoVeldrid" />
       <PackageReference Include="NeoVeldrid.ImGui" />
       <PackageReference Include="NeoVeldrid.StartupUtilities" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <SlangShader Include="Shaders/**/*.slang" />
-      <None Remove="Shaders/**/*.slang" />
-      <ProjectReference Include="..\Pathetic.Slang.Tool\Pathetic.Slang.Tool.csproj"
-                        ReferenceOutputAssembly="false"
-                        Private="false"
-                        GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained" />
     </ItemGroup>
 
 </Project>

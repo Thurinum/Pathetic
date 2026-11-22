@@ -1,3 +1,3 @@
-namespace Pathetic.Slang.Tool;
+namespace Pathetic.Renderer.Shaders.Generator;
 
 internal sealed class ToolException(string message) : Exception(message);

@@ -1,5 +1,5 @@
 using System.CommandLine;
-using Pathetic.Slang.Tool;
+using Pathetic.Renderer.Shaders.Generator;
 
 Option<string[]> shaders = new("--shaders")
 {
@@ -11,7 +11,7 @@ Option<string[]> shaders = new("--shaders")
 
 Option<string> output = new("--out")
 {
-    Description = "Directory receiving the manifests, SPIR-V blobs and generated C#.",
+    Description = "Directory receiving the SPIR-V blobs and generated C#.",
     Required = true,
 };
 
@@ -25,10 +25,10 @@ Option<string[]> search = new("--search")
 Option<string> targetNamespace = new("--namespace")
 {
     Description = "Namespace of the generated types.",
-    DefaultValueFactory = _ => "Pathetic.Generated.GPUTypes",
+    DefaultValueFactory = _ => "Pathetic.Renderer.Shaders.GPUTypes",
 };
 
-RootCommand root = new("Reflects Slang modules into C#, a runtime manifest and SPIR-V blobs.");
+RootCommand root = new("Reflects Slang modules into C# and SPIR-V blobs.");
 root.Options.Add(shaders);
 root.Options.Add(search);
 root.Options.Add(output);
@@ -46,7 +46,7 @@ root.SetAction(parseResult =>
         Directory.CreateDirectory(outDir);
         new Reflector(parseResult.GetValue(targetNamespace)!).Run(shaderSet, outDir);
 
-        Console.WriteLine($"Pathetic.Slang.Tool: {shaderSet.Files.Count} module(s) written to '{outDir}'.");
+        Console.WriteLine($"Pathetic.Renderer.Shaders.Generator: {shaderSet.Files.Count} module(s) written to '{outDir}'.");
         return 0;
     }
     catch (ToolException exception)
