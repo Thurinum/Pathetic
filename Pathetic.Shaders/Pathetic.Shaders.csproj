@@ -4,12 +4,11 @@
         <RootNamespace>Pathetic.Shaders</RootNamespace>
         <SlangShadersDir>$(MSBuildProjectDirectory)/Shaders</SlangShadersDir>
         <SlangOutDir>$(BaseIntermediateOutputPath)slang</SlangOutDir>
-        <SlangToolPath>$(MSBuildThisFileDirectory)../Pathetic.Slang.Tool/bin/$(Configuration)/net11.0/Pathetic.Slang.Tool.dll</SlangToolPath>
         <NoWarn>$(NoWarn);CS1591</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
-        <Content Include="Shaders/**/*.slang" CopyToOutputDirectory="Always" />
+        <Content Include="Shaders/**/*.slang" CopyToOutputDirectory="PreserveNewest" />
 
         <ProjectReference Include="..\Pathetic.Slang.Tool\Pathetic.Slang.Tool.csproj"
                           ReferenceOutputAssembly="false"
@@ -17,12 +16,21 @@
                           GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained" />
     </ItemGroup>
 
+    <Target Name="ResolveSlangTool" DependsOnTargets="ResolveProjectReferences">
+        <MSBuild Projects="$(MSBuildThisFileDirectory)../Pathetic.Slang.Tool/Pathetic.Slang.Tool.csproj"
+                 Targets="GetTargetPath"
+                 Properties="Configuration=$(Configuration)"
+                 RemoveProperties="RuntimeIdentifier;SelfContained">
+            <Output TaskParameter="TargetOutputs" ItemName="_SlangTool" />
+        </MSBuild>
+    </Target>
+
     <Target Name="GenerateSlangAssets"
             BeforeTargets="CoreCompile"
-            DependsOnTargets="ResolveProjectReferences"
-            Inputs="@(Content);$(SlangToolPath)"
+            DependsOnTargets="ResolveSlangTool"
+            Inputs="@(Content);@(_SlangTool)"
             Outputs="@(Content->'$(SlangOutDir)/%(Filename).json');@(Content->'$(SlangOutDir)/gen/%(Filename).g.cs');$(SlangOutDir)/gen/ResourceRefs.g.cs">
-        <Exec Command="dotnet &quot;$(SlangToolPath)&quot; --shaders &quot;$(SlangShadersDir)&quot; --out &quot;$(SlangOutDir)&quot;" />
+        <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;@(_SlangTool)&quot; --shaders &quot;$(SlangShadersDir)&quot; --out &quot;$(SlangOutDir)&quot;" />
     </Target>
 
     <Target Name="DeclareSlangSources"
