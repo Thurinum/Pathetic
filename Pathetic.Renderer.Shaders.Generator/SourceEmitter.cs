@@ -48,7 +48,9 @@ internal static class Identifier
 
 internal static class SourceEmitter
 {
-    public static string EmitModule(string targetNamespace, ModuleModel module)
+    private const string TargetNamespace = "Pathetic.Renderer.Shaders.GPUTypes";
+
+    public static string EmitModule(ModuleModel module)
     {
         CodeWriter writer = new();
 
@@ -69,11 +71,11 @@ internal static class SourceEmitter
 
         if (module.Pipeline is not null || bindings.Count > 0)
         {
-            writer.Line($"namespace {targetNamespace}.Resources");
+            writer.Line($"namespace {TargetNamespace}.Resources");
             writer.Open("{");
-            writer.Line($"public static class {Identifier.Escape(module.Module)}");
+            writer.Line($"public static class {Identifier.Escape(module.Name)}");
             writer.Open("{");
-            writer.Line($"public const string ModuleName = \"{module.Module}\";");
+            writer.Line($"public const string ModuleName = \"{module.Name}\";");
 
             if (bindings.Count > 0)
                 writer.Line();
@@ -88,7 +90,7 @@ internal static class SourceEmitter
 
         if (module.Types.Count > 0)
         {
-            writer.Line($"namespace {targetNamespace}");
+            writer.Line($"namespace {TargetNamespace}");
             writer.Open("{");
 
             foreach (TypeModel type in module.Types)
@@ -133,17 +135,17 @@ internal static class SourceEmitter
         writer.Line("public static readonly IReadOnlyDictionary<string, ShaderModule> All = new Dictionary<string, ShaderModule>(StringComparer.Ordinal)");
         writer.Open("{");
 
-        foreach (ModuleModel module in modules.Where(static module => module.Pipeline is not null).OrderBy(static module => module.Module, StringComparer.Ordinal))
+        foreach (ModuleModel module in modules.Where(static module => module.Pipeline is not null).OrderBy(static module => module.Name, StringComparer.Ordinal))
         {
             PipelineModel pipeline = module.Pipeline!;
 
-            writer.Line($"[\"{module.Module}\"] = new()");
+            writer.Line($"[\"{module.Name}\"] = new()");
             writer.Open("{");
-            writer.Line($"Name = \"{module.Module}\",");
+            writer.Line($"Name = \"{module.Name}\",");
             writer.Line($"GroupSizeX = {pipeline.ThreadGroupSize[0]},");
             writer.Line($"GroupSizeY = {pipeline.ThreadGroupSize[1]},");
             writer.Line($"GroupSizeZ = {pipeline.ThreadGroupSize[2]},");
-            writer.Line($"CodeResource = \"Pathetic.Renderer.Shaders.{module.OutputStem}.spv\",");
+            writer.Line($"CodeResource = \"Pathetic.Renderer.Shaders.{module.Name}.spv\",");
             writer.Line("Parameters =");
             writer.Open("[");
 

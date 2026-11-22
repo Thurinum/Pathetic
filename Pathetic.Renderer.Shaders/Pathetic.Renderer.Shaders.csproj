@@ -2,24 +2,62 @@
 
     <PropertyGroup>
         <RootNamespace>Pathetic.Renderer.Shaders</RootNamespace>
-        <GenerateSlang>true</GenerateSlang>
-        <EmbedSlangAssets>true</EmbedSlangAssets>
-        <SlangShaderDirs>$(MSBuildProjectDirectory)/../Pathetic.App/Shaders;$(MSBuildProjectDirectory)/../Pathetic.Renderer/Shaders</SlangShaderDirs>
+        <SlangOutputPath>$(BaseIntermediateOutputPath)slang</SlangOutputPath>
+        <SlangGeneratorProject>$(MSBuildThisFileDirectory)../Pathetic.Renderer.Shaders.Generator/Pathetic.Renderer.Shaders.Generator.csproj</SlangGeneratorProject>
+        <AppShaders>$(MSBuildThisFileDirectory)../Pathetic.App/Shaders</AppShaders>
+        <RendererShaders>$(MSBuildThisFileDirectory)../Pathetic.Renderer/Shaders</RendererShaders>
     </PropertyGroup>
 
     <ItemGroup>
-        <AvailableItemName Include="SlangShader" />
-        <AvailableItemName Include="SlangShaderHeader" />
+        <SlangShader Include="$(AppShaders)/**/*.slang;$(RendererShaders)/**/*.slang" Visible="false" />
+        <SlangShaderHeader Include="$(AppShaders)/**/*.slangh;$(RendererShaders)/**/*.slangh" Visible="false" />
 
-        <SlangShader Include="$(MSBuildProjectDirectory)/../Pathetic.App/Shaders/**/*.slang;$(MSBuildProjectDirectory)/../Pathetic.Renderer/Shaders/**/*.slang" Visible="false" />
-        <SlangShaderHeader Include="$(MSBuildProjectDirectory)/../Pathetic.App/Shaders/**/*.slangh;$(MSBuildProjectDirectory)/../Pathetic.Renderer/Shaders/**/*.slangh" Visible="false" />
+        <SlangGenerated Include="@(SlangShader->'$(SlangOutputPath)/gen/%(Filename).g.cs')" Visible="false" />
+        <SlangGenerated Include="$(SlangOutputPath)/gen/ShaderModules.g.cs" Visible="false" />
 
+        <Compile Include="@(SlangGenerated)" />
         <UpToDateCheckInput Include="@(SlangShader);@(SlangShaderHeader)" />
 
-        <ProjectReference Include="..\Pathetic.Renderer.Shaders.Generator\Pathetic.Renderer.Shaders.Generator.csproj"
+        <ProjectReference Include="$(SlangGeneratorProject)"
                           ReferenceOutputAssembly="false"
                           Private="false"
                           GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained" />
     </ItemGroup>
+
+    <Target Name="ResolveSlangGenerator" DependsOnTargets="ResolveProjectReferences">
+        <MSBuild Projects="$(SlangGeneratorProject)"
+                 Targets="GetTargetPath"
+                 RemoveProperties="RuntimeIdentifier;SelfContained">
+            <Output TaskParameter="TargetOutputs" ItemName="SlangGenerator" />
+        </MSBuild>
+    </Target>
+
+    <Target Name="GenerateSlangAssets"
+            DependsOnTargets="ResolveSlangGenerator"
+            Inputs="@(SlangShader);@(SlangShaderHeader);@(SlangGenerator)"
+            Outputs="$(SlangOutputPath)/.stamp">
+        <RemoveDir Directories="$(SlangOutputPath)" />
+        <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;@(SlangGenerator)&quot; --shaders &quot;$(AppShaders)&quot; --shaders &quot;$(RendererShaders)&quot; --out &quot;$(SlangOutputPath)&quot;" />
+        <Touch Files="$(SlangOutputPath)/.stamp" AlwaysCreate="true" />
+    </Target>
+
+    <Target Name="EmbedSlangAssets"
+            BeforeTargets="PrepareResources"
+            DependsOnTargets="GenerateSlangAssets">
+        <ItemGroup>
+            <_SlangSpirv Include="$(SlangOutputPath)/*.spv" />
+            <EmbeddedResource Include="@(_SlangSpirv)">
+                <LogicalName>Pathetic.Renderer.Shaders.%(Filename).spv</LogicalName>
+                <Type>Non-Resx</Type>
+                <WithCulture>false</WithCulture>
+            </EmbeddedResource>
+        </ItemGroup>
+    </Target>
+
+    <Target Name="CleanSlangAssets"
+            AfterTargets="Clean"
+            Condition="Exists('$(SlangOutputPath)')">
+        <RemoveDir Directories="$(SlangOutputPath)" />
+    </Target>
 
 </Project>

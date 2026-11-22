@@ -3,7 +3,7 @@ using Prowl.Slang;
 
 namespace Pathetic.Renderer.Shaders.Generator;
 
-internal sealed class Reflector(string targetNamespace)
+internal sealed class Reflector
 {
     private const string CpuTypeAttribute = "CPUType";
     private const TypeKind SlangEnumKind = (TypeKind)20;
@@ -44,7 +44,7 @@ internal sealed class Reflector(string targetNamespace)
         SessionDescription sessionDesc = new()
         {
             Targets = [targetDesc],
-            SearchPaths = [.. shaders.Roots, "./"],
+            SearchPaths = [.. shaders.Roots],
         };
 
         Session session = GlobalSession.CreateSession(sessionDesc);
@@ -62,8 +62,7 @@ internal sealed class Reflector(string targetNamespace)
 
         ModuleModel model = new()
         {
-            Module = file.ModuleName,
-            OutputStem = file.OutputStem,
+            Name = file.Name,
         };
 
         DeclReflection root = module.GetModuleReflection();
@@ -90,7 +89,7 @@ internal sealed class Reflector(string targetNamespace)
         if (module.GetDefinedEntryPointCount() > 0)
             ReflectPipeline(session, file, module, model);
 
-        _modules[file.ModuleName] = model;
+        _modules[file.Name] = model;
     }
 
     private static Module LoadModule(Session session, ShaderFile file, string source)
@@ -108,7 +107,7 @@ internal sealed class Reflector(string targetNamespace)
 
         try
         {
-            module = session.LoadModuleFromSourceString(file.ModuleName, file.Path, source, out DiagnosticInfo diagnostics);
+            module = session.LoadModuleFromSourceString(file.Name, file.Path, source, out DiagnosticInfo diagnostics);
             ThrowOnErrors(diagnostics);
         }
         catch (CompilationException exception)
@@ -149,7 +148,7 @@ internal sealed class Reflector(string targetNamespace)
             {
                 Name = fieldLayout.Name,
                 Offset = offset,
-                CsType = MapFieldType($"{file.ModuleName}.{declaration.Name}.{fieldLayout.Name}", fieldLayout),
+                CsType = MapFieldType($"{file.Name}.{declaration.Name}.{fieldLayout.Name}", fieldLayout),
             });
         }
 
@@ -218,7 +217,7 @@ internal sealed class Reflector(string targetNamespace)
         byte[] code = linked.GetEntryPointCode(IntPtr.Zero, IntPtr.Zero, out DiagnosticInfo codeDiagnostics).ToArray();
         ThrowOnErrors(codeDiagnostics);
 
-        _code[file.OutputStem] = code;
+        _code[file.Name] = code;
     }
 
     private static string MapFieldType(string field, VariableLayoutReflection fieldLayout)
@@ -283,12 +282,12 @@ internal sealed class Reflector(string targetNamespace)
         string codeDir = Path.Combine(outDir, "gen");
         Directory.CreateDirectory(codeDir);
 
-        foreach (ModuleModel module in _modules.Values.OrderBy(static module => module.Module, StringComparer.Ordinal))
+        foreach (ModuleModel module in _modules.Values.OrderBy(static module => module.Name, StringComparer.Ordinal))
         {
-            File.WriteAllText(Path.Combine(codeDir, module.OutputStem + ".g.cs"), SourceEmitter.EmitModule(targetNamespace, module), Utf8Bom);
+            File.WriteAllText(Path.Combine(codeDir, module.Name + ".g.cs"), SourceEmitter.EmitModule(module), Utf8Bom);
 
-            if (_code.TryGetValue(module.OutputStem, out byte[]? code))
-                File.WriteAllBytes(Path.Combine(outDir, module.OutputStem + ".spv"), code);
+            if (_code.TryGetValue(module.Name, out byte[]? code))
+                File.WriteAllBytes(Path.Combine(outDir, module.Name + ".spv"), code);
         }
 
         File.WriteAllText(Path.Combine(codeDir, "ShaderModules.g.cs"), SourceEmitter.EmitShaderModules(_modules.Values), Utf8Bom);

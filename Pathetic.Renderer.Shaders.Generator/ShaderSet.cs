@@ -3,8 +3,7 @@
 internal sealed class ShaderFile
 {
     public required string Path { get; init; }
-    public required string ModuleName { get; init; }
-    public required string OutputStem { get; init; }
+    public required string Name { get; init; }
 }
 
 internal sealed class ShaderSet
@@ -12,24 +11,16 @@ internal sealed class ShaderSet
     public required IReadOnlyList<ShaderFile> Files { get; init; }
     public required IReadOnlyList<string> Roots { get; init; }
 
-    public static ShaderSet Discover(IEnumerable<string> ownedRoots, IEnumerable<string> searchRoots)
+    public static ShaderSet Discover(IReadOnlyList<string> roots)
     {
-        List<string> owned = [.. ownedRoots];
-        List<string> roots = [];
         List<ShaderFile> files = [];
         HashSet<string> stems = new(StringComparer.OrdinalIgnoreCase);
 
-        foreach (string root in owned.Concat(searchRoots))
+        foreach (string root in roots)
         {
             if (!Directory.Exists(root))
                 throw new SlangInteropException($"Shader directory '{root}' does not exist.");
 
-            if (!roots.Contains(root))
-                roots.Add(root);
-        }
-
-        foreach (string root in owned)
-        {
             foreach (string path in Directory.EnumerateFiles(root, "*.slang", SearchOption.AllDirectories))
             {
                 string stem = Path.GetFileNameWithoutExtension(path);
@@ -40,8 +31,7 @@ internal sealed class ShaderSet
                 files.Add(new ShaderFile
                 {
                     Path = path,
-                    ModuleName = stem,
-                    OutputStem = stem,
+                    Name = stem,
                 });
             }
         }
@@ -49,7 +39,7 @@ internal sealed class ShaderSet
         if (files.Count == 0)
             throw new SlangInteropException("No shader files found.");
 
-        files.Sort(static (a, b) => string.CompareOrdinal(a.OutputStem, b.OutputStem));
+        files.Sort(static (a, b) => string.CompareOrdinal(a.Name, b.Name));
 
         return new ShaderSet { Files = files, Roots = roots };
     }

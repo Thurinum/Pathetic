@@ -12,8 +12,7 @@ internal enum BindingKind
 
 internal sealed class ModuleModel
 {
-    public required string Module { get; init; }
-    public required string OutputStem { get; init; }
+    public required string Name { get; init; }
     public PipelineModel? Pipeline { get; set; }
     public List<BindingModel> Bindings { get; init; } = [];
     public List<TypeModel> Types { get; init; } = [];
