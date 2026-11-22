@@ -170,7 +170,7 @@ internal static class SourceEmitter
             "UniformBuffer" => "UniformBufferRef",
             "BufferRead" => "BufferRef",
             "BufferReadWrite" => "MutableBufferRef",
-            _ => throw new ToolException($"Unsupported binding kind '{kind}'."),
+            _ => throw new SlangInteropException($"Unsupported binding kind '{kind}'."),
         };
     }
 
@@ -182,6 +182,6 @@ internal static class SourceEmitter
         "UniformBuffer" => "UniformBuffer",
         "BufferRead" => "Buffer",
         "BufferReadWrite" => "MutableBuffer",
-        _ => throw new ToolException($"Unsupported shader parameter kind '{kind}'."),
+        _ => throw new SlangInteropException($"Unsupported shader parameter kind '{kind}'."),
     };
 }

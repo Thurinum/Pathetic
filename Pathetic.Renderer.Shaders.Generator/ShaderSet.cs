@@ -22,7 +22,7 @@ internal sealed class ShaderSet
         foreach (string root in owned.Concat(searchRoots))
         {
             if (!Directory.Exists(root))
-                throw new ToolException($"Shader directory '{root}' does not exist.");
+                throw new SlangInteropException($"Shader directory '{root}' does not exist.");
 
             if (!roots.Contains(root))
                 roots.Add(root);
@@ -35,7 +35,7 @@ internal sealed class ShaderSet
                 string stem = Path.GetFileNameWithoutExtension(path);
 
                 if (!stems.Add(stem))
-                    throw new ToolException($"Two shader files share the name '{stem}', outputs would collide.");
+                    throw new SlangInteropException($"Two shader files share the name '{stem}', outputs would collide.");
 
                 files.Add(new ShaderFile
                 {
@@ -47,7 +47,7 @@ internal sealed class ShaderSet
         }
 
         if (files.Count == 0)
-            throw new ToolException("No shader files found.");
+            throw new SlangInteropException("No shader files found.");
 
         files.Sort(static (a, b) => string.CompareOrdinal(a.OutputStem, b.OutputStem));
 

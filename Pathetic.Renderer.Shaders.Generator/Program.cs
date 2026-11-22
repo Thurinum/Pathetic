@@ -49,7 +49,7 @@ root.SetAction(parseResult =>
         Console.WriteLine($"Pathetic.Renderer.Shaders.Generator: {shaderSet.Files.Count} module(s) written to '{outDir}'.");
         return 0;
     }
-    catch (ToolException exception)
+    catch (SlangInteropException exception)
     {
         Console.Error.WriteLine($"error PATSLANG: {exception.Message}");
         return 1;

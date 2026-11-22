@@ -13,13 +13,18 @@ internal sealed class Reflector(string targetNamespace)
 
     public void Run(ShaderSet shaders, string outDir)
     {
-        SessionDescription description = new()
+        TargetDescription targetDesc = new()
         {
-            Targets = [new TargetDescription { Format = CompileTarget.Spirv, Profile = GlobalSession.FindProfile("spirv_1_5") }],
+            Format = CompileTarget.Spirv, 
+            Profile = GlobalSession.FindProfile("spirv_1_5")
+        };
+        SessionDescription sessionDesc = new()
+        {
+            Targets = [targetDesc],
             SearchPaths = [.. shaders.Roots, "./"],
         };
 
-        Session session = GlobalSession.CreateSession(description);
+        Session session = GlobalSession.CreateSession(sessionDesc);
 
         foreach (ShaderFile file in shaders.Files)
             ReflectModule(session, file);
@@ -75,9 +80,9 @@ internal sealed class Reflector(string targetNamespace)
         for (int i = 0; i < session.GetLoadedModuleCount(); i++)
         {
             Module loaded = session.GetLoadedModule(i);
-            string? path = loaded.GetFilePath();
+            string path = loaded.GetFilePath();
 
-            if (path is not null && string.Equals(Path.GetFullPath(path), file.Path, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(Path.GetFullPath(path), file.Path, StringComparison.OrdinalIgnoreCase))
                 return loaded;
         }
 
@@ -90,7 +95,7 @@ internal sealed class Reflector(string targetNamespace)
         }
         catch (CompilationException exception)
         {
-            throw new ToolException($"{file.Path}: {exception.Message}");
+            throw new SlangInteropException($"{file.Path}: {exception.Message}");
         }
 
         return module;
@@ -105,7 +110,7 @@ internal sealed class Reflector(string targetNamespace)
             return;
 
         if (!_cpuTypeNames.Add(cpuTypeName))
-            throw new ToolException($"Two [CPUType] declarations emit '{cpuTypeName}'; give one an explicit name with [CPUType(\"...\")].");
+            throw new SlangInteropException($"Two [CPUType] declarations emit '{cpuTypeName}'; give one an explicit name with [CPUType(\"...\")].");
 
         TypeLayoutReflection layout = session.GetTypeLayout(type, 0, LayoutRules.Default, out DiagnosticInfo diagnostics);
         ThrowOnErrors(diagnostics, file.Path);
@@ -203,10 +208,10 @@ internal sealed class Reflector(string targetNamespace)
         string fieldName = fieldLayout.Name;
 
         if (fieldType.Kind == TypeKind.Array || fieldTypeLayout.IsArray)
-            throw new ToolException($"Exported type '{module}.{typeName}' field '{fieldName}' is an array, which is not supported yet.");
+            throw new SlangInteropException($"Exported type '{module}.{typeName}' field '{fieldName}' is an array, which is not supported yet.");
 
         if (fieldType.Kind == TypeKind.Matrix)
-            throw new ToolException($"Exported type '{module}.{typeName}' field '{fieldName}' is a matrix, which is not supported yet.");
+            throw new SlangInteropException($"Exported type '{module}.{typeName}' field '{fieldName}' is a matrix, which is not supported yet.");
 
         if (!Enum.IsDefined(fieldType.Kind))
             return "int";
@@ -214,14 +219,14 @@ internal sealed class Reflector(string targetNamespace)
         if (fieldType.Kind == TypeKind.Vector)
         {
             if (fieldTypeLayout.ScalarType != ScalarType.Float32)
-                throw new ToolException($"Exported type '{module}.{typeName}' field '{fieldName}' is a non-float vector, which is not supported yet.");
+                throw new SlangInteropException($"Exported type '{module}.{typeName}' field '{fieldName}' is a non-float vector, which is not supported yet.");
 
             return fieldTypeLayout.ColumnCount switch
             {
                 2 => "global::System.Numerics.Vector2",
                 3 => "global::System.Numerics.Vector3",
                 4 => "global::System.Numerics.Vector4",
-                _ => throw new ToolException($"Exported type '{module}.{typeName}' field '{fieldName}' has an unsupported vector width ({fieldTypeLayout.ColumnCount})."),
+                _ => throw new SlangInteropException($"Exported type '{module}.{typeName}' field '{fieldName}' has an unsupported vector width ({fieldTypeLayout.ColumnCount})."),
             };
         }
 
@@ -229,9 +234,9 @@ internal sealed class Reflector(string targetNamespace)
             return MapScalar(module, typeName, fieldName, fieldTypeLayout.ScalarType);
 
         if (fieldType.Kind == TypeKind.Struct)
-            throw new ToolException($"Exported type '{module}.{typeName}' field '{fieldName}' is a nested struct, which is not supported yet.");
+            throw new SlangInteropException($"Exported type '{module}.{typeName}' field '{fieldName}' is a nested struct, which is not supported yet.");
 
-        throw new ToolException($"Exported type '{module}.{typeName}' field '{fieldName}' has unsupported Slang type '{fieldType.Name}' (kind {fieldType.Kind}).");
+        throw new SlangInteropException($"Exported type '{module}.{typeName}' field '{fieldName}' has unsupported Slang type '{fieldType.Name}' (kind {fieldType.Kind}).");
     }
 
     private static string MapScalar(string module, string typeName, string fieldName, ScalarType scalar) => scalar switch
@@ -247,7 +252,7 @@ internal sealed class Reflector(string targetNamespace)
         ScalarType.Int8 => "sbyte",
         ScalarType.UInt8 => "byte",
         ScalarType.Bool => "bool",
-        _ => throw new ToolException($"Exported type '{module}.{typeName}' field '{fieldName}' uses unsupported scalar '{scalar}'."),
+        _ => throw new SlangInteropException($"Exported type '{module}.{typeName}' field '{fieldName}' uses unsupported scalar '{scalar}'."),
     };
 
     private static bool IsResourceType(TypeKind kind) => kind is
@@ -270,7 +275,7 @@ internal sealed class Reflector(string targetNamespace)
             return "ParameterBlock";
 
         if (type.Kind != TypeKind.Resource)
-            throw new ToolException($"Unsupported global resource type '{type.FullName}' (kind {type.Kind}).");
+            throw new SlangInteropException($"Unsupported global resource type '{type.FullName}' (kind {type.Kind}).");
 
         bool writable = type.ResourceAccess is ResourceAccess.ReadWrite or ResourceAccess.RasterOrdered or ResourceAccess.Write or ResourceAccess.Append or ResourceAccess.Consume;
 
@@ -278,7 +283,7 @@ internal sealed class Reflector(string targetNamespace)
         {
             ResourceShape.StructuredBuffer or ResourceShape.ByteAddressBuffer or ResourceShape.TextureBuffer =>
                 writable ? "BufferReadWrite" : "BufferRead",
-            ResourceShape.AccelerationStructure => throw new ToolException("Ray tracing acceleration structures are not supported in the reflection pipeline."),
+            ResourceShape.AccelerationStructure => throw new SlangInteropException("Ray tracing acceleration structures are not supported in the reflection pipeline."),
             _ => writable ? "MutableTexture" : "Texture",
         };
     }
@@ -292,7 +297,7 @@ internal sealed class Reflector(string targetNamespace)
         BindingType.TypedBuffer or BindingType.RawBuffer => "BufferRead",
         BindingType.MutableTypedBuffer or BindingType.MutableRawBuffer => "BufferReadWrite",
         BindingType.ParameterBlock => "ParameterBlock",
-        _ => throw new ToolException($"Unsupported shader parameter binding type '{type}'."),
+        _ => throw new SlangInteropException($"Unsupported shader parameter binding type '{type}'."),
     };
 
     private void WriteOutput(string outDir)
@@ -324,6 +329,6 @@ internal sealed class Reflector(string targetNamespace)
         }
 
         if (errors.Count > 0)
-            throw new ToolException($"{path}: {string.Join(Environment.NewLine, errors)}");
+            throw new SlangInteropException($"{path}: {string.Join(Environment.NewLine, errors)}");
     }
 }
