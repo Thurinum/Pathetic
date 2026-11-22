@@ -66,6 +66,7 @@ public sealed class ProfilerStats(IOptions<ProfilerOptions> options)
     private readonly Queue<double> _frameMs = new();
 
     private long _windowStart;
+    private long _lastBoundary;
 
     internal long Add(string span, double ms, IReadOnlyList<SpanTag> tags)
     {
@@ -83,11 +84,12 @@ public sealed class ProfilerStats(IOptions<ProfilerOptions> options)
         {
             if (_boundaries.Count > 0)
             {
-                _frameMs.Enqueue(TimeProvider.System.GetElapsedTime(_boundaries.Last(), now).TotalMilliseconds);
+                _frameMs.Enqueue(TimeProvider.System.GetElapsedTime(_lastBoundary, now).TotalMilliseconds);
                 if (_frameMs.Count > _windowFrames)
                     _frameMs.Dequeue();
             }
 
+            _lastBoundary = now;
             _boundaries.Enqueue(now);
             if (_boundaries.Count > _windowFrames + 1)
                 _boundaries.Dequeue();
