@@ -11,9 +11,6 @@
     <ItemGroup>
         <Content Include="Shaders/**/*.slang" CopyToOutputDirectory="Always" />
 
-        <ProjectReference Include="..\Pathetic.Slang.Generator\Pathetic.Slang.Generator.csproj"
-                          OutputItemType="Analyzer"
-                          ReferenceOutputAssembly="false" />
         <ProjectReference Include="..\Pathetic.Slang.Tool\Pathetic.Slang.Tool.csproj"
                           ReferenceOutputAssembly="false"
                           Private="false"
@@ -32,8 +29,8 @@
             BeforeTargets="CoreCompile"
             DependsOnTargets="GenerateSlangAssets">
         <ItemGroup>
-            <AdditionalFiles Include="@(Content->'$(SlangOutDir)/gen/%(Filename).g.cs')" />
-            <AdditionalFiles Include="$(SlangOutDir)/gen/ResourceRefs.g.cs" />
+            <Compile Include="@(Content->'$(SlangOutDir)/gen/%(Filename).g.cs')" />
+            <Compile Include="$(SlangOutDir)/gen/ResourceRefs.g.cs" />
         </ItemGroup>
     </Target>
 
