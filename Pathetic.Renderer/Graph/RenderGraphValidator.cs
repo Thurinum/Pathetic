@@ -34,17 +34,14 @@ internal static class RenderGraphValidator
             foreach (var binding in entry.State.Bindings)
                 bindings.TryAdd(binding.Name, binding);
 
-            var declared = entry.Pass.Inputs
-                .Concat(entry.Pass.Resources.Select(resource => resource.Name))
+            var declared = entry.Pass.Resources
+                .Select(resource => resource.Name)
                 .ToHashSet(StringComparer.Ordinal);
 
-            foreach (var input in entry.Pass.Inputs)
+            foreach (var resource in entry.Pass.Resources)
             {
-                if (!resources.Has(input))
-                    throw new InvalidOperationException($"Pass {passName} has invalid input {input}.");
-
-                if (!bindings.ContainsKey(input))
-                    throw new InvalidOperationException($"Pass {passName} declares input '{input}' that shader '{shader}' does not consume.");
+                if (!bindings.ContainsKey(resource.Name))
+                    throw new InvalidOperationException($"Pass {passName} declares resource '{resource.Name}' that shader '{shader}' does not consume.");
             }
 
             foreach (var binding in bindings.Values)
@@ -53,7 +50,7 @@ internal static class RenderGraphValidator
                     continue;
 
                 // Shared resources (frame state, camera, primitive buffers, pass textures) are
-                // declared once and bound by name, so a pass doesn't need to list them in Inputs.
+                // declared once and bound by name, so a pass doesn't need to list them.
                 if (resources.Has(binding.Name))
                     continue;
 

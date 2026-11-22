@@ -18,11 +18,6 @@ public sealed class TemporalAccumulationPass(
         UniformBufferSpec.Of<GPUType.TemporalAccumulationParams>(GPUType.Resources.TemporalAccumulation.@params),
     ];
 
-    public override IReadOnlyList<string> Inputs { get; } =
-    [
-        GPUType.Resources.TemporalAccumulation.pathTracerColor,
-    ];
-
     public override void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
     {
         ConvergencePlan plan = convergence.GetPlan(ctx.FrameIndex, ctx.Resources.SceneRevision);

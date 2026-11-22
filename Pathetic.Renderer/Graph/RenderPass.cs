@@ -10,7 +10,6 @@ public abstract class RenderPass : IResourceUploader
     public abstract string ShaderModule { get; }
 
     public virtual IReadOnlyList<IResourceSpec> Resources => [];
-    public virtual IReadOnlyList<string> Inputs => [];
 
     public SceneChange DirtyChanges => SceneChange.None;
     public void SetDirty(SceneChange changes) { }

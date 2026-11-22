@@ -18,18 +18,6 @@ public sealed class PathTracerPass(
         UniformBufferSpec.Of<GPUType.PathTracerParams>(GPUType.Resources.PathTracer.@params),
     ];
 
-    public override IReadOnlyList<string> Inputs { get; } =
-    [
-        GPUType.Resources.PathTracer.camera,
-        GPUType.Resources.PathTracer.planes,
-        GPUType.Resources.PathTracer.spheres,
-        GPUType.Resources.PathTracer.triangles,
-        GPUType.Resources.Primitives.meshTransforms,
-        GPUType.Resources.PathTracer.materials,
-        GPUType.Resources.PathTracer.bvhNodes,
-        GPUType.Resources.PathTracer.bvhPrimitiveRefs,
-    ];
-
     public override void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
     {
         ConvergencePlan plan = convergence.GetPlan(ctx.FrameIndex, ctx.Resources.SceneRevision);

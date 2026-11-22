@@ -14,11 +14,6 @@ public sealed class CirclesPass : RenderPass
         UniformBufferSpec.Of<GPUType.CirclesParams>(GPUType.Resources.Circles.@params),
     ];
 
-    public override IReadOnlyList<string> Inputs { get; } =
-    [
-        GPUType.Resources.Circles.circlePrimitives,
-    ];
-
     public override void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
     {
         uint count = ctx.Resources.GetElementCount(GPUType.Resources.Circles.circlePrimitives);
