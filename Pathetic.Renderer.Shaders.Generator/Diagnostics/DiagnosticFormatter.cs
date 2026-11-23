@@ -1,6 +1,6 @@
 using Prowl.Slang;
 
-namespace Pathetic.Renderer.Shaders.Generator;
+namespace Pathetic.Renderer.Shaders.Generator.Diagnostics;
 
 internal static class DiagnosticFormatter
 {

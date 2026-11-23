@@ -1,5 +1,6 @@
 using System.CommandLine;
 using Pathetic.Renderer.Shaders.Generator;
+using Pathetic.Renderer.Shaders.Generator.Diagnostics;
 using Prowl.Slang;
 
 Option<string[]> shaderDirectories = new("--shader-dirs")

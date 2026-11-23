@@ -1,5 +1,7 @@
 using System.Text;
+using Pathetic.Renderer.Shaders.Generator.Diagnostics;
 using Prowl.Slang;
+using Attribute = Prowl.Slang.Attribute;
 
 namespace Pathetic.Renderer.Shaders.Generator;
 
@@ -69,19 +71,17 @@ internal sealed class ShaderCompiler
 
         foreach (DeclReflection declaration in root.Children)
         {
-            switch (declaration.Kind)
+            if (declaration.Kind == DeclKind.Struct)
             {
-                case DeclKind.Struct:
-                    TryExportType(session, file, model, declaration);
-                    break;
-                case DeclKind.Variable:
+                TryExportType(session, file, model, declaration);
+            }
+            else if (declaration.Kind == DeclKind.Variable)
+            {
+                VariableReflection variable = declaration.AsVariable();
+
+                if (ClassifyBinding(variable.Type) is { } kind)
                 {
-                    VariableReflection variable = declaration.AsVariable();
-
-                    if (ClassifyBinding(variable.Type) is { } kind)
-                        model.Bindings.Add(new ResourceBinding { Name = variable.Name, Kind = kind });
-
-                    break;
+                    model.Bindings.Add(new ResourceBinding { Name = variable.Name, Kind = kind });
                 }
             }
         }
@@ -139,10 +139,10 @@ internal sealed class ShaderCompiler
         foreach (VariableLayoutReflection fieldLayout in layout.Fields)
         {
             TypeLayoutReflection fieldTypeLayout = fieldLayout.TypeLayout;
-            int offset = (int)fieldLayout.GetOffset(ParameterCategory.Uniform);
+            int offset = (int)fieldLayout.GetOffset();
 
-            end = Math.Max(end, offset + (int)fieldTypeLayout.GetSize(ParameterCategory.Uniform));
-            alignment = Math.Max(alignment, (int)fieldTypeLayout.GetAlignment(ParameterCategory.Uniform));
+            end = Math.Max(end, offset + (int)fieldTypeLayout.GetSize());
+            alignment = Math.Max(alignment, fieldTypeLayout.GetAlignment(ParameterCategory.Uniform));
 
             fields.Add(new FieldModel
             {
@@ -162,7 +162,7 @@ internal sealed class ShaderCompiler
 
     private static string? GetCPUTypeName(TypeReflection type)
     {
-        foreach (Prowl.Slang.Attribute attribute in type.UserAttributes)
+        foreach (Attribute attribute in type.UserAttributes)
         {
             if (!string.Equals(attribute.Name, CpuTypeAttributeName, StringComparison.OrdinalIgnoreCase))
                 continue;

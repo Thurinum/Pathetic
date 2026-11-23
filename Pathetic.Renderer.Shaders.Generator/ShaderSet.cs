@@ -1,3 +1,5 @@
+using Pathetic.Renderer.Shaders.Generator.Diagnostics;
+
 namespace Pathetic.Renderer.Shaders.Generator;
 
 internal sealed class ShaderFile
