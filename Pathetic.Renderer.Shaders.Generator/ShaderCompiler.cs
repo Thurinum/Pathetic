@@ -37,7 +37,7 @@ internal sealed class ShaderCompiler
     private readonly Dictionary<string, ModuleModel> _modules = new(StringComparer.Ordinal);
     private readonly Dictionary<string, byte[]> _code = new(StringComparer.Ordinal);
 
-    public void Compile(ShaderSet shaders, string outDir)
+    public void Compile(ShaderSet shaders, string outDir, bool profileCounters)
     {
         TargetDescription targetDesc = new()
         {
@@ -48,7 +48,9 @@ internal sealed class ShaderCompiler
         {
             Targets = [targetDesc],
             SearchPaths = [.. shaders.Directories],
-            PreprocessorMacros = [.. ShaderCounterMacros.All.Select(static macro => new PreprocessorMacroDescription { Name = macro.Name, Value = macro.Value })],
+            PreprocessorMacros = profileCounters
+                ? [.. ShaderCounterMacros.All.Select(static macro => new PreprocessorMacroDescription { Name = macro.Name, Value = macro.Value })]
+                : null,
         };
 
         Session session = GlobalSession.CreateSession(sessionDesc);

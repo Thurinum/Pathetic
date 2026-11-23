@@ -1,8 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
+#if PROFILING
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 using Pathetic.Profiling.Gpu;
 using Pathetic.Profiling.Statistics;
+#endif
 
 namespace Pathetic.Profiling.DI;
 
@@ -12,6 +13,7 @@ public static class ServiceCollectionExtensions
     {
         public IServiceCollection AddProfiling()
         {
+#if PROFILING
             services.AddOptions<ProfilerOptions>()
                 .BindConfiguration(ProfilerOptions.Section)
                 .ValidateDataAnnotations()
@@ -22,10 +24,8 @@ public static class ServiceCollectionExtensions
             services.AddHostedService<ProfilerHost>();
             services.AddSingleton<FenceGpuTimer>();
 
-            services.Replace(ServiceDescriptor.Singleton<IGpuTimer>(provider =>
-                provider.GetRequiredService<IOptions<ProfilerOptions>>().Value.Enabled
-                    ? provider.GetRequiredService<FenceGpuTimer>()
-                    : new NullGpuTimer()));
+            services.Replace(ServiceDescriptor.Singleton<IGpuTimer>(provider => provider.GetRequiredService<FenceGpuTimer>()));
+#endif
 
             return services;
         }

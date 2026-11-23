@@ -17,9 +17,15 @@ Option<string> output = new("--out")
     Required = true,
 };
 
+Option<bool> profileCounters = new("--profile-counters")
+{
+    Description = "Defines the profiler's shader counter macros.",
+};
+
 RootCommand root = new("Reflects Slang modules into C# and SPIR-V blobs.");
 root.Options.Add(shaderDirectories);
 root.Options.Add(output);
+root.Options.Add(profileCounters);
 
 root.SetAction(parseResult =>
 {
@@ -28,7 +34,7 @@ root.SetAction(parseResult =>
         ShaderSet shaderSet = ShaderSet.Discover([.. parseResult.GetValue(shaderDirectories)!.Select(Path.GetFullPath)]);
         string outDir = Path.GetFullPath(parseResult.GetValue(output)!);
 
-        new ShaderCompiler().Compile(shaderSet, outDir);
+        new ShaderCompiler().Compile(shaderSet, outDir, parseResult.GetValue(profileCounters));
 
         Console.WriteLine($"Pathetic.Renderer.Shaders.Generator: {shaderSet.Files.Count} module(s) written to '{outDir}'.");
         return 0;

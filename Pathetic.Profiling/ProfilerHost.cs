@@ -29,7 +29,7 @@ internal sealed partial class ProfilerHost : IHostedService, IDisposable
         _stats = stats;
         _shaderCounters = shaderCounters;
         _logger = logger;
-        _trace = _options.Enabled && _options.TraceFile.Length > 0 ? new ChromeTraceWriter(_options.TraceFile) : null;
+        _trace = _options.TraceFile.Length > 0 ? new ChromeTraceWriter(_options.TraceFile) : null;
         _listener = new ActivityListener
         {
             ShouldListenTo = source => source.Name.StartsWith(ProfilingName.SourcePrefix, StringComparison.Ordinal),
@@ -40,9 +40,7 @@ internal sealed partial class ProfilerHost : IHostedService, IDisposable
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        if (_options.Enabled)
-            ActivitySource.AddActivityListener(_listener);
-
+        ActivitySource.AddActivityListener(_listener);
         return Task.CompletedTask;
     }
 

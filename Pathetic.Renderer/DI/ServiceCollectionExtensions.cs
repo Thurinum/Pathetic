@@ -4,7 +4,9 @@ using Microsoft.Extensions.Options;
 using Pathetic.Profiling.Gpu;
 using Pathetic.Renderer.Buffers;
 using Pathetic.Renderer.Graph;
+#if PROFILING
 using Pathetic.Renderer.Profiling;
+#endif
 using Pathetic.Renderer.Resources;
 using Pathetic.Renderer.Shaders;
 using Pathetic.Renderer.Shaders.GPUTypes;
@@ -50,8 +52,10 @@ public static class ServiceCollectionExtensions
             services.AddSingleton<PrecompiledShaderLibrary>();
 
             services.TryAddSingleton<IGpuTimer, NullGpuTimer>();
+#if PROFILING
             services.AddStructuredBuffer<ShaderCounterBuffer>();
             services.AddSingleton<IShaderCounterReadback>(sp => sp.GetRequiredService<ShaderCounterBuffer>());
+#endif
             services.AddSingleton<RenderPassFactory>();
             services.AddSingleton<RenderGraphPipelineFactory>();
             services.AddSingleton<RenderGraphFactory>();

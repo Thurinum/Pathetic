@@ -2,7 +2,11 @@
 
     <PropertyGroup>
         <RootNamespace>Pathetic.Renderer.Shaders</RootNamespace>
-        <SlangIntermediateDirectory>$(BaseIntermediateOutputPath)slang</SlangIntermediateDirectory>
+        <SlangRootDirectory>$(BaseIntermediateOutputPath)slang</SlangRootDirectory>
+        <SlangVariant Condition="'$(EnableProfiling)' == 'true'">profiled</SlangVariant>
+        <SlangVariant Condition="'$(SlangVariant)' == ''">plain</SlangVariant>
+        <SlangIntermediateDirectory>$(SlangRootDirectory)/$(SlangVariant)</SlangIntermediateDirectory>
+        <SlangProfilingArgument Condition="'$(EnableProfiling)' == 'true'">--profile-counters</SlangProfilingArgument>
         <SlangGeneratorProject>$(MSBuildThisFileDirectory)../Pathetic.Renderer.Shaders.Generator/Pathetic.Renderer.Shaders.Generator.csproj</SlangGeneratorProject>
         <AppShaderDirectory>$(MSBuildThisFileDirectory)../Pathetic.App/Shaders</AppShaderDirectory>
         <RendererShaderDirectory>$(MSBuildThisFileDirectory)../Pathetic.Renderer/Shaders</RendererShaderDirectory>
@@ -37,7 +41,7 @@
             Inputs="@(SlangShader);@(SlangShaderHeader);@(SlangGeneratorAssembly)"
             Outputs="$(SlangIntermediateDirectory)/.stamp">
         <RemoveDir Directories="$(SlangIntermediateDirectory)" />
-        <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;@(SlangGeneratorAssembly)&quot; --shader-dirs &quot;$(AppShaderDirectory)&quot; --shader-dirs &quot;$(RendererShaderDirectory)&quot; --out &quot;$(SlangIntermediateDirectory)&quot;" />
+        <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;@(SlangGeneratorAssembly)&quot; --shader-dirs &quot;$(AppShaderDirectory)&quot; --shader-dirs &quot;$(RendererShaderDirectory)&quot; --out &quot;$(SlangIntermediateDirectory)&quot; $(SlangProfilingArgument)" />
         <Touch Files="$(SlangIntermediateDirectory)/.stamp" AlwaysCreate="true" />
     </Target>
 
@@ -56,8 +60,8 @@
 
     <Target Name="CleanSlang"
             AfterTargets="Clean"
-            Condition="Exists('$(SlangIntermediateDirectory)')">
-        <RemoveDir Directories="$(SlangIntermediateDirectory)" />
+            Condition="Exists('$(SlangRootDirectory)')">
+        <RemoveDir Directories="$(SlangRootDirectory)" />
     </Target>
 
 </Project>
