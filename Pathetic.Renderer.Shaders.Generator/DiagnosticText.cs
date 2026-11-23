@@ -1,65 +1,95 @@
-﻿using System.Text.RegularExpressions;
+﻿using Prowl.Slang;
 
 namespace Pathetic.Renderer.Shaders.Generator;
 
 internal static class DiagnosticText
 {
-    private static readonly Regex Header = new(
-        @"^(?:fatal\s+)?(?<severity>error|warning|note)(?:\[(?<code>[^\]]+)\])?:\s*(?<text>.*)$",
-        RegexOptions.Compiled);
+    public static string Format(Diagnostic diagnostic)
+    {
+        string severity = diagnostic.Severity == Severity.Fatal ? "fatal error" : "error";
+        string code = diagnostic.ErrorCode >= 0 ? $" {diagnostic.ErrorCode}" : string.Empty;
+        string origin = diagnostic.FilePath is { Length: > 0 } path ? $"{path}({diagnostic.LineNumber}): " : string.Empty;
 
-    private static readonly Regex Arrow = new(
-        @"^\s*-->\s*(?<file>.+):(?<line>\d+):(?<column>\d+)\s*$",
-        RegexOptions.Compiled);
-
-    private static readonly Regex ErrorLine = new(
-        @"^(?:fatal\s+)?error(?:\[[^\]]*\])?:",
-        RegexOptions.Compiled | RegexOptions.Multiline);
-
-    public static bool HasErrors(string? message) =>
-        !string.IsNullOrEmpty(message) && ErrorLine.IsMatch(message);
+        return $"{origin}{severity}{code}: {diagnostic.Message}";
+    }
 
     public static string Format(string? message)
     {
-        if (string.IsNullOrEmpty(message))
-            return string.Empty;
+        string[] errors = [.. ReadErrors(message)];
 
-        string[] lines = message.ReplaceLineEndings("\n").Split('\n');
-        List<string> output = [];
-        int skipped = -1;
+        return errors.Length > 0
+            ? string.Join(Environment.NewLine, errors)
+            : message ?? string.Empty;
+    }
+
+    public static IReadOnlyList<string> ReadErrors(string? message)
+    {
+        List<string> errors = [];
+
+        if (string.IsNullOrEmpty(message))
+            return errors;
+
+        string[] lines = message.Split('\n');
 
         for (int i = 0; i < lines.Length; i++)
         {
-            if (i == skipped)
+            if (!TryReadDiagnostic(lines[i].TrimEnd('\r'), out string diagnostic))
                 continue;
 
-            Match header = Header.Match(lines[i]);
-
-            if (!header.Success)
+            if (i + 1 < lines.Length && TryReadLocation(lines[i + 1].TrimEnd('\r'), out string location))
             {
-                output.Add(lines[i]);
-                continue;
+                i++;
+                diagnostic = $"{location}: {diagnostic}";
             }
 
-            string severity = header.Groups["severity"].Value;
-            string code = header.Groups["code"].Value;
-            string text = header.Groups["text"].Value;
-            Match arrow = i + 1 < lines.Length ? Arrow.Match(lines[i + 1]) : Match.Empty;
-
-            if (!arrow.Success)
-            {
-                output.Add(Decorate(severity, code, text));
-                continue;
-            }
-
-            skipped = i + 1;
-            string location = $"{arrow.Groups["file"].Value}({arrow.Groups["line"].Value},{arrow.Groups["column"].Value})";
-            output.Add($"{location}: {Decorate(severity, code, text)}");
+            errors.Add(diagnostic);
         }
 
-        return string.Join(Environment.NewLine, output);
+        return errors;
     }
 
-    private static string Decorate(string severity, string code, string text) =>
-        code.Length > 0 ? $"{severity} {code}: {text}" : $"{severity}: {text}";
+    private static bool TryReadDiagnostic(string line, out string diagnostic)
+    {
+        diagnostic = string.Empty;
+
+        int bracket = line.IndexOf('[');
+        int end = line.IndexOf("]: ", StringComparison.Ordinal);
+
+        if (bracket < 0 || end < bracket)
+            return false;
+
+        string severity = line[..bracket].TrimEnd();
+
+        if (severity is not ("error" or "fatal error"))
+            return false;
+
+        diagnostic = $"{severity} {line[(bracket + 1)..end]}: {line[(end + 3)..]}";
+
+        return true;
+    }
+
+    private static bool TryReadLocation(string line, out string location)
+    {
+        location = string.Empty;
+
+        string trimmed = line.TrimStart();
+
+        if (!trimmed.StartsWith("--> ", StringComparison.Ordinal))
+            return false;
+
+        string target = trimmed[4..];
+        int column = target.LastIndexOf(':');
+
+        if (column < 0)
+            return false;
+
+        int lineNumber = target.LastIndexOf(':', column - 1);
+
+        if (lineNumber < 0)
+            return false;
+
+        location = $"{target[..lineNumber]}({target[(lineNumber + 1)..column]},{target[(column + 1)..]})";
+
+        return true;
+    }
 }

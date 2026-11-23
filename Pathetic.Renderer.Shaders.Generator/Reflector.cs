@@ -295,16 +295,12 @@ internal sealed class Reflector
 
     private static void ThrowOnErrors(DiagnosticInfo diagnostics)
     {
-        List<string> errors = [];
+        List<string> errors = [.. diagnostics.GetDiagnostics()
+            .Where(static diagnostic => diagnostic.Severity >= Severity.Error)
+            .Select(static diagnostic => DiagnosticText.Format(diagnostic))];
 
-        foreach (Diagnostic diagnostic in diagnostics.GetDiagnostics())
-        {
-            if (diagnostic.Severity >= Severity.Error)
-                errors.Add(DiagnosticText.Format(diagnostic.Message));
-        }
-
-        if (errors.Count == 0 && DiagnosticText.HasErrors(diagnostics.Message))
-            errors.Add(DiagnosticText.Format(diagnostics.Message));
+        if (errors.Count == 0)
+            errors.AddRange(DiagnosticText.ReadErrors(diagnostics.Message));
 
         if (errors.Count > 0)
             throw new ShaderCompilationException(string.Join(Environment.NewLine, errors));
