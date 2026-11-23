@@ -25,6 +25,7 @@ public sealed class ImGuiHost(RenderWindow window) : IDisposable
         _imgui!.Update(deltaTime, input);
     }
 
+    [Profile]
     public void End()
     {
         _imgui!.Render(window.Device, window.CommandList);

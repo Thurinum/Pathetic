@@ -23,6 +23,7 @@ public sealed record TextureSpec : IResourceSpec
     public TextureSizePolicy SizePolicy { get; }
 }
 
+public sealed record RwBufferSpec(string Name, uint SizeInBytes, uint Stride) : IResourceSpec;
 public sealed record SamplerSpec : IResourceSpec
 {
     public SamplerSpec(SamplerName name, SamplerDescription description)

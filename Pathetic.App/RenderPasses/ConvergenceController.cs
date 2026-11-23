@@ -9,7 +9,7 @@ public readonly record struct ConvergencePlan(
     uint SamplesPerPixel,
     uint MaxFrames);
 
-public sealed class ConvergenceController(
+public sealed partial class ConvergenceController(
     IOptions<TemporalAccumulationOptions> temporalAccumulation,
     IOptions<PathTracerOptions> pathTracer,
     RenderDebugSettings debug)
@@ -25,6 +25,7 @@ public sealed class ConvergenceController(
 
     public void Invalidate() => _invalidated = true;
 
+    [Profile]
     public ConvergencePlan GetPlan(uint frameIndex, SceneChange sceneRevision)
     {
         if (_lastFrameIndex == frameIndex)

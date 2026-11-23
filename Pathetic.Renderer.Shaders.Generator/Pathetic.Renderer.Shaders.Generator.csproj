@@ -12,4 +12,8 @@
         <PackageReference Include="System.CommandLine" />
     </ItemGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="..\Pathetic.Profiling\Pathetic.Profiling.csproj" />
+    </ItemGroup>
+
 </Project>

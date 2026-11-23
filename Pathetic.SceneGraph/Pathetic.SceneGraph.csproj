@@ -14,4 +14,9 @@
       <ProjectReference Include="..\Pathetic.Renderer\Pathetic.Renderer.csproj" />
     </ItemGroup>
 
+
+    <ItemGroup>
+        <ProjectReference Include="..\Pathetic.Profiling\Pathetic.Profiling.csproj" OutputItemType="Analyzer" />
+    </ItemGroup>
+
 </Project>

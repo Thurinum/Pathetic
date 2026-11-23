@@ -1,4 +1,5 @@
 using System.Text;
+using Pathetic.Profiling.Gpu;
 using Pathetic.Renderer.Shaders.Generator.Diagnostics;
 using Prowl.Slang;
 using Attribute = Prowl.Slang.Attribute;
@@ -47,6 +48,7 @@ internal sealed class ShaderCompiler
         {
             Targets = [targetDesc],
             SearchPaths = [.. shaders.Directories],
+            PreprocessorMacros = [.. ShaderCounterMacros.All.Select(static macro => new PreprocessorMacroDescription { Name = macro.Name, Value = macro.Value })],
         };
 
         Session session = GlobalSession.CreateSession(sessionDesc);

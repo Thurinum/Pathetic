@@ -11,6 +11,8 @@ import Environment;
 import FrameState;
 import Bvh;
 
+#include "ProfileCounters.slang"
+
 [CPUType("PathTracerParams")]
 struct Params
 {
@@ -50,8 +52,12 @@ public HitResult TraceBvh(Ray ray)
 
     // Check if there is an intersection with the BVH at all
     BvhIntersection rootIntersection = bvhNodes[BvhNode.Root].Intersects(ray, 1e-4, bestT);
+    PROFILE_ADD(BoxTests, 1);
     if (!rootIntersection.Hit)
+    {
+        PROFILE_ADD(RootMisses, 1);
         return bestHit;
+    }
 
     BvhStackEntry stack[64];
     uint stackSize = 0;
@@ -59,6 +65,7 @@ public HitResult TraceBvh(Ray ray)
 
     while (stackSize > 0)
     {
+        PROFILE_MAX(MaxStackDepth, stackSize);
         BvhStackEntry entry = stack[--stackSize];
 
         // Discard nodes whose entry point is past the closest hit found so far
@@ -66,11 +73,13 @@ public HitResult TraceBvh(Ray ray)
             continue;
 
         BvhNode node = bvhNodes[entry.Node];
+        PROFILE_ADD(NodeVisits, 1);
 
         if (node.PrimitiveCount > 0)
         {
             for (uint i = 0; i < node.PrimitiveCount; ++i)
             {
+                PROFILE_ADD(PrimitiveTests, 1);
                 BvhPrimitiveRef primitive = bvhPrimitiveRefs[node.FirstPrimitive + i];
 
                 HitResult hit = HitResult.Miss();
@@ -98,6 +107,7 @@ public HitResult TraceBvh(Ray ray)
             continue;
         }
 
+        PROFILE_ADD(BoxTests, 2);
         BvhIntersection leftIntersection = bvhNodes[node.Left].Intersects(ray, 1e-4, bestT);
         BvhIntersection rightIntersection = bvhNodes[node.Right].Intersects(ray, 1e-4, bestT);
 
@@ -128,10 +138,12 @@ float3 Trace(Ray ray, inout Rng rng)
 
     for (uint bounce = 0; bounce < params.MaxBounces; ++bounce)
     {
+        PROFILE_RAY(bounce);
         HitResult bestHit = TraceBvh(ray);
 
         if (!bestHit.IsHit())
         {
+            PROFILE_ADD(SkyEscapes, 1);
             light += weight * Sky(ray.Direction);
             break;
         }
@@ -145,10 +157,20 @@ float3 Trace(Ray ray, inout Rng rng)
             return 0.5 * (shadingNormal + 1.0);
 
         if (dot(bestHit.NormalExt, -ray.Direction) > 0.0)
-            light += weight * material.Emission.UnpackRgb() * material.EmissionStrength;
+        {
+            float3 emission = material.Emission.UnpackRgb() * material.EmissionStrength;
+            light += weight * emission;
+            if (any(emission > 0.0))
+            {
+                PROFILE_ADD(EmitterHits, 1);
+            }
+        }
 
         if (all(albedo == 0.0))
+        {
+            PROFILE_ADD(Absorbed, 1);
             break;
+        }
 
         float3 newDirection = RandomBounceDirection(shadingNormal, rng);
         weight *= albedo;
@@ -170,17 +192,8 @@ float3 Trace(Ray ray, inout Rng rng)
     return light;
 }
 
-[shader("compute")]
-[numthreads(8, 8, 1)]
-void main(uint3 dispatchThreadId : SV_DispatchThreadID)
+void RenderPixel(uint2 pixel, uint2 frameSize)
 {
-    uint2 frameSize;
-    pathTracerColor.GetDimensions(frameSize.x, frameSize.y);
-
-    uint2 pixel = dispatchThreadId.xy;
-    if (any(pixel >= frameSize))
-        return;
-
     Rng rng = Rng(pixel, frameState.FrameIndex);
     Accumulator accum = Accumulator();
 
@@ -193,8 +206,28 @@ void main(uint3 dispatchThreadId : SV_DispatchThreadID)
     {
         float2 pixelPoint = StratifiedPoint(sampleIndex, cellsPerAxis, rng);
         float2 aperturePoint = StratifiedPoint(apertureCells[sampleIndex], cellsPerAxis, rng);
-        accum.Add(Trace(BuildPrimaryRay(camera, pixel, frameSize, pixelPoint, aperturePoint), rng));
+        float3 C = Trace(BuildPrimaryRay(camera, pixel, frameSize, pixelPoint, aperturePoint), rng);
+        PROFILE_ADD(Paths, 1);
+        if (any(isnan(C)))
+        {
+            PROFILE_ADD(NanSamples, 1);
+        }
+        accum.Add(C);
     }
 
     pathTracerColor[pixel] = float4(accum.Average(), 1.0);
+}
+
+[shader("compute")]
+[numthreads(8, 8, 1)]
+void main(uint3 dispatchThreadId : SV_DispatchThreadID, uint groupIndex : SV_GroupIndex)
+{
+    uint2 frameSize;
+    pathTracerColor.GetDimensions(frameSize.x, frameSize.y);
+
+    uint2 pixel = dispatchThreadId.xy;
+    ProfileBegin(groupIndex);
+    if (all(pixel < frameSize))
+        RenderPixel(pixel, frameSize);
+    ProfileEnd(groupIndex);
 }

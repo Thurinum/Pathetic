@@ -55,8 +55,9 @@ public sealed class SceneLoop(SceneManager sceneService, RenderWindow window, Im
     
     private void UpdateComponents(Scene scene)
     {
-        foreach (var obj in scene.Objects)
+        for (int i = 0; i < scene.Objects.Count; i++)
         {
+            var obj = scene.Objects[i];
             foreach (Component component in obj.Components)
             {
                 if (!component.IsFullySetup)
@@ -69,8 +70,9 @@ public sealed class SceneLoop(SceneManager sceneService, RenderWindow window, Im
     
     private void LateUpdateComponents(Scene scene)
     {
-        foreach (var obj in scene.Objects)
+        for (int i = 0; i < scene.Objects.Count; i++)
         {
+            var obj = scene.Objects[i];
             foreach (Component component in obj.Components)
             {
                 if (!component.IsFullySetup)
@@ -83,8 +85,9 @@ public sealed class SceneLoop(SceneManager sceneService, RenderWindow window, Im
 
     private void GUIComponents(Scene scene)
     {
-        foreach (var obj in scene.Objects)
+        for (int i = 0; i < scene.Objects.Count; i++)
         {
+            var obj = scene.Objects[i];
             foreach (Component component in obj.Components)
             {
                 if (!component.IsFullySetup)

@@ -5,7 +5,7 @@ using Pathetic.Renderer.Buffers;
 
 namespace Pathetic.App.Bvh;
 
-public sealed class SceneBvh(
+public sealed partial class SceneBvh(
     StructuredBuffer<GPUTypes.Sphere> spheres,
     StructuredBuffer<GPUTypes.Plane> planes,
     StructuredBuffer<GPUTypes.Triangle> triangles,
@@ -34,6 +34,7 @@ public sealed class SceneBvh(
         || _triangleRevision != triangles.Revision
         || _transformRevision != meshTransforms.Revision;
 
+    [Profile]
     public void Rebuild()
     {
         List<BvhPrimitiveRef> references = [];

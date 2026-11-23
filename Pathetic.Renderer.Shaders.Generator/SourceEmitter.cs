@@ -130,7 +130,7 @@ internal static class SourceEmitter
             writer.Line($"GroupSizeX = {pipeline.ThreadGroupSize[0]},");
             writer.Line($"GroupSizeY = {pipeline.ThreadGroupSize[1]},");
             writer.Line($"GroupSizeZ = {pipeline.ThreadGroupSize[2]},");
-            writer.Line($"SpirvResourceName = \"Pathetic.Renderer.Shaders.{module.ModuleName}.spv\",");
+            writer.Line($"SPIRVResourceName = \"Pathetic.Renderer.Shaders.{module.ModuleName}.spv\",");
             writer.Line("Parameters =");
             writer.Open("[");
 
