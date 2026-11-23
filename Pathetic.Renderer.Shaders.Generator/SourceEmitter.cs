@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using Microsoft.CodeAnalysis.CSharp;
 
 namespace Pathetic.Renderer.Shaders.Generator;

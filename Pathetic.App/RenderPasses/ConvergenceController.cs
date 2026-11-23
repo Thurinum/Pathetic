@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Options;
 using Pathetic.Renderer.Resources;
 
 namespace Pathetic.App.RenderPasses;

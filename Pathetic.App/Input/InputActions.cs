@@ -1,4 +1,4 @@
-﻿using Pathetic.Input;
+using Pathetic.Input;
 
 namespace Pathetic.App.Input;
 

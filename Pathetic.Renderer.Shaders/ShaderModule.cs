@@ -1,4 +1,4 @@
-﻿namespace Pathetic.Renderer.Shaders;
+namespace Pathetic.Renderer.Shaders;
 
 public readonly record struct ShaderParameter(string Name, ShaderResourceKind Kind, uint Space, uint Binding);
 

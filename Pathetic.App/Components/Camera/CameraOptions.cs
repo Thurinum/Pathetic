@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using Pathetic.Renderer;
 
 namespace Pathetic.App.Components.Camera;

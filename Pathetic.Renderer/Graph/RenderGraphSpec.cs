@@ -1,4 +1,4 @@
-﻿namespace Pathetic.Renderer.Graph;
+namespace Pathetic.Renderer.Graph;
 
 public sealed record RenderGraphSpec
 {

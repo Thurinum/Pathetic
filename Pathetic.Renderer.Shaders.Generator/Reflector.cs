@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using Prowl.Slang;
 
 namespace Pathetic.Renderer.Shaders.Generator;

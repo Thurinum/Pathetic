@@ -1,4 +1,4 @@
-﻿module Camera;
+module Camera;
 
 import CPUType;
 

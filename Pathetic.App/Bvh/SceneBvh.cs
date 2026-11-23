@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using Pathetic.App.Components;
 using Pathetic.Renderer.Bvh;
 using Pathetic.Renderer.Buffers;

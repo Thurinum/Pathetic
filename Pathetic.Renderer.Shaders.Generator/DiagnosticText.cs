@@ -1,4 +1,4 @@
-﻿using Prowl.Slang;
+using Prowl.Slang;
 
 namespace Pathetic.Renderer.Shaders.Generator;
 

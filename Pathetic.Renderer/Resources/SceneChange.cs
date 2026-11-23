@@ -1,4 +1,4 @@
-﻿namespace Pathetic.Renderer.Resources;
+namespace Pathetic.Renderer.Resources;
 
 [Flags]
 public enum SceneChange : uint

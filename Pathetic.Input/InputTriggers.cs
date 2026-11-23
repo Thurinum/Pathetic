@@ -1,4 +1,4 @@
-﻿namespace Pathetic.Input;
+namespace Pathetic.Input;
 
 /// <summary>
 /// Fires once per press instead of every frame the action stays above its threshold.

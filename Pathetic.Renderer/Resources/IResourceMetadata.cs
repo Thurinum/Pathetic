@@ -1,4 +1,4 @@
-﻿using Pathetic.Renderer.Graph;
+using Pathetic.Renderer.Graph;
 
 namespace Pathetic.Renderer.Resources;
 

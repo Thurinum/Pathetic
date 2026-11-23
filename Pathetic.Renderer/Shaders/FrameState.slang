@@ -1,4 +1,4 @@
-﻿module FrameState;
+module FrameState;
 
 import CPUType;
 

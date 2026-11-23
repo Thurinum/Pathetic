@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using ImGuiNET;
 using Pathetic.App.Input;
 using Pathetic.SceneGraph;

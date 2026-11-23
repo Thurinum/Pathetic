@@ -1,4 +1,4 @@
-﻿using ImGuiNET;
+using ImGuiNET;
 using Microsoft.Extensions.Options;
 using Pathetic.App.RenderPasses;
 using Pathetic.SceneGraph.Components;
