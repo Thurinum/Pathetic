@@ -10,12 +10,12 @@ public sealed class PathTracerPass(
     ConvergenceController convergence,
     RenderDebugSettings debug) : RenderPass
 {
-    public override string ShaderModuleName => GPUTypes.Bindings.PathTracer.ModuleName;
+    public override string ShaderModuleName => Gpu.Bindings.PathTracer.ModuleName;
 
     public override IReadOnlyList<IResourceSpec> Resources { get; } =
     [
-        new TextureSpec(GPUTypes.Bindings.PathTracer.pathTracerColor, PixelFormat.R32_G32_B32_A32_Float, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
-        UniformBufferSpec.Of<GPUTypes.PathTracerParams>(GPUTypes.Bindings.PathTracer.@params),
+        new TextureSpec(Gpu.Bindings.PathTracer.PathTracerColor, PixelFormat.R32_G32_B32_A32_Float, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
+        UniformBufferSpec.Of<Gpu.PathTracerParams>(Gpu.Bindings.PathTracer.Params),
     ];
 
     public override void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
@@ -23,14 +23,14 @@ public sealed class PathTracerPass(
         ConvergencePlan plan = convergence.GetPlan(ctx.FrameIndex, ctx.Resources.SceneRevision);
         Enabled = plan.RunPathTracer;
 
-        GPUTypes.PathTracerParams @params = new()
+        Gpu.PathTracerParams @params = new()
         {
-            PlaneCount = ctx.Resources.GetElementCount(GPUTypes.Bindings.PathTracer.planes),
-            SphereCount = ctx.Resources.GetElementCount(GPUTypes.Bindings.PathTracer.spheres),
-            TriangleCount = ctx.Resources.GetElementCount(GPUTypes.Bindings.PathTracer.triangles),
+            PlaneCount = ctx.Resources.GetElementCount(Gpu.Bindings.PathTracer.Planes),
+            SphereCount = ctx.Resources.GetElementCount(Gpu.Bindings.PathTracer.Spheres),
+            TriangleCount = ctx.Resources.GetElementCount(Gpu.Bindings.PathTracer.Triangles),
             SamplesPerPixel = plan.SamplesPerPixel,
             MaxBounces = options.Value.MaxBounces,
-            BvhNodeCount = ctx.Resources.GetElementCount(GPUTypes.Bindings.PathTracer.bvhNodes),
+            BvhNodeCount = ctx.Resources.GetElementCount(Gpu.Bindings.PathTracer.BvhNodes),
             DisplayNormals = debug.DisplayNormals ? 1u : 0u,
             SmoothShading = debug.SmoothShading ? 1u : 0u,
         };

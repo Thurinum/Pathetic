@@ -9,7 +9,7 @@ using Pathetic.Renderer.Profiling;
 #endif
 using Pathetic.Renderer.Resources;
 using Pathetic.Renderer.Shaders;
-using Pathetic.Renderer.Shaders.GPUTypes;
+using Pathetic.Renderer.Shaders.Gpu;
 
 namespace Pathetic.Renderer.DI;
 

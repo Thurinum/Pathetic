@@ -33,9 +33,19 @@ public sealed class PrecompiledShaderLibrary
             : a.Slot.CompareTo(b.Slot));
 
         return new CompiledShader(
-            module.LoadSpirv(),
+            LoadSpirv(module),
             new UIntVector3(module.GroupSizeX, module.GroupSizeY, module.GroupSizeZ),
             bindings);
+    }
+
+    private static byte[] LoadSpirv(ShaderModule module)
+    {
+        using Stream stream = typeof(ShaderModule).Assembly.GetManifestResourceStream(module.SpirvResourceName)
+            ?? throw new InvalidOperationException($"Shader module '{module.Name}' is missing its embedded SPIR-V resource '{module.SpirvResourceName}'.");
+
+        using MemoryStream buffer = new();
+        stream.CopyTo(buffer);
+        return buffer.ToArray();
     }
 
     private static ResourceKind MapKind(ShaderResourceKind kind, string moduleName) => kind switch

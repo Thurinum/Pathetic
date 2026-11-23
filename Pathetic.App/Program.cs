@@ -2,10 +2,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Pathetic.App;
-using Pathetic.App.Assets;
-using Pathetic.App.Bvh;
-using Pathetic.App.Components;
 using Pathetic.App.Components.Camera;
+using Pathetic.App.DI;
 using Pathetic.App.Input;
 using Pathetic.App.RenderPasses;
 using Pathetic.App.Scenes;
@@ -43,30 +41,9 @@ builder.Services.AddRenderer(graph => graph
     // .AddPass<CirclesPass>()
     .AddPass<PathTracerPass>()
     .AddPass<TemporalAccumulationPass>()
-    .Present(GPUTypes.Bindings.TemporalAccumulation.color));
+    .Present(Gpu.Bindings.TemporalAccumulation.Color));
 
-builder.Services.AddStructuredBuffer<GPUTypes.Sphere>(GPUTypes.Bindings.PathTracer.spheres, sparseStorage: true);
-builder.Services.AddStructuredBuffer<GPUTypes.Plane>(GPUTypes.Bindings.PathTracer.planes, sparseStorage: true);
-builder.Services.AddStructuredBuffer<GPUTypes.Triangle>(GPUTypes.Bindings.PathTracer.triangles, sparseStorage: true);
-builder.Services.AddStructuredBuffer<GPUTypes.MeshTransform>(GPUTypes.Bindings.Primitives.meshTransforms);
-builder.Services.AddStructuredBuffer<Material>(GPUTypes.Bindings.PathTracer.materials);
-builder.Services.AddSingleton<MaterialLibrary>();
-builder.Services.AddSingleton<MeshTransformLibrary>();
-builder.Services.AddSingleton<ObjLoader>();
-builder.Services.AddStructuredBuffer<CameraProvider>();
-
-builder.Services.AddSingleton<SceneBvh>();
-builder.Services.AddSingleton(sp => new BvhBufferUploader<GPUTypes.BvhNode>(
-    GPUTypes.Bindings.PathTracer.bvhNodes,
-    sp.GetRequiredService<SceneBvh>(),
-    scene => scene.Nodes));
-builder.Services.AddSingleton<IResourceUploader>(sp => sp.GetRequiredService<BvhBufferUploader<GPUTypes.BvhNode>>());
-builder.Services.AddSingleton(sp => new BvhBufferUploader<GPUTypes.BvhPrimitiveRef>(
-    GPUTypes.Bindings.PathTracer.bvhPrimitiveRefs,
-    sp.GetRequiredService<SceneBvh>(),
-    scene => scene.PrimitiveRefs));
-builder.Services.AddSingleton<IResourceUploader>(sp => sp.GetRequiredService<BvhBufferUploader<GPUTypes.BvhPrimitiveRef>>());
-
+builder.Services.AddSceneRendering();
 builder.Services.AddSceneGraph();
 builder.Services.AddScene<DefaultScene>();
 builder.Services.AddScene<OneWeekendScene>();

@@ -1,4 +1,4 @@
-namespace Pathetic.Renderer.Shaders.GPUTypes;
+namespace Pathetic.Renderer.Shaders.Gpu;
 
 public readonly record struct TextureName(string Value)
 {

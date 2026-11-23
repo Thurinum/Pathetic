@@ -1,21 +1,13 @@
 using Pathetic.Renderer.Shaders.Generator.Diagnostics;
+using Pathetic.Renderer.Shaders.Generator.Models;
 
-namespace Pathetic.Renderer.Shaders.Generator;
+namespace Pathetic.Renderer.Shaders.Generator.Discovery;
 
-internal sealed class ShaderFile
+internal static class ShaderSourceDiscovery
 {
-    public required string Path { get; init; }
-    public required string ModuleName { get; init; }
-}
-
-internal sealed class ShaderSet
-{
-    public required IReadOnlyList<ShaderFile> Files { get; init; }
-    public required IReadOnlyList<string> Directories { get; init; }
-
-    public static ShaderSet Discover(IReadOnlyList<string> directories)
+    public static ShaderSourceSet Discover(IReadOnlyList<string> directories)
     {
-        List<ShaderFile> files = [];
+        List<ShaderSource> sources = [];
         HashSet<string> moduleNames = new(StringComparer.OrdinalIgnoreCase);
 
         foreach (string directory in directories)
@@ -30,19 +22,15 @@ internal sealed class ShaderSet
                 if (!moduleNames.Add(moduleName))
                     throw new ShaderCompilerException($"Two shader files share the name '{moduleName}', outputs would collide.");
 
-                files.Add(new ShaderFile
-                {
-                    Path = path,
-                    ModuleName = moduleName,
-                });
+                sources.Add(new ShaderSource(path, moduleName));
             }
         }
 
-        if (files.Count == 0)
+        if (sources.Count == 0)
             throw new ShaderCompilerException("No shader files found.");
 
-        files.Sort(static (a, b) => string.CompareOrdinal(a.ModuleName, b.ModuleName));
+        sources.Sort(static (a, b) => string.CompareOrdinal(a.ModuleName, b.ModuleName));
 
-        return new ShaderSet { Files = files, Directories = directories };
+        return new ShaderSourceSet(sources, directories);
     }
 }

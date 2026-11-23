@@ -31,12 +31,11 @@ root.SetAction(parseResult =>
 {
     try
     {
-        ShaderSet shaderSet = ShaderSet.Discover([.. parseResult.GetValue(shaderDirectories)!.Select(Path.GetFullPath)]);
-        string outDir = Path.GetFullPath(parseResult.GetValue(output)!);
+        ShaderGenerationPipeline.Run(new ShaderGenerationOptions(
+            [.. parseResult.GetValue(shaderDirectories)!.Select(Path.GetFullPath)],
+            Path.GetFullPath(parseResult.GetValue(output)!),
+            parseResult.GetValue(profileCounters)));
 
-        new ShaderCompiler().Compile(shaderSet, outDir, parseResult.GetValue(profileCounters));
-
-        Console.WriteLine($"Pathetic.Renderer.Shaders.Generator: {shaderSet.Files.Count} module(s) written to '{outDir}'.");
         return 0;
     }
     catch (SlangDiagnosticException exception)

@@ -8,16 +8,6 @@ public sealed class ShaderModule
     public required uint GroupSizeX { get; init; }
     public required uint GroupSizeY { get; init; }
     public required uint GroupSizeZ { get; init; }
-    public required string SPIRVResourceName { get; init; }
+    public required string SpirvResourceName { get; init; }
     public required IReadOnlyList<ShaderParameter> Parameters { get; init; }
-
-    public byte[] LoadSpirv()
-    {
-        using Stream stream = typeof(ShaderModule).Assembly.GetManifestResourceStream(SPIRVResourceName)
-            ?? throw new InvalidOperationException($"Shader module '{Name}' is missing its embedded SPIR-V resource '{SPIRVResourceName}'.");
-
-        using MemoryStream buffer = new();
-        stream.CopyTo(buffer);
-        return buffer.ToArray();
-    }
 }

@@ -5,7 +5,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Using Include="Pathetic.Renderer.Shaders.GPUTypes" Alias="GPUTypes" />
+      <Using Include="Pathetic.Renderer.Shaders.Gpu" Alias="Gpu" />
     </ItemGroup>
 
     <ItemGroup>

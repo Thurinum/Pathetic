@@ -4,7 +4,7 @@ using Pathetic.SceneGraph;
 
 namespace Pathetic.App.Components;
 
-public class PlaneComponent(SparseSet<GPUTypes.Plane> primitives, MaterialLibrary materials) : RendererBase<GPUTypes.Plane>(primitives)
+public class PlaneComponent(SparseSet<Gpu.Plane> primitives, MaterialLibrary materials) : RendererBase<Gpu.Plane>(primitives)
 {
     private Transform _transform = null!;
 
@@ -18,9 +18,9 @@ public class PlaneComponent(SparseSet<GPUTypes.Plane> primitives, MaterialLibrar
         base.Setup();
     }
 
-    protected override GPUTypes.Plane BuildPrimitive()
+    protected override Gpu.Plane BuildPrimitive()
     {
-        return new GPUTypes.Plane
+        return new Gpu.Plane
         {
             Center = _transform.Position,
             U = Vector3.Transform(Vector3.UnitX, _transform.Rotation) * (Width * 0.5f),

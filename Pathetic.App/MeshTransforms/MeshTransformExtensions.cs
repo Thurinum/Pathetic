@@ -1,18 +1,17 @@
 using System.Numerics;
-using Pathetic.Renderer.Buffers;
 
-namespace Pathetic.App;
+namespace Pathetic.App.MeshTransforms;
 
 public static class MeshTransformExtensions
 {
-    public static GPUTypes.MeshTransform FromMatrix(Matrix4x4 matrix)
+    public static Gpu.MeshTransform FromMatrix(Matrix4x4 matrix)
     {
         if (!Matrix4x4.Invert(matrix, out Matrix4x4 inverse))
             inverse = Matrix4x4.Identity;
 
         Matrix4x4 normal = Matrix4x4.Transpose(inverse);
 
-        return new GPUTypes.MeshTransform
+        return new Gpu.MeshTransform
         {
             InverseX = new Vector3(inverse.M11, inverse.M12, inverse.M13),
             InverseY = new Vector3(inverse.M21, inverse.M22, inverse.M23),
@@ -28,29 +27,6 @@ public static class MeshTransformExtensions
         };
     }
 
-    public static Vector3 TransformPoint(this GPUTypes.MeshTransform transform, Vector3 point) =>
+    public static Vector3 TransformPoint(this Gpu.MeshTransform transform, Vector3 point) =>
         point.X * transform.ForwardX + point.Y * transform.ForwardY + point.Z * transform.ForwardZ + transform.ForwardOffset;
-}
-
-public sealed class MeshTransformLibrary(StructuredBuffer<GPUTypes.MeshTransform> transforms)
-{
-    public const uint None = uint.MaxValue;
-
-    private readonly Stack<uint> _free = [];
-
-    public uint Add(in GPUTypes.MeshTransform transform)
-    {
-        if (_free.Count > 0)
-        {
-            uint index = _free.Pop();
-            transforms.UpdateAt((int)index, transform);
-            return index;
-        }
-
-        return (uint)transforms.Add(transform);
-    }
-
-    public void Update(uint index, in GPUTypes.MeshTransform transform) => transforms.UpdateAt((int)index, transform);
-
-    public void Remove(uint index) => _free.Push(index);
 }

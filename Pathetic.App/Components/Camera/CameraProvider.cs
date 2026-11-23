@@ -6,10 +6,10 @@ namespace Pathetic.App.Components.Camera;
 
 public sealed class CameraProvider : IResourceUploader
 {
-    private GPUTypes.Camera _data;
+    private Gpu.Camera _data;
     private SceneChange _dirty = SceneChange.All;
 
-    public void Set(in GPUTypes.Camera data)
+    public void Set(in Gpu.Camera data)
     {
         if (data.Equals(_data))
             return;
@@ -20,7 +20,7 @@ public sealed class CameraProvider : IResourceUploader
 
     public IReadOnlyList<IResourceSpec> Resources { get; } =
     [
-        UniformBufferSpec.Of<GPUTypes.Camera>(GPUTypes.Bindings.PathTracer.camera)
+        UniformBufferSpec.Of<Gpu.Camera>(Gpu.Bindings.PathTracer.Camera)
     ];
 
     public SceneChange DirtyChanges => _dirty;

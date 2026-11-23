@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using NeoVeldrid;
-using Pathetic.Renderer.Shaders.GPUTypes;
+using Pathetic.Renderer.Shaders.Gpu;
 using Pathetic.Renderer.Graph;
 
 namespace Pathetic.Renderer.Resources;
