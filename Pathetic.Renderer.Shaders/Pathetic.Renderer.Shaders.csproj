@@ -8,6 +8,8 @@
         <SlangIntermediateDirectory>$(SlangRootDirectory)/$(SlangVariant)</SlangIntermediateDirectory>
         <SlangProfilingArgument Condition="'$(EnableProfiling)' == 'true'">--profile-counters</SlangProfilingArgument>
         <SlangGeneratorProject>$(MSBuildThisFileDirectory)../Pathetic.Renderer.Shaders.Generator/Pathetic.Renderer.Shaders.Generator.csproj</SlangGeneratorProject>
+        <!-- The generator is a build-time tool: it must not inherit the app's publish settings, or the SDK infers a host RID for it. -->
+        <SlangGeneratorGlobalPropertiesToRemove>RuntimeIdentifier;SelfContained;PublishSingleFile;PublishTrimmed;PublishAot;PublishReadyToRun;PublishSelfContained;PublishRuntimeIdentifier</SlangGeneratorGlobalPropertiesToRemove>
         <AppShaderDirectory>$(MSBuildThisFileDirectory)../Pathetic.App/Shaders</AppShaderDirectory>
         <RendererShaderDirectory>$(MSBuildThisFileDirectory)../Pathetic.Renderer/Shaders</RendererShaderDirectory>
     </PropertyGroup>
@@ -25,13 +27,13 @@
         <ProjectReference Include="$(SlangGeneratorProject)"
                           ReferenceOutputAssembly="false"
                           Private="false"
-                          GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained" />
+                          GlobalPropertiesToRemove="$(SlangGeneratorGlobalPropertiesToRemove)" />
     </ItemGroup>
 
     <Target Name="ResolveSlangGenerator" DependsOnTargets="ResolveProjectReferences">
         <MSBuild Projects="$(SlangGeneratorProject)"
                  Targets="GetTargetPath"
-                 RemoveProperties="RuntimeIdentifier;SelfContained">
+                 RemoveProperties="$(SlangGeneratorGlobalPropertiesToRemove)">
             <Output TaskParameter="TargetOutputs" ItemName="SlangGeneratorAssembly" />
         </MSBuild>
     </Target>

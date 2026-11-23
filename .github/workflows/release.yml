@@ -98,7 +98,6 @@ jobs:
 
           - **macOS (Apple silicon):** \`Pathetic-${VERSION}-macos-arm64.zip\`. Requires macOS 26 or later. The app is not notarized: on first launch, right-click Pathetic.app and choose **Open**.
           - **Windows (x64):** \`Pathetic-${VERSION}-windows-x64.zip\`. Unzip and run \`Pathetic\\Pathetic.App.exe\`. Requires a GPU driver with Vulkan support.
-          - **Windows (ARM64):** \`Pathetic-${VERSION}-windows-arm64.zip\`, same as above for Windows on ARM.
           NOTES
           )
 
