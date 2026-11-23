@@ -6,17 +6,17 @@ using Pathetic.Renderer.Buffers;
 namespace Pathetic.App.Bvh;
 
 public sealed class SceneBvh(
-    StructuredBuffer<GPUType.Sphere> spheres,
-    StructuredBuffer<GPUType.Plane> planes,
-    StructuredBuffer<GPUType.Triangle> triangles,
-    StructuredBuffer<GPUType.MeshTransform> meshTransforms)
+    StructuredBuffer<GPUTypes.Sphere> spheres,
+    StructuredBuffer<GPUTypes.Plane> planes,
+    StructuredBuffer<GPUTypes.Triangle> triangles,
+    StructuredBuffer<GPUTypes.MeshTransform> meshTransforms)
 {
     private const uint PlaneType = 0;
     private const uint SphereType = 1;
     private const uint TriangleType = 2;
 
-    private GPUType.BvhNode[] _nodes = [];
-    private GPUType.BvhPrimitiveRef[] _primitiveRefs = [];
+    private GPUTypes.BvhNode[] _nodes = [];
+    private GPUTypes.BvhPrimitiveRef[] _primitiveRefs = [];
     private uint _sphereRevision;
     private uint _planeRevision;
     private uint _triangleRevision;
@@ -24,8 +24,8 @@ public sealed class SceneBvh(
     private bool _built;
 
     public uint Version { get; private set; }
-    public GPUType.BvhNode[] Nodes => _nodes;
-    public GPUType.BvhPrimitiveRef[] PrimitiveRefs => _primitiveRefs;
+    public GPUTypes.BvhNode[] Nodes => _nodes;
+    public GPUTypes.BvhPrimitiveRef[] PrimitiveRefs => _primitiveRefs;
 
     public bool IsDirty =>
         !_built
@@ -41,8 +41,8 @@ public sealed class SceneBvh(
         AppendPlanes(references);
         AppendTriangles(references);
 
-        List<GPUType.BvhNode> nodes = [];
-        List<GPUType.BvhPrimitiveRef> primitiveRefs = [];
+        List<GPUTypes.BvhNode> nodes = [];
+        List<GPUTypes.BvhPrimitiveRef> primitiveRefs = [];
 
         if (references.Count > 0)
         {
@@ -62,10 +62,10 @@ public sealed class SceneBvh(
 
     private void AppendSpheres(List<BvhPrimitiveRef> references)
     {
-        ReadOnlySpan<GPUType.Sphere> source = spheres.Values;
+        ReadOnlySpan<GPUTypes.Sphere> source = spheres.Values;
         for (uint i = 0; i < source.Length; i++)
         {
-            GPUType.Sphere sphere = source[(int)i];
+            GPUTypes.Sphere sphere = source[(int)i];
             Vector3 radius = new(sphere.Radius);
             references.Add(new BvhPrimitiveRef(
                 SphereType,
@@ -76,10 +76,10 @@ public sealed class SceneBvh(
 
     private void AppendPlanes(List<BvhPrimitiveRef> references)
     {
-        ReadOnlySpan<GPUType.Plane> source = planes.Values;
+        ReadOnlySpan<GPUTypes.Plane> source = planes.Values;
         for (uint i = 0; i < source.Length; i++)
         {
-            GPUType.Plane plane = source[(int)i];
+            GPUTypes.Plane plane = source[(int)i];
             Vector3 p0 = plane.Center - plane.U - plane.V;
             Vector3 p1 = plane.Center + plane.U - plane.V;
             Vector3 p2 = plane.Center - plane.U + plane.V;
@@ -94,12 +94,12 @@ public sealed class SceneBvh(
 
     private void AppendTriangles(List<BvhPrimitiveRef> references)
     {
-        ReadOnlySpan<GPUType.Triangle> source = triangles.Values;
-        ReadOnlySpan<GPUType.MeshTransform> transforms = meshTransforms.Values;
+        ReadOnlySpan<GPUTypes.Triangle> source = triangles.Values;
+        ReadOnlySpan<GPUTypes.MeshTransform> transforms = meshTransforms.Values;
 
         for (uint i = 0; i < source.Length; i++)
         {
-            GPUType.Triangle triangle = source[(int)i];
+            GPUTypes.Triangle triangle = source[(int)i];
 
             AxisAlignedBoundingBox bounds = AxisAlignedBoundingBox.Empty
                 .Include(triangle.V0).Include(triangle.V1).Include(triangle.V2);
@@ -111,7 +111,7 @@ public sealed class SceneBvh(
         }
     }
 
-    private static AxisAlignedBoundingBox TransformBounds(AxisAlignedBoundingBox bounds, GPUType.MeshTransform transform)
+    private static AxisAlignedBoundingBox TransformBounds(AxisAlignedBoundingBox bounds, GPUTypes.MeshTransform transform)
     {
         AxisAlignedBoundingBox result = AxisAlignedBoundingBox.Empty;
 

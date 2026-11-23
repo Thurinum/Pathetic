@@ -28,7 +28,7 @@ public static class ServiceCollectionExtensions
         /// <param name="capacity">How many elements the buffer can hold.</param>
         /// <typeparam name="T"></typeparam>
         public void AddStructuredBuffer<T>(
-            BufferRef name,
+            BufferName name,
             bool sparseStorage = false,
             bool resizable = true,
             bool dynamic = true,

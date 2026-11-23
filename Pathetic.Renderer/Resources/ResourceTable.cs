@@ -19,7 +19,7 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
 
     public ResourceTable()
     {
-        Declare(UniformBufferSpec.Of<GPUType.FrameState>(GPUType.Resources.FrameState.frameState));
+        Declare(UniformBufferSpec.Of<GPUTypes.FrameState>(GPUTypes.Bindings.FrameState.frameState));
     }
 
     private SceneChange _pendingChanges;
@@ -97,7 +97,7 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
         }
 
         // Hard-coded and deliberately last: shaders must observe this frame's revision.
-        ctx.Cmd.UpdateBuffer(GetResource<DeviceBuffer>(GPUType.Resources.FrameState.frameState), 0, new GPUType.FrameState
+        ctx.Cmd.UpdateBuffer(GetResource<DeviceBuffer>(GPUTypes.Bindings.FrameState.frameState), 0, new GPUTypes.FrameState
         {
             FrameIndex = ctx.FrameIndex,
             DeltaTime = ctx.DeltaTime,

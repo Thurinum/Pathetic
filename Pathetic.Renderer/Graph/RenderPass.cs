@@ -7,7 +7,7 @@ namespace Pathetic.Renderer.Graph;
 public abstract class RenderPass : IResourceUploader
 {
     public bool Enabled { get; set; } = true;
-    public abstract string ShaderModule { get; }
+    public abstract string ShaderModuleName { get; }
 
     public virtual IReadOnlyList<IResourceSpec> Resources => [];
 

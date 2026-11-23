@@ -3,14 +3,14 @@ using Pathetic.SceneGraph;
 
 namespace Pathetic.App.Components;
 
-public class SphereComponent(SparseSet<GPUType.Sphere> primitives, MaterialLibrary materials) : RendererBase<GPUType.Sphere>(primitives)
+public class SphereComponent(SparseSet<GPUTypes.Sphere> primitives, MaterialLibrary materials) : RendererBase<GPUTypes.Sphere>(primitives)
 {
     public float Radius { get; set; } = 1.0f;
     public Material Material { get; set; } = Material.Default;
 
-    protected override GPUType.Sphere BuildPrimitive()
+    protected override GPUTypes.Sphere BuildPrimitive()
     {
-        return new GPUType.Sphere
+        return new GPUTypes.Sphere
         {
             Center = Parent.Transform.Position,
             Radius = Radius,

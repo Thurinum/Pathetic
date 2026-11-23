@@ -3,44 +3,44 @@ namespace Pathetic.Renderer.Shaders.Generator;
 internal sealed class ShaderFile
 {
     public required string Path { get; init; }
-    public required string Name { get; init; }
+    public required string ModuleName { get; init; }
 }
 
 internal sealed class ShaderSet
 {
     public required IReadOnlyList<ShaderFile> Files { get; init; }
-    public required IReadOnlyList<string> Roots { get; init; }
+    public required IReadOnlyList<string> Directories { get; init; }
 
-    public static ShaderSet Discover(IReadOnlyList<string> roots)
+    public static ShaderSet Discover(IReadOnlyList<string> directories)
     {
         List<ShaderFile> files = [];
-        HashSet<string> stems = new(StringComparer.OrdinalIgnoreCase);
+        HashSet<string> moduleNames = new(StringComparer.OrdinalIgnoreCase);
 
-        foreach (string root in roots)
+        foreach (string directory in directories)
         {
-            if (!Directory.Exists(root))
-                throw new SlangInteropException($"Shader directory '{root}' does not exist.");
+            if (!Directory.Exists(directory))
+                throw new ShaderCompilerException($"Shader directory '{directory}' does not exist.");
 
-            foreach (string path in Directory.EnumerateFiles(root, "*.slang", SearchOption.AllDirectories))
+            foreach (string path in Directory.EnumerateFiles(directory, "*.slang", SearchOption.AllDirectories))
             {
-                string stem = Path.GetFileNameWithoutExtension(path);
+                string moduleName = Path.GetFileNameWithoutExtension(path);
 
-                if (!stems.Add(stem))
-                    throw new SlangInteropException($"Two shader files share the name '{stem}', outputs would collide.");
+                if (!moduleNames.Add(moduleName))
+                    throw new ShaderCompilerException($"Two shader files share the name '{moduleName}', outputs would collide.");
 
                 files.Add(new ShaderFile
                 {
                     Path = path,
-                    Name = stem,
+                    ModuleName = moduleName,
                 });
             }
         }
 
         if (files.Count == 0)
-            throw new SlangInteropException("No shader files found.");
+            throw new ShaderCompilerException("No shader files found.");
 
-        files.Sort(static (a, b) => string.CompareOrdinal(a.Name, b.Name));
+        files.Sort(static (a, b) => string.CompareOrdinal(a.ModuleName, b.ModuleName));
 
-        return new ShaderSet { Files = files, Roots = roots };
+        return new ShaderSet { Files = files, Directories = directories };
     }
 }

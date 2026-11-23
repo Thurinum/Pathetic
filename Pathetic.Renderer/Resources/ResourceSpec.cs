@@ -9,7 +9,7 @@ namespace Pathetic.Renderer.Resources;
 public interface IResourceSpec { string Name { get; } }
 public sealed record TextureSpec : IResourceSpec
 {
-    public TextureSpec(TextureRef name, PixelFormat format, TextureUsage usage, TextureSizePolicy sizePolicy)
+    public TextureSpec(TextureName name, PixelFormat format, TextureUsage usage, TextureSizePolicy sizePolicy)
     {
         Name = name.Value;
         Format = format;
@@ -25,7 +25,7 @@ public sealed record TextureSpec : IResourceSpec
 
 public sealed record SamplerSpec : IResourceSpec
 {
-    public SamplerSpec(SamplerRef name, SamplerDescription description)
+    public SamplerSpec(SamplerName name, SamplerDescription description)
     {
         Name = name.Value;
         Description = description;
@@ -46,7 +46,7 @@ public sealed record UniformBufferSpec : IResourceSpec
         SizeInBytes = size;
     }
     
-    public static UniformBufferSpec Of<T>(UniformBufferRef name) where T : unmanaged
+    public static UniformBufferSpec Of<T>(UniformBufferName name) where T : unmanaged
     {
         uint size = (uint)Unsafe.SizeOf<T>();
         uint aligned16 = (size + 15u) & ~15u;

@@ -3,17 +3,17 @@ using Pathetic.Renderer.Utils;
 
 namespace Pathetic.Renderer.Shaders;
 
-public readonly record struct ShaderBinding(string Name, ResourceKind Kind, uint BindingIndex, uint BindingSpace);
-public readonly record struct ShaderCompilationResult(
-    byte[] Code,
+public readonly record struct ShaderBinding(string Name, ResourceKind Kind, uint Slot, uint Space);
+public readonly record struct CompiledShader(
+    byte[] Spirv,
     UIntVector3 GroupSize,
-    IReadOnlyList<ShaderBinding> Reflection);
+    IReadOnlyList<ShaderBinding> Bindings);
 
 public sealed class PrecompiledShaderLibrary
 {
     public const string EntryPointName = "main";
 
-    public ShaderCompilationResult LoadComputeShader(string moduleName)
+    public CompiledShader LoadComputeShader(string moduleName)
     {
         ShaderModule module = ShaderModules.Get(moduleName);
 
@@ -24,16 +24,16 @@ public sealed class PrecompiledShaderLibrary
             bindings.Add(new ShaderBinding(
                 parameter.Name,
                 MapKind(parameter.Kind, moduleName),
-                parameter.Binding,
+                parameter.Slot,
                 parameter.Space));
         }
 
-        bindings.Sort(static (a, b) => a.BindingSpace != b.BindingSpace
-            ? a.BindingSpace.CompareTo(b.BindingSpace)
-            : a.BindingIndex.CompareTo(b.BindingIndex));
+        bindings.Sort(static (a, b) => a.Space != b.Space
+            ? a.Space.CompareTo(b.Space)
+            : a.Slot.CompareTo(b.Slot));
 
-        return new ShaderCompilationResult(
-            module.LoadCode(),
+        return new CompiledShader(
+            module.LoadSpirv(),
             new UIntVector3(module.GroupSizeX, module.GroupSizeY, module.GroupSizeZ),
             bindings);
     }

@@ -28,7 +28,7 @@ internal static class RenderGraphValidator
         foreach (var entry in passes)
         {
             string passName = entry.Pass.GetType().Name;
-            string shader = entry.Pass.ShaderModule;
+            string moduleName = entry.Pass.ShaderModuleName;
 
             var bindings = new Dictionary<string, ResourceLayoutElementDescription>(StringComparer.Ordinal);
             foreach (var binding in entry.State.Bindings)
@@ -41,7 +41,7 @@ internal static class RenderGraphValidator
             foreach (var resource in entry.Pass.Resources)
             {
                 if (!bindings.ContainsKey(resource.Name))
-                    throw new InvalidOperationException($"Pass {passName} declares resource '{resource.Name}' that shader '{shader}' does not consume.");
+                    throw new InvalidOperationException($"Pass {passName} declares resource '{resource.Name}' that shader '{moduleName}' does not consume.");
             }
 
             foreach (var binding in bindings.Values)
@@ -54,7 +54,7 @@ internal static class RenderGraphValidator
                 if (resources.Has(binding.Name))
                     continue;
 
-                throw new InvalidOperationException($"Pass {passName} shader '{shader}' binds '{binding.Name}', which is neither declared by the pass nor registered as a shared resource.");
+                throw new InvalidOperationException($"Pass {passName} shader '{moduleName}' binds '{binding.Name}', which is neither declared by the pass nor registered as a shared resource.");
             }
         }
     }

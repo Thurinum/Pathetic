@@ -3,12 +3,12 @@ using Prowl.Slang;
 
 namespace Pathetic.Renderer.Shaders.Generator;
 
-internal sealed class Reflector
+internal sealed class ShaderCompiler
 {
-    private const string CpuTypeAttribute = "CPUType";
+    private const string CpuTypeAttributeName = "CPUType";
     private const TypeKind SlangEnumKind = (TypeKind)20;
 
-    private static readonly UTF8Encoding Utf8Bom = new(encoderShouldEmitUTF8Identifier: true);
+    private static readonly UTF8Encoding Utf8WithBom = new(encoderShouldEmitUTF8Identifier: true);
     private static readonly Dictionary<ScalarType, string> ScalarTypes = new()
     {
         [ScalarType.Float32] = "float",
@@ -34,7 +34,7 @@ internal sealed class Reflector
     private readonly Dictionary<string, ModuleModel> _modules = new(StringComparer.Ordinal);
     private readonly Dictionary<string, byte[]> _code = new(StringComparer.Ordinal);
 
-    public void Run(ShaderSet shaders, string outDir)
+    public void Compile(ShaderSet shaders, string outDir)
     {
         TargetDescription targetDesc = new()
         {
@@ -44,7 +44,7 @@ internal sealed class Reflector
         SessionDescription sessionDesc = new()
         {
             Targets = [targetDesc],
-            SearchPaths = [.. shaders.Roots],
+            SearchPaths = [.. shaders.Directories],
         };
 
         Session session = GlobalSession.CreateSession(sessionDesc);
@@ -62,7 +62,7 @@ internal sealed class Reflector
 
         ModuleModel model = new()
         {
-            Name = file.Name,
+            ModuleName = file.ModuleName,
         };
 
         DeclReflection root = module.GetModuleReflection();
@@ -79,7 +79,7 @@ internal sealed class Reflector
                     VariableReflection variable = declaration.AsVariable();
 
                     if (ClassifyBinding(variable.Type) is { } kind)
-                        model.Bindings.Add(new BindingModel { Name = variable.Name, Kind = kind });
+                        model.Bindings.Add(new ResourceBinding { Name = variable.Name, Kind = kind });
 
                     break;
                 }
@@ -89,7 +89,7 @@ internal sealed class Reflector
         if (module.GetDefinedEntryPointCount() > 0)
             ReflectPipeline(session, file, module, model);
 
-        _modules[file.Name] = model;
+        _modules[file.ModuleName] = model;
     }
 
     private static Module LoadModule(Session session, ShaderFile file, string source)
@@ -107,12 +107,12 @@ internal sealed class Reflector
 
         try
         {
-            module = session.LoadModuleFromSourceString(file.Name, file.Path, source, out DiagnosticInfo diagnostics);
+            module = session.LoadModuleFromSourceString(file.ModuleName, file.Path, source, out DiagnosticInfo diagnostics);
             ThrowOnErrors(diagnostics);
         }
         catch (CompilationException exception)
         {
-            throw new ShaderCompilationException(DiagnosticText.Format(exception.Message));
+            throw new SlangDiagnosticException(DiagnosticFormatter.Format(exception.Message));
         }
 
         return module;
@@ -127,7 +127,7 @@ internal sealed class Reflector
             return;
 
         if (!_cpuTypeNames.Add(cpuTypeName))
-            throw new SlangInteropException($"Two [CPUType] declarations emit '{cpuTypeName}'; give one an explicit name with [CPUType(\"...\")].");
+            throw new ShaderCompilerException($"Two [CPUType] declarations emit '{cpuTypeName}'; give one an explicit name with [CPUType(\"...\")].");
 
         TypeLayoutReflection layout = session.GetTypeLayout(type, 0, LayoutRules.Default, out DiagnosticInfo diagnostics);
         ThrowOnErrors(diagnostics);
@@ -148,7 +148,7 @@ internal sealed class Reflector
             {
                 Name = fieldLayout.Name,
                 Offset = offset,
-                CsType = MapFieldType($"{file.Name}.{declaration.Name}.{fieldLayout.Name}", fieldLayout),
+                CsType = MapFieldType($"{file.ModuleName}.{declaration.Name}.{fieldLayout.Name}", fieldLayout),
             });
         }
 
@@ -164,7 +164,7 @@ internal sealed class Reflector
     {
         foreach (Prowl.Slang.Attribute attribute in type.UserAttributes)
         {
-            if (!string.Equals(attribute.Name, CpuTypeAttribute, StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(attribute.Name, CpuTypeAttributeName, StringComparison.OrdinalIgnoreCase))
                 continue;
 
             string? uniqueName = attribute.ArgumentCount > 0 ? attribute.GetArgumentValueString(0) : null;
@@ -201,14 +201,14 @@ internal sealed class Reflector
                 continue;
 
             BindingKind kind = ClassifyBinding(parameter.Type)
-                ?? throw new SlangInteropException($"Shader parameter '{parameter.Name}' is not a supported resource.");
+                ?? throw new ShaderCompilerException($"Shader parameter '{parameter.Name}' is not a supported resource.");
 
-            pipeline.Parameters.Add(new ParameterModel
+            pipeline.Parameters.Add(new PipelineParameter
             {
                 Name = parameter.Name,
                 Kind = kind,
                 Space = parameter.BindingSpace,
-                Binding = parameter.BindingIndex,
+                Slot = parameter.BindingIndex,
             });
         }
 
@@ -217,7 +217,7 @@ internal sealed class Reflector
         byte[] code = linked.GetEntryPointCode(IntPtr.Zero, IntPtr.Zero, out DiagnosticInfo codeDiagnostics).ToArray();
         ThrowOnErrors(codeDiagnostics);
 
-        _code[file.Name] = code;
+        _code[file.ModuleName] = code;
     }
 
     private static string MapFieldType(string field, VariableLayoutReflection fieldLayout)
@@ -230,19 +230,19 @@ internal sealed class Reflector
             TypeKind.Scalar => MapScalar(field, layout.ScalarType),
             TypeKind.Vector => MapVector(field, layout),
             SlangEnumKind => MapScalar(field, layout.ScalarType),
-            _ => throw new SlangInteropException($"Field '{field}' uses unsupported Slang type '{type.Name}' (kind {type.Kind})."),
+            _ => throw new ShaderCompilerException($"Field '{field}' uses unsupported Slang type '{type.Name}' (kind {type.Kind})."),
         };
     }
 
     private static string MapScalar(string field, ScalarType scalar) =>
         ScalarTypes.TryGetValue(scalar, out string? type)
             ? type
-            : throw new SlangInteropException($"Field '{field}' uses unsupported scalar '{scalar}'.");
+            : throw new ShaderCompilerException($"Field '{field}' uses unsupported scalar '{scalar}'.");
 
     private static string MapVector(string field, TypeLayoutReflection layout)
     {
         if (layout.ScalarType != ScalarType.Float32 || !VectorTypes.TryGetValue(layout.ColumnCount, out string? type))
-            throw new SlangInteropException($"Field '{field}' uses unsupported vector '{layout.ScalarType}{layout.ColumnCount}'.");
+            throw new ShaderCompilerException($"Field '{field}' uses unsupported vector '{layout.ScalarType}{layout.ColumnCount}'.");
 
         return type;
     }
@@ -257,7 +257,7 @@ internal sealed class Reflector
             TypeKind.ConstantBuffer => BindingKind.UniformBuffer,
             TypeKind.SamplerState => BindingKind.Sampler,
             TypeKind.Resource or TypeKind.ShaderStorageBuffer or TypeKind.TextureBuffer => ClassifyResource(type),
-            TypeKind.ParameterBlock => throw new SlangInteropException($"Parameter blocks are not supported ('{type.FullName}')."),
+            TypeKind.ParameterBlock => throw new ShaderCompilerException($"Parameter blocks are not supported ('{type.FullName}')."),
             _ => null,
         };
     }
@@ -269,8 +269,8 @@ internal sealed class Reflector
         return type.ResourceShape switch
         {
             ResourceShape.StructuredBuffer or ResourceShape.ByteAddressBuffer or ResourceShape.TextureBuffer => writable ? BindingKind.MutableBuffer : BindingKind.Buffer,
-            ResourceShape.AccelerationStructure => throw new SlangInteropException($"Ray tracing acceleration structures are not supported ('{type.FullName}')."),
-            ResourceShape.None or ResourceShape.Unknown => throw new SlangInteropException($"Unsupported resource shape '{type.ResourceShape}' ('{type.FullName}')."),
+            ResourceShape.AccelerationStructure => throw new ShaderCompilerException($"Ray tracing acceleration structures are not supported ('{type.FullName}')."),
+            ResourceShape.None or ResourceShape.Unknown => throw new ShaderCompilerException($"Unsupported resource shape '{type.ResourceShape}' ('{type.FullName}')."),
             _ => writable ? BindingKind.MutableTexture : BindingKind.Texture,
         };
     }
@@ -282,27 +282,27 @@ internal sealed class Reflector
         string codeDir = Path.Combine(outDir, "gen");
         Directory.CreateDirectory(codeDir);
 
-        foreach (ModuleModel module in _modules.Values.OrderBy(static module => module.Name, StringComparer.Ordinal))
+        foreach (ModuleModel module in _modules.Values.OrderBy(static module => module.ModuleName, StringComparer.Ordinal))
         {
-            File.WriteAllText(Path.Combine(codeDir, module.Name + ".g.cs"), SourceEmitter.EmitModule(module), Utf8Bom);
+            File.WriteAllText(Path.Combine(codeDir, module.ModuleName + ".g.cs"), SourceEmitter.EmitModule(module), Utf8WithBom);
 
-            if (_code.TryGetValue(module.Name, out byte[]? code))
-                File.WriteAllBytes(Path.Combine(outDir, module.Name + ".spv"), code);
+            if (_code.TryGetValue(module.ModuleName, out byte[]? code))
+                File.WriteAllBytes(Path.Combine(outDir, module.ModuleName + ".spv"), code);
         }
 
-        File.WriteAllText(Path.Combine(codeDir, "ShaderModules.g.cs"), SourceEmitter.EmitShaderModules(_modules.Values), Utf8Bom);
+        File.WriteAllText(Path.Combine(codeDir, "ShaderModules.g.cs"), SourceEmitter.EmitRegistry(_modules.Values), Utf8WithBom);
     }
 
     private static void ThrowOnErrors(DiagnosticInfo diagnostics)
     {
         List<string> errors = [.. diagnostics.GetDiagnostics()
             .Where(static diagnostic => diagnostic.Severity >= Severity.Error)
-            .Select(static diagnostic => DiagnosticText.Format(diagnostic))];
+            .Select(static diagnostic => DiagnosticFormatter.Format(diagnostic))];
 
         if (errors.Count == 0)
-            errors.AddRange(DiagnosticText.ReadErrors(diagnostics.Message));
+            errors.AddRange(DiagnosticFormatter.ReadErrors(diagnostics.Message));
 
         if (errors.Count > 0)
-            throw new ShaderCompilationException(string.Join(Environment.NewLine, errors));
+            throw new SlangDiagnosticException(string.Join(Environment.NewLine, errors));
     }
 }

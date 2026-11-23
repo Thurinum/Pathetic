@@ -12,30 +12,30 @@ internal enum BindingKind
 
 internal sealed class ModuleModel
 {
-    public required string Name { get; init; }
+    public required string ModuleName { get; init; }
     public PipelineModel? Pipeline { get; set; }
-    public List<BindingModel> Bindings { get; init; } = [];
+    public List<ResourceBinding> Bindings { get; init; } = [];
     public List<TypeModel> Types { get; init; } = [];
 }
 
 internal sealed class PipelineModel
 {
     public required uint[] ThreadGroupSize { get; init; }
-    public List<ParameterModel> Parameters { get; init; } = [];
+    public List<PipelineParameter> Parameters { get; init; } = [];
 }
 
-internal sealed class BindingModel
+internal sealed class ResourceBinding
 {
     public required string Name { get; init; }
     public required BindingKind Kind { get; init; }
 }
 
-internal sealed class ParameterModel
+internal sealed class PipelineParameter
 {
     public required string Name { get; init; }
     public required BindingKind Kind { get; init; }
+    public required uint Slot { get; init; }
     public required uint Space { get; init; }
-    public required uint Binding { get; init; }
 }
 
 internal sealed class TypeModel

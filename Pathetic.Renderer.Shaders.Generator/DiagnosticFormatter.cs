@@ -2,7 +2,7 @@ using Prowl.Slang;
 
 namespace Pathetic.Renderer.Shaders.Generator;
 
-internal static class DiagnosticText
+internal static class DiagnosticFormatter
 {
     public static string Format(Diagnostic diagnostic)
     {

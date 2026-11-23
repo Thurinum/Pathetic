@@ -2,9 +2,9 @@ using System.CommandLine;
 using Pathetic.Renderer.Shaders.Generator;
 using Prowl.Slang;
 
-Option<string[]> shaders = new("--shaders")
+Option<string[]> shaderDirectories = new("--shader-dirs")
 {
-    Description = "Directory containing the .slang modules.",
+    Description = "Directories containing the .slang modules.",
     Required = true,
     Arity = ArgumentArity.OneOrMore,
     AllowMultipleArgumentsPerToken = true,
@@ -17,39 +17,39 @@ Option<string> output = new("--out")
 };
 
 RootCommand root = new("Reflects Slang modules into C# and SPIR-V blobs.");
-root.Options.Add(shaders);
+root.Options.Add(shaderDirectories);
 root.Options.Add(output);
 
 root.SetAction(parseResult =>
 {
     try
     {
-        ShaderSet shaderSet = ShaderSet.Discover([.. parseResult.GetValue(shaders)!.Select(Path.GetFullPath)]);
+        ShaderSet shaderSet = ShaderSet.Discover([.. parseResult.GetValue(shaderDirectories)!.Select(Path.GetFullPath)]);
         string outDir = Path.GetFullPath(parseResult.GetValue(output)!);
 
-        new Reflector().Run(shaderSet, outDir);
+        new ShaderCompiler().Compile(shaderSet, outDir);
 
         Console.WriteLine($"Pathetic.Renderer.Shaders.Generator: {shaderSet.Files.Count} module(s) written to '{outDir}'.");
         return 0;
     }
-    catch (ShaderCompilationException exception)
+    catch (SlangDiagnosticException exception)
     {
         Console.Error.WriteLine(exception.Message);
         return 1;
     }
     catch (CompilationException exception)
     {
-        Console.Error.WriteLine(DiagnosticText.Format(exception.Message));
+        Console.Error.WriteLine(DiagnosticFormatter.Format(exception.Message));
         return 1;
     }
-    catch (SlangInteropException exception)
+    catch (ShaderCompilerException exception)
     {
-        Console.Error.WriteLine($"error PATSLANG: {exception.Message}");
+        Console.Error.WriteLine($"Pathetic Slang Interop error: {exception.Message}");
         return 1;
     }
     catch (Exception exception)
     {
-        Console.Error.WriteLine($"error PATSLANG: {exception.GetType().Name}: {exception.Message}");
+        Console.Error.WriteLine($"Pathetic Slang interop internal error: {exception.GetType().Name}: {exception.Message}");
 
         if (exception.StackTrace is { Length: > 0 } stackTrace)
             Console.Error.WriteLine(stackTrace);

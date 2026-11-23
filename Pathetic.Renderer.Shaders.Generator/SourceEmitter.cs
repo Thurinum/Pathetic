@@ -57,24 +57,24 @@ internal static class SourceEmitter
             writer.Line();
         }
 
-        List<BindingModel> bindings = module.Bindings;
+        List<ResourceBinding> bindings = module.Bindings;
 
         if (module.Pipeline is not null)
             bindings = [.. bindings.Where(binding => module.Pipeline.Parameters.Any(parameter => parameter.Name == binding.Name))];
 
         if (module.Pipeline is not null || bindings.Count > 0)
         {
-            writer.Line($"namespace {TargetNamespace}.Resources");
+            writer.Line($"namespace {TargetNamespace}.Bindings");
             writer.Open("{");
-            writer.Line($"public static class {Identifier.Escape(module.Name)}");
+            writer.Line($"public static class {Identifier.Escape(module.ModuleName)}");
             writer.Open("{");
-            writer.Line($"public const string ModuleName = \"{module.Name}\";");
+            writer.Line($"public const string ModuleName = \"{module.ModuleName}\";");
 
             if (bindings.Count > 0)
                 writer.Line();
 
-            foreach (BindingModel binding in bindings)
-                writer.Line($"public static readonly {binding.Kind}Ref {Identifier.Escape(binding.Name)} = new(\"{binding.Name}\");");
+            foreach (ResourceBinding binding in bindings)
+                writer.Line($"public static readonly {binding.Kind}Name {Identifier.Escape(binding.Name)} = new(\"{binding.Name}\");");
 
             writer.Close("}");
             writer.Close("}");
@@ -106,7 +106,7 @@ internal static class SourceEmitter
         return writer.ToString();
     }
 
-    public static string EmitShaderModules(IEnumerable<ModuleModel> modules)
+    public static string EmitRegistry(IEnumerable<ModuleModel> modules)
     {
         CodeWriter writer = new();
 
@@ -128,22 +128,22 @@ internal static class SourceEmitter
         writer.Line("public static readonly IReadOnlyDictionary<string, ShaderModule> All = new Dictionary<string, ShaderModule>(StringComparer.Ordinal)");
         writer.Open("{");
 
-        foreach (ModuleModel module in modules.Where(static module => module.Pipeline is not null).OrderBy(static module => module.Name, StringComparer.Ordinal))
+        foreach (ModuleModel module in modules.Where(static module => module.Pipeline is not null).OrderBy(static module => module.ModuleName, StringComparer.Ordinal))
         {
             PipelineModel pipeline = module.Pipeline!;
 
-            writer.Line($"[\"{module.Name}\"] = new()");
+            writer.Line($"[\"{module.ModuleName}\"] = new()");
             writer.Open("{");
-            writer.Line($"Name = \"{module.Name}\",");
+            writer.Line($"Name = \"{module.ModuleName}\",");
             writer.Line($"GroupSizeX = {pipeline.ThreadGroupSize[0]},");
             writer.Line($"GroupSizeY = {pipeline.ThreadGroupSize[1]},");
             writer.Line($"GroupSizeZ = {pipeline.ThreadGroupSize[2]},");
-            writer.Line($"CodeResource = \"Pathetic.Renderer.Shaders.{module.Name}.spv\",");
+            writer.Line($"SpirvResourceName = \"Pathetic.Renderer.Shaders.{module.ModuleName}.spv\",");
             writer.Line("Parameters =");
             writer.Open("[");
 
-            foreach (ParameterModel parameter in pipeline.Parameters)
-                writer.Line($"new ShaderParameter(\"{parameter.Name}\", ShaderResourceKind.{parameter.Kind}, {parameter.Space}, {parameter.Binding}),");
+            foreach (PipelineParameter parameter in pipeline.Parameters)
+                writer.Line($"new ShaderParameter(\"{parameter.Name}\", ShaderResourceKind.{parameter.Kind}, {parameter.Slot}, {parameter.Space}),");
 
             writer.Close("],");
             writer.Close("},");

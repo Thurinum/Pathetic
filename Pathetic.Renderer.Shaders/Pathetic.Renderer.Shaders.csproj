@@ -2,20 +2,20 @@
 
     <PropertyGroup>
         <RootNamespace>Pathetic.Renderer.Shaders</RootNamespace>
-        <SlangOutputPath>$(BaseIntermediateOutputPath)slang</SlangOutputPath>
+        <SlangIntermediateDirectory>$(BaseIntermediateOutputPath)slang</SlangIntermediateDirectory>
         <SlangGeneratorProject>$(MSBuildThisFileDirectory)../Pathetic.Renderer.Shaders.Generator/Pathetic.Renderer.Shaders.Generator.csproj</SlangGeneratorProject>
-        <AppShaders>$(MSBuildThisFileDirectory)../Pathetic.App/Shaders</AppShaders>
-        <RendererShaders>$(MSBuildThisFileDirectory)../Pathetic.Renderer/Shaders</RendererShaders>
+        <AppShaderDirectory>$(MSBuildThisFileDirectory)../Pathetic.App/Shaders</AppShaderDirectory>
+        <RendererShaderDirectory>$(MSBuildThisFileDirectory)../Pathetic.Renderer/Shaders</RendererShaderDirectory>
     </PropertyGroup>
 
     <ItemGroup>
-        <SlangShader Include="$(AppShaders)/**/*.slang;$(RendererShaders)/**/*.slang" Visible="false" />
-        <SlangShaderHeader Include="$(AppShaders)/**/*.slangh;$(RendererShaders)/**/*.slangh" Visible="false" />
+        <SlangShader Include="$(AppShaderDirectory)/**/*.slang;$(RendererShaderDirectory)/**/*.slang" Visible="false" />
+        <SlangShaderHeader Include="$(AppShaderDirectory)/**/*.slangh;$(RendererShaderDirectory)/**/*.slangh" Visible="false" />
 
-        <SlangGenerated Include="@(SlangShader->'$(SlangOutputPath)/gen/%(Filename).g.cs')" Visible="false" />
-        <SlangGenerated Include="$(SlangOutputPath)/gen/ShaderModules.g.cs" Visible="false" />
+        <SlangGeneratedSource Include="@(SlangShader->'$(SlangIntermediateDirectory)/gen/%(Filename).g.cs')" Visible="false" />
+        <SlangGeneratedSource Include="$(SlangIntermediateDirectory)/gen/ShaderModules.g.cs" Visible="false" />
 
-        <Compile Include="@(SlangGenerated)" />
+        <Compile Include="@(SlangGeneratedSource)" />
         <UpToDateCheckInput Include="@(SlangShader);@(SlangShaderHeader)" />
 
         <ProjectReference Include="$(SlangGeneratorProject)"
@@ -28,24 +28,24 @@
         <MSBuild Projects="$(SlangGeneratorProject)"
                  Targets="GetTargetPath"
                  RemoveProperties="RuntimeIdentifier;SelfContained">
-            <Output TaskParameter="TargetOutputs" ItemName="SlangGenerator" />
+            <Output TaskParameter="TargetOutputs" ItemName="SlangGeneratorAssembly" />
         </MSBuild>
     </Target>
 
-    <Target Name="GenerateSlangAssets"
+    <Target Name="CompileSlang"
             DependsOnTargets="ResolveSlangGenerator"
-            Inputs="@(SlangShader);@(SlangShaderHeader);@(SlangGenerator)"
-            Outputs="$(SlangOutputPath)/.stamp">
-        <RemoveDir Directories="$(SlangOutputPath)" />
-        <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;@(SlangGenerator)&quot; --shaders &quot;$(AppShaders)&quot; --shaders &quot;$(RendererShaders)&quot; --out &quot;$(SlangOutputPath)&quot;" />
-        <Touch Files="$(SlangOutputPath)/.stamp" AlwaysCreate="true" />
+            Inputs="@(SlangShader);@(SlangShaderHeader);@(SlangGeneratorAssembly)"
+            Outputs="$(SlangIntermediateDirectory)/.stamp">
+        <RemoveDir Directories="$(SlangIntermediateDirectory)" />
+        <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;@(SlangGeneratorAssembly)&quot; --shader-dirs &quot;$(AppShaderDirectory)&quot; --shader-dirs &quot;$(RendererShaderDirectory)&quot; --out &quot;$(SlangIntermediateDirectory)&quot;" />
+        <Touch Files="$(SlangIntermediateDirectory)/.stamp" AlwaysCreate="true" />
     </Target>
 
-    <Target Name="EmbedSlangAssets"
+    <Target Name="EmbedSlangSpirv"
             BeforeTargets="PrepareResources"
-            DependsOnTargets="GenerateSlangAssets">
+            DependsOnTargets="CompileSlang">
         <ItemGroup>
-            <_SlangSpirv Include="$(SlangOutputPath)/*.spv" />
+            <_SlangSpirv Include="$(SlangIntermediateDirectory)/*.spv" />
             <EmbeddedResource Include="@(_SlangSpirv)">
                 <LogicalName>Pathetic.Renderer.Shaders.%(Filename).spv</LogicalName>
                 <Type>Non-Resx</Type>
@@ -54,10 +54,10 @@
         </ItemGroup>
     </Target>
 
-    <Target Name="CleanSlangAssets"
+    <Target Name="CleanSlang"
             AfterTargets="Clean"
-            Condition="Exists('$(SlangOutputPath)')">
-        <RemoveDir Directories="$(SlangOutputPath)" />
+            Condition="Exists('$(SlangIntermediateDirectory)')">
+        <RemoveDir Directories="$(SlangIntermediateDirectory)" />
     </Target>
 
 </Project>
