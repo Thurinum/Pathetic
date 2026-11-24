@@ -1,6 +1,9 @@
 module TemporalAccumulation;
+
+import CPUType;
 import Tonemapping.Tonemap;
 
+[CPUType("TemporalAccumulationParams")]
 struct Params 
 { 
     uint Reset; 

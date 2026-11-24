@@ -1,0 +1,69 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>Pathetic.Renderer.Shaders</RootNamespace>
+        <SlangRootDirectory>$(BaseIntermediateOutputPath)slang</SlangRootDirectory>
+        <SlangVariant Condition="'$(EnableProfiling)' == 'true'">profiled</SlangVariant>
+        <SlangVariant Condition="'$(SlangVariant)' == ''">plain</SlangVariant>
+        <SlangIntermediateDirectory>$(SlangRootDirectory)/$(SlangVariant)</SlangIntermediateDirectory>
+        <SlangProfilingArgument Condition="'$(EnableProfiling)' == 'true'">--profile-counters</SlangProfilingArgument>
+        <SlangGeneratorProject>$(MSBuildThisFileDirectory)../Pathetic.Renderer.Shaders.Generator/Pathetic.Renderer.Shaders.Generator.csproj</SlangGeneratorProject>
+        <!-- The generator is a build-time tool: it must not inherit the app's publish settings, or the SDK infers a host RID for it. -->
+        <SlangGeneratorGlobalPropertiesToRemove>RuntimeIdentifier;SelfContained;PublishSingleFile;PublishTrimmed;PublishAot;PublishReadyToRun;PublishSelfContained;PublishRuntimeIdentifier</SlangGeneratorGlobalPropertiesToRemove>
+        <AppShaderDirectory>$(MSBuildThisFileDirectory)../Pathetic.App/Shaders</AppShaderDirectory>
+        <RendererShaderDirectory>$(MSBuildThisFileDirectory)../Pathetic.Renderer/Shaders</RendererShaderDirectory>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <SlangShader Include="$(AppShaderDirectory)/**/*.slang;$(RendererShaderDirectory)/**/*.slang" Visible="false" />
+        <SlangShaderHeader Include="$(AppShaderDirectory)/**/*.slangh;$(RendererShaderDirectory)/**/*.slangh" Visible="false" />
+
+        <SlangGeneratedSource Include="@(SlangShader->'$(SlangIntermediateDirectory)/gen/%(Filename).g.cs')" Visible="false" />
+        <SlangGeneratedSource Include="$(SlangIntermediateDirectory)/gen/ShaderModules.g.cs" Visible="false" />
+
+        <Compile Include="@(SlangGeneratedSource)" />
+        <UpToDateCheckInput Include="@(SlangShader);@(SlangShaderHeader)" />
+
+        <ProjectReference Include="$(SlangGeneratorProject)"
+                          ReferenceOutputAssembly="false"
+                          Private="false"
+                          GlobalPropertiesToRemove="$(SlangGeneratorGlobalPropertiesToRemove)" />
+    </ItemGroup>
+
+    <Target Name="ResolveSlangGenerator" DependsOnTargets="ResolveProjectReferences">
+        <MSBuild Projects="$(SlangGeneratorProject)"
+                 Targets="GetTargetPath"
+                 RemoveProperties="$(SlangGeneratorGlobalPropertiesToRemove)">
+            <Output TaskParameter="TargetOutputs" ItemName="SlangGeneratorAssembly" />
+        </MSBuild>
+    </Target>
+
+    <Target Name="CompileSlang"
+            DependsOnTargets="ResolveSlangGenerator"
+            Inputs="@(SlangShader);@(SlangShaderHeader);@(SlangGeneratorAssembly)"
+            Outputs="$(SlangIntermediateDirectory)/.stamp">
+        <RemoveDir Directories="$(SlangIntermediateDirectory)" />
+        <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;@(SlangGeneratorAssembly)&quot; --shader-dirs &quot;$(AppShaderDirectory)&quot; --shader-dirs &quot;$(RendererShaderDirectory)&quot; --out &quot;$(SlangIntermediateDirectory)&quot; $(SlangProfilingArgument)" />
+        <Touch Files="$(SlangIntermediateDirectory)/.stamp" AlwaysCreate="true" />
+    </Target>
+
+    <Target Name="EmbedSlangSpirv"
+            BeforeTargets="PrepareResources"
+            DependsOnTargets="CompileSlang">
+        <ItemGroup>
+            <_SlangSpirv Include="$(SlangIntermediateDirectory)/*.spv" />
+            <EmbeddedResource Include="@(_SlangSpirv)">
+                <LogicalName>Pathetic.Renderer.Shaders.%(Filename).spv</LogicalName>
+                <Type>Non-Resx</Type>
+                <WithCulture>false</WithCulture>
+            </EmbeddedResource>
+        </ItemGroup>
+    </Target>
+
+    <Target Name="CleanSlang"
+            AfterTargets="Clean"
+            Condition="Exists('$(SlangRootDirectory)')">
+        <RemoveDir Directories="$(SlangRootDirectory)" />
+    </Target>
+
+</Project>

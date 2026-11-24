@@ -1,14 +1,41 @@
 ﻿using System.Runtime.CompilerServices;
 using NeoVeldrid;
+using Pathetic.Renderer.Shaders.Gpu;
 using Pathetic.Renderer.Graph;
 
 namespace Pathetic.Renderer.Resources;
 
 // outputs
 public interface IResourceSpec { string Name { get; } }
-public sealed record TextureSpec(string Name, PixelFormat Format, TextureUsage Usage, TextureSizePolicy SizePolicy) : IResourceSpec;
+public sealed record TextureSpec : IResourceSpec
+{
+    public TextureSpec(TextureName name, PixelFormat format, TextureUsage usage, TextureSizePolicy sizePolicy)
+    {
+        Name = name.Value;
+        Format = format;
+        Usage = usage;
+        SizePolicy = sizePolicy;
+    }
+
+    public string Name { get; }
+    public PixelFormat Format { get; }
+    public TextureUsage Usage { get; }
+    public TextureSizePolicy SizePolicy { get; }
+}
+
 public sealed record RwBufferSpec(string Name, uint SizeInBytes, uint Stride) : IResourceSpec;
-public sealed record SamplerSpec(string Name, SamplerDescription Description) : IResourceSpec;
+public sealed record SamplerSpec : IResourceSpec
+{
+    public SamplerSpec(SamplerName name, SamplerDescription description)
+    {
+        Name = name.Value;
+        Description = description;
+    }
+
+    public string Name { get; }
+    public SamplerDescription Description { get; }
+}
+
 public sealed record UniformBufferSpec : IResourceSpec
 {
     public string Name { get; }
@@ -20,11 +47,11 @@ public sealed record UniformBufferSpec : IResourceSpec
         SizeInBytes = size;
     }
     
-    public static UniformBufferSpec Of<T>(string name) where T : unmanaged
+    public static UniformBufferSpec Of<T>(UniformBufferName name) where T : unmanaged
     {
         uint size = (uint)Unsafe.SizeOf<T>();
         uint aligned16 = (size + 15u) & ~15u;
-        return new UniformBufferSpec(name, aligned16);
+        return new UniformBufferSpec(name.Value, aligned16);
     }
 }
 public interface IResourceUploader

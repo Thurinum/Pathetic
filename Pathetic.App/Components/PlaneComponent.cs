@@ -1,20 +1,10 @@
 ﻿using System.Numerics;
-using System.Runtime.InteropServices;
 using Pathetic.Renderer.Buffers;
 using Pathetic.SceneGraph;
 
 namespace Pathetic.App.Components;
 
-[StructLayout(LayoutKind.Explicit, Size = 40)]
-public record struct PlanePrimitive
-{
-    [FieldOffset(00)] public Vector3 Point;
-    [FieldOffset(12)] public Vector3 ExtentX;
-    [FieldOffset(24)] public Vector3 ExtentY;
-    [FieldOffset(36)] public uint MaterialId;
-}
-
-public class PlaneComponent(SparseSet<PlanePrimitive> primitives, MaterialLibrary materials) : RendererBase<PlanePrimitive>(primitives)
+public class PlaneComponent(SparseSet<Gpu.Plane> primitives, MaterialLibrary materials) : RendererBase<Gpu.Plane>(primitives)
 {
     private Transform _transform = null!;
 
@@ -28,13 +18,13 @@ public class PlaneComponent(SparseSet<PlanePrimitive> primitives, MaterialLibrar
         base.Setup();
     }
 
-    protected override PlanePrimitive BuildPrimitive()
+    protected override Gpu.Plane BuildPrimitive()
     {
-        return new PlanePrimitive
+        return new Gpu.Plane
         {
-            Point = _transform.Position,
-            ExtentX = Vector3.Transform(Vector3.UnitX, _transform.Rotation) * (Width * 0.5f),
-            ExtentY = Vector3.Transform(Vector3.UnitY, _transform.Rotation) * (Height * 0.5f),
+            Center = _transform.Position,
+            U = Vector3.Transform(Vector3.UnitX, _transform.Rotation) * (Width * 0.5f),
+            V = Vector3.Transform(Vector3.UnitY, _transform.Rotation) * (Height * 0.5f),
             MaterialId = materials.GetOrAdd(Material)
         };
     }

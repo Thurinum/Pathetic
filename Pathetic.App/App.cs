@@ -1,6 +1,4 @@
-using Microsoft.Extensions.Options;
 using Pathetic.App.Components.GUI;
-using Pathetic.Profiling;
 using Pathetic.SceneGraph;
 using Pathetic.SceneGraph.Scenes;
 
@@ -8,8 +6,7 @@ namespace Pathetic.App;
 
 public sealed class App(
     SceneLoop loop,
-    SceneManager sceneManager,
-    IOptions<ProfilerOptions> profilerOptions)
+    SceneManager sceneManager)
 {
     public void Run()
     {
@@ -24,11 +21,10 @@ public sealed class App(
         sceneManager.CreateObject(scene, nameof(SceneSelector))
             .AddComponent<SceneSelector>();
 
-        if (profilerOptions.Value.Enabled)
-        {
-            sceneManager.CreateObject(scene, nameof(ProfilerOverlay))
-                .AddComponent<ProfilerOverlay>();
-        }
+#if PROFILING
+        sceneManager.CreateObject(scene, nameof(ProfilerOverlay))
+            .AddComponent<ProfilerOverlay>();
+#endif
 
         loop.Run(scene);
     }

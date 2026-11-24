@@ -21,18 +21,9 @@ concurrency:
 
 jobs:
   build:
-    name: Build Pathetic (${{ matrix.runtime }})
+    name: Build Pathetic (win-x64)
     runs-on: windows-latest
     timeout-minutes: 30
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - runtime: win-x64
-            arch: x64
-          - runtime: win-arm64
-            arch: arm64
 
     steps:
       - name: Checkout
@@ -43,6 +34,14 @@ jobs:
         with:
           dotnet-version: 11.0.x
 
+      - name: Install Vulkan SDK
+        uses: jakoch/install-vulkan-sdk-action@v1
+        with:
+          cache: true
+          stripdown: true
+          install_runtime: false
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Cache NuGet packages
         uses: actions/cache@v6
         with:
@@ -51,18 +50,17 @@ jobs:
           restore-keys: nuget-${{ runner.os }}-
 
       - name: Build
-        if: matrix.runtime == 'win-x64'
         run: dotnet build Pathetic.slnx --configuration Release
 
       - name: Package
         shell: pwsh
-        run: build/windows/package.ps1 -Version $env:VERSION -Runtime ${{ matrix.runtime }}
+        run: build/windows/package.ps1 -Version $env:VERSION -Runtime win-x64
         env:
           VERSION: ${{ inputs.version || format('0.0.{0}', github.run_number) }}
 
       - name: Upload app
         uses: actions/upload-artifact@v7
         with:
-          name: Pathetic-windows-${{ matrix.arch }}
-          path: artifacts/Pathetic-windows-${{ matrix.arch }}.zip
+          name: Pathetic-windows-x64
+          path: artifacts/Pathetic-windows-x64.zip
           if-no-files-found: error

@@ -2,10 +2,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Pathetic.App;
-using Pathetic.App.Assets;
-using Pathetic.App.Bvh;
-using Pathetic.App.Components;
 using Pathetic.App.Components.Camera;
+using Pathetic.App.DI;
 using Pathetic.App.Input;
 using Pathetic.App.RenderPasses;
 using Pathetic.App.Scenes;
@@ -43,30 +41,9 @@ builder.Services.AddRenderer(graph => graph
     // .AddPass<CirclesPass>()
     .AddPass<PathTracerPass>()
     .AddPass<TemporalAccumulationPass>()
-    .Present(ResourceName.PresentColor));
+    .Present(Gpu.Bindings.TemporalAccumulation.Color));
 
-builder.Services.AddStructuredBuffer<SpherePrimitive>(ResourceName.Spheres, sparseStorage: true);
-builder.Services.AddStructuredBuffer<PlanePrimitive>(ResourceName.Planes, sparseStorage: true);
-builder.Services.AddStructuredBuffer<TrianglePrimitive>(ResourceName.Triangles, sparseStorage: true);
-builder.Services.AddStructuredBuffer<MeshTransform>(ResourceName.MeshTransforms);
-builder.Services.AddStructuredBuffer<Material>(ResourceName.Materials);
-builder.Services.AddSingleton<MaterialLibrary>();
-builder.Services.AddSingleton<MeshTransformLibrary>();
-builder.Services.AddSingleton<ObjLoader>();
-builder.Services.AddStructuredBuffer<CameraProvider>();
-
-builder.Services.AddSingleton<SceneBvh>();
-builder.Services.AddSingleton(sp => new BvhBufferUploader<GpuBvhNode>(
-    ResourceName.BvhNodes,
-    sp.GetRequiredService<SceneBvh>(),
-    scene => scene.Nodes));
-builder.Services.AddSingleton<IResourceUploader>(sp => sp.GetRequiredService<BvhBufferUploader<GpuBvhNode>>());
-builder.Services.AddSingleton(sp => new BvhBufferUploader<GpuBvhPrimitiveRef>(
-    ResourceName.BvhPrimitiveRefs,
-    sp.GetRequiredService<SceneBvh>(),
-    scene => scene.PrimitiveRefs));
-builder.Services.AddSingleton<IResourceUploader>(sp => sp.GetRequiredService<BvhBufferUploader<GpuBvhPrimitiveRef>>());
-
+builder.Services.AddSceneRendering();
 builder.Services.AddSceneGraph();
 builder.Services.AddScene<DefaultScene>();
 builder.Services.AddScene<OneWeekendScene>();

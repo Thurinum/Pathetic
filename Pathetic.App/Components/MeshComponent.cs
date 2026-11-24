@@ -1,29 +1,16 @@
 using System.Numerics;
-using System.Runtime.InteropServices;
 using Pathetic.App.Assets;
+using Pathetic.App.MeshTransforms;
 using Pathetic.Renderer.Buffers;
 using Pathetic.SceneGraph;
 using Pathetic.SceneGraph.Components;
 
 namespace Pathetic.App.Components;
 
-[StructLayout(LayoutKind.Explicit, Size = 80)]
-public record struct TrianglePrimitive
-{
-    [FieldOffset(00)] public Vector3 V0;
-    [FieldOffset(12)] public Vector3 V1;
-    [FieldOffset(24)] public Vector3 V2;
-    [FieldOffset(36)] public Vector3 N0;
-    [FieldOffset(48)] public Vector3 N1;
-    [FieldOffset(60)] public Vector3 N2;
-    [FieldOffset(72)] public uint MaterialId;
-    [FieldOffset(76)] public uint TransformId;
-}
-
 public record struct MeshTriangle(Vector3 V0, Vector3 V1, Vector3 V2, Vector3 N0, Vector3 N1, Vector3 N2);
 
 public class MeshComponent(
-    SparseSet<TrianglePrimitive> triangles,
+    SparseSet<Gpu.Triangle> triangles,
     MaterialLibrary materials,
     MeshTransformLibrary transforms) : Component
 {
@@ -31,7 +18,7 @@ public class MeshComponent(
     private Vector3 _bakedPosition;
     private Quaternion _bakedRotation = Quaternion.Identity;
     private Vector3 _bakedScale = Vector3.One;
-    private uint _transformId = MeshTransform.None;
+    private uint _transformId = MeshTransformLibrary.None;
 
     public MeshAsset? Asset { get; set; }
 
@@ -40,7 +27,7 @@ public class MeshComponent(
         if (Asset is null)
             return;
 
-        _transformId = transforms.Add(MeshTransform.FromMatrix(BuildMatrix()));
+        _transformId = transforms.Add(MeshTransformExtensions.FromMatrix(BuildMatrix()));
 
         uint materialId = materials.GetOrAdd(Asset.Material);
 
@@ -52,10 +39,10 @@ public class MeshComponent(
 
     protected override void LateUpdate(float deltaTime)
     {
-        if (_transformId == MeshTransform.None || !TransformChanged())
+        if (_transformId == MeshTransformLibrary.None || !TransformChanged())
             return;
 
-        transforms.Update(_transformId, MeshTransform.FromMatrix(BuildMatrix()));
+        transforms.Update(_transformId, MeshTransformExtensions.FromMatrix(BuildMatrix()));
         BakeTransform();
     }
 
@@ -69,11 +56,11 @@ public class MeshComponent(
 
         _handles.Clear();
 
-        if (_transformId == MeshTransform.None)
+        if (_transformId == MeshTransformLibrary.None)
             return;
 
         transforms.Remove(_transformId);
-        _transformId = MeshTransform.None;
+        _transformId = MeshTransformLibrary.None;
     }
 
     private Matrix4x4 BuildMatrix()
@@ -84,7 +71,7 @@ public class MeshComponent(
             * Matrix4x4.CreateTranslation(transform.Position);
     }
 
-    private static TrianglePrimitive ToPrimitive(MeshTriangle triangle, uint materialId, uint transformId) => new()
+    private static Gpu.Triangle ToPrimitive(MeshTriangle triangle, uint materialId, uint transformId) => new()
     {
         V0 = triangle.V0,
         V1 = triangle.V1,

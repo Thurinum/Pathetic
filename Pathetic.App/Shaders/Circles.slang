@@ -1,9 +1,12 @@
+import CPUType;
+
 struct Circle 
 {
     float2 Position01;
     float Radius;
 }
 
+[CPUType("CirclesParams")]
 struct Params
 {
     uint Count;

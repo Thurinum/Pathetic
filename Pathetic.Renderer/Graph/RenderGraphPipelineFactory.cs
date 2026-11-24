@@ -4,15 +4,15 @@ using Pathetic.Renderer.Shaders;
 
 namespace Pathetic.Renderer.Graph;
 
-public sealed class RenderGraphPipelineFactory(SlangCompiler compiler)
+public sealed class RenderGraphPipelineFactory(PrecompiledShaderLibrary shaders)
 {
     public PassRenderState Build(GraphicsDevice device, RenderPass pass)
     {
-        ShaderCompilationResult compiled = compiler.CompileComputeShader(pass.ShaderModule);
-        ShaderDescription shaderDesc = new(ShaderStages.Compute, compiled.Code, SlangCompiler.EntryPointName);
+        CompiledShader compiled = shaders.LoadComputeShader(pass.ShaderModuleName);
+        ShaderDescription shaderDesc = new(ShaderStages.Compute, compiled.Spirv, PrecompiledShaderLibrary.EntryPointName);
         using Shader shader = device.ResourceFactory.CreateShader(shaderDesc);
 
-        var bindings = compiled.Reflection
+        var bindings = compiled.Bindings
             .Select(r => new ResourceLayoutElementDescription(r.Name, r.Kind, ShaderStages.Compute))
             .ToArray();
 

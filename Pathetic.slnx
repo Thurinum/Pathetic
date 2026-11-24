@@ -1,7 +1,9 @@
 <Solution>
   <Project Path="Pathetic.App/Pathetic.App.csproj" />
+  <Project Path="Pathetic.Renderer.Shaders/Pathetic.Renderer.Shaders.csproj" />
   <Project Path="Pathetic.Input/Pathetic.Input.csproj" />
   <Project Path="Pathetic.Profiling/Pathetic.Profiling.csproj" />
   <Project Path="Pathetic.Renderer/Pathetic.Renderer.csproj" />
   <Project Path="Pathetic.SceneGraph/Pathetic.SceneGraph.csproj" />
+  <Project Path="Pathetic.Renderer.Shaders.Generator/Pathetic.Renderer.Shaders.Generator.csproj" />
 </Solution>

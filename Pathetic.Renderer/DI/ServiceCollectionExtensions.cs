@@ -2,11 +2,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Pathetic.Profiling.Gpu;
-using Pathetic.Renderer.Profiling;
 using Pathetic.Renderer.Buffers;
 using Pathetic.Renderer.Graph;
+#if PROFILING
+using Pathetic.Renderer.Profiling;
+#endif
 using Pathetic.Renderer.Resources;
 using Pathetic.Renderer.Shaders;
+using Pathetic.Renderer.Shaders.Gpu;
 
 namespace Pathetic.Renderer.DI;
 
@@ -30,13 +33,13 @@ public static class ServiceCollectionExtensions
         /// <param name="capacity">How many elements the buffer can hold.</param>
         /// <typeparam name="T"></typeparam>
         public void AddStructuredBuffer<T>(
-            string name,
+            BufferName name,
             bool sparseStorage = false,
             bool resizable = true,
             bool dynamic = true,
             uint capacity = 256) where T : unmanaged, IEquatable<T>
         {
-            var buffer = new StructuredBuffer<T>(name, resizable, dynamic, capacity, 64);
+            var buffer = new StructuredBuffer<T>(name.Value, resizable, dynamic, capacity, 64);
             services.AddSingleton(buffer);
             services.AddSingleton<IResourceUploader>(buffer);
 
@@ -46,11 +49,13 @@ public static class ServiceCollectionExtensions
         
         public IServiceCollection AddRenderer(Action<RenderGraphSpecBuilder> configureGraph)
         {
+            services.AddSingleton<PrecompiledShaderLibrary>();
 
             services.TryAddSingleton<IGpuTimer, NullGpuTimer>();
+#if PROFILING
             services.AddStructuredBuffer<ShaderCounterBuffer>();
             services.AddSingleton<IShaderCounterReadback>(sp => sp.GetRequiredService<ShaderCounterBuffer>());
-            services.AddSingleton<SlangCompiler>();
+#endif
             services.AddSingleton<RenderPassFactory>();
             services.AddSingleton<RenderGraphPipelineFactory>();
             services.AddSingleton<RenderGraphFactory>();

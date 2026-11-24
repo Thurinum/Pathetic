@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using Microsoft.Extensions.Options;
 using NeoVeldrid;
 using Pathetic.Renderer.Graph;
@@ -11,37 +10,12 @@ public sealed class PathTracerPass(
     ConvergenceController convergence,
     RenderDebugSettings debug) : RenderPass
 {
-    [StructLayout(LayoutKind.Sequential)]
-    private struct Params
-    {
-        public uint PlaneCount;
-        public uint SphereCount;
-        public uint TriangleCount;
-        public uint SamplesPerPixel;
-        public uint MaxBounces;
-        public uint BvhNodeCount;
-        public uint DisplayNormals;
-        public uint SmoothShading;
-    }
-
-    public override string ShaderModule => "PathTracer";
+    public override string ShaderModuleName => Gpu.Bindings.PathTracer.ModuleName;
 
     public override IReadOnlyList<IResourceSpec> Resources { get; } =
     [
-        new TextureSpec(ResourceName.PathTracerColor, PixelFormat.R32_G32_B32_A32_Float, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
-        UniformBufferSpec.Of<Params>(ResourceName.Params),
-    ];
-
-    public override IReadOnlyList<string> Inputs { get; } =
-    [
-        ResourceName.Camera,
-        ResourceName.Planes,
-        ResourceName.Spheres,
-        ResourceName.Triangles,
-        ResourceName.MeshTransforms,
-        ResourceName.Materials,
-        ResourceName.BvhNodes,
-        ResourceName.BvhPrimitiveRefs,
+        new TextureSpec(Gpu.Bindings.PathTracer.PathTracerColor, PixelFormat.R32_G32_B32_A32_Float, TextureUsage.Sampled | TextureUsage.Storage, new AutoSize()),
+        UniformBufferSpec.Of<Gpu.PathTracerParams>(Gpu.Bindings.PathTracer.Params),
     ];
 
     public override void Upload(RenderContext ctx, DeviceBuffer buffer, bool resized)
@@ -49,14 +23,14 @@ public sealed class PathTracerPass(
         ConvergencePlan plan = convergence.GetPlan(ctx.FrameIndex, ctx.Resources.SceneRevision);
         Enabled = plan.RunPathTracer;
 
-        Params @params = new()
+        Gpu.PathTracerParams @params = new()
         {
-            PlaneCount = ctx.Resources.GetElementCount(ResourceName.Planes),
-            SphereCount = ctx.Resources.GetElementCount(ResourceName.Spheres),
-            TriangleCount = ctx.Resources.GetElementCount(ResourceName.Triangles),
+            PlaneCount = ctx.Resources.GetElementCount(Gpu.Bindings.PathTracer.Planes),
+            SphereCount = ctx.Resources.GetElementCount(Gpu.Bindings.PathTracer.Spheres),
+            TriangleCount = ctx.Resources.GetElementCount(Gpu.Bindings.PathTracer.Triangles),
             SamplesPerPixel = plan.SamplesPerPixel,
             MaxBounces = options.Value.MaxBounces,
-            BvhNodeCount = ctx.Resources.GetElementCount(ResourceName.BvhNodes),
+            BvhNodeCount = ctx.Resources.GetElementCount(Gpu.Bindings.PathTracer.BvhNodes),
             DisplayNormals = debug.DisplayNormals ? 1u : 0u,
             SmoothShading = debug.SmoothShading ? 1u : 0u,
         };

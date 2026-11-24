@@ -1,7 +1,10 @@
 module Camera;
 
+import CPUType;
+
 import Random;
 
+[CPUType]
 public struct Camera
 {
     public float3 Origin;    
@@ -14,6 +17,7 @@ public struct Camera
     float ApertureRadius;
 };
        
+[CPUType]
 public struct Ray
 {
     public float3 Origin;

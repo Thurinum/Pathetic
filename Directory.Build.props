@@ -12,6 +12,10 @@
   </PropertyGroup>
 
   <PropertyGroup>
+    <EnableProfiling Condition="'$(EnableProfiling)' == ''">false</EnableProfiling>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(EnableProfiling)' == 'true'">
     <DefineConstants>$(DefineConstants);PROFILING</DefineConstants>
     <InterceptorsNamespaces>$(InterceptorsNamespaces);Pathetic.Profiling.Generated</InterceptorsNamespaces>
   </PropertyGroup>

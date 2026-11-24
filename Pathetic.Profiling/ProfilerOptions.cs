@@ -9,8 +9,6 @@ public sealed record ProfilerOptions
 
     public const string Section = "Profiler";
 
-    public bool Enabled { get; init; }
-
     /// <summary>Number of most recent frames that every statistic is computed over.</summary>
     [Range(1, MaxWindowFrames)]
     public int WindowFrames { get; init; } = DefaultWindowFrames;

@@ -1,5 +1,7 @@
 module Primitives;
 
+import CPUType;
+
 public enum PrimitiveType {
     Plane = 0u,
     Sphere = 1u,
@@ -7,6 +9,7 @@ public enum PrimitiveType {
     None = 1000u,
 }
 
+[CPUType]
 public struct Sphere
 {
     public float3 Center;
@@ -14,6 +17,7 @@ public struct Sphere
     public uint MaterialId;
 }
 
+[CPUType]
 public struct Plane
 {
     public float3 Center;
@@ -22,6 +26,7 @@ public struct Plane
     public uint MaterialId;
 }
 
+[CPUType]
 public struct Triangle
 {
     public float3 V0;
@@ -34,6 +39,7 @@ public struct Triangle
     public uint TransformId;
 }
 
+[CPUType]
 public struct MeshTransform
 {
     public float3 InverseX;
@@ -49,13 +55,14 @@ public struct MeshTransform
     public float3 ForwardOffset;
 };
 
-StructuredBuffer<MeshTransform, ScalarDataLayout> meshTransforms;
+StructuredBuffer<MeshTransform> meshTransforms;
 
 float3 TransformDirection(float3 v, float3 x, float3 y, float3 z)
 {
     return v.x * x + v.y * y + v.z * z;
 }
 
+[CPUType]
 public struct HitResult 
 {
     public float T;

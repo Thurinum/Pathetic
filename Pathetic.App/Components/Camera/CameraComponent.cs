@@ -22,10 +22,10 @@ public class CameraComponent(CameraProvider provider, IOptions<CameraOptions> op
         float fovRadians = float.DegreesToRadians(FovDegrees);
         float tanHalfFovRad = MathF.Tan(fovRadians * 0.5f);
         
-        CameraData cameraData = new()
+        Gpu.Camera cameraData = new()
         {
             Origin = _transform.Position,
-            TanHalfFOV = tanHalfFovRad,
+            TanHalfFov = tanHalfFovRad,
             ApertureRadius = ApertureRadius,
             FocusDistance = FocusDistance,
             

@@ -10,7 +10,6 @@ internal readonly record struct ResourceKey(string Name, RenderPass? Owner);
 
 internal sealed class ResourceTable : IResourceMetadata, IDisposable
 {
-    private const string FrameStateName = "frameState";
     private readonly Dictionary<ResourceKey, RenderGraphResource> _resources = [];
     private readonly HashSet<string> _reallocated = [];
     private readonly HashSet<string> _resized = [];
@@ -20,7 +19,7 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
 
     public ResourceTable()
     {
-        Declare(UniformBufferSpec.Of<FrameState>(FrameStateName));
+        Declare(UniformBufferSpec.Of<Gpu.FrameState>(Gpu.Bindings.FrameState.FrameStateResource));
     }
 
     private SceneChange _pendingChanges;
@@ -100,11 +99,11 @@ internal sealed class ResourceTable : IResourceMetadata, IDisposable
         }
 
         // Hard-coded and deliberately last: shaders must observe this frame's revision.
-        ctx.Cmd.UpdateBuffer(GetResource<DeviceBuffer>(FrameStateName), 0, new FrameState
+        ctx.Cmd.UpdateBuffer(GetResource<DeviceBuffer>(Gpu.Bindings.FrameState.FrameStateResource), 0, new Gpu.FrameState
         {
             FrameIndex = ctx.FrameIndex,
             DeltaTime = ctx.DeltaTime,
-            SceneRevision = SceneRevision
+            SceneRevision = (int)SceneRevision
         });
 
         return _reallocated;

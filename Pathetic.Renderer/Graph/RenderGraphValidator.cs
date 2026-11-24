@@ -28,32 +28,20 @@ internal static class RenderGraphValidator
         foreach (var entry in passes)
         {
             string passName = entry.Pass.GetType().Name;
-            string shader = entry.Pass.ShaderModule;
+            string moduleName = entry.Pass.ShaderModuleName;
 
             var bindings = new Dictionary<string, ResourceLayoutElementDescription>(StringComparer.Ordinal);
             foreach (var binding in entry.State.Bindings)
                 bindings.TryAdd(binding.Name, binding);
 
-            var declared = entry.Pass.Inputs
-                .Concat(entry.Pass.Resources.Select(resource => resource.Name))
+            var declared = entry.Pass.Resources
+                .Select(resource => resource.Name)
                 .ToHashSet(StringComparer.Ordinal);
 
-            foreach (var input in entry.Pass.Inputs)
+            foreach (var resource in entry.Pass.Resources)
             {
-                if (!resources.Has(input))
-                    throw new InvalidOperationException($"Pass {passName} has invalid input {input}.");
-
-                if (!bindings.ContainsKey(input))
-                    throw new InvalidOperationException($"Pass {passName} declares input '{input}' that shader '{shader}' does not consume.");
-            }
-
-            foreach (var sampler in entry.Pass.Resources.OfType<SamplerSpec>())
-            {
-                if (!bindings.TryGetValue(sampler.Name, out var binding))
-                    throw new InvalidOperationException($"Pass {passName} declares sampler '{sampler.Name}' that shader '{shader}' does not consume.");
-
-                if (binding.Kind != ResourceKind.Sampler)
-                    throw new InvalidOperationException($"Pass {passName} sampler '{sampler.Name}': shader '{shader}' declares {binding.Kind}, expected {ResourceKind.Sampler}.");
+                if (!bindings.ContainsKey(resource.Name))
+                    throw new InvalidOperationException($"Pass {passName} declares resource '{resource.Name}' that shader '{moduleName}' does not consume.");
             }
 
             foreach (var binding in bindings.Values)
@@ -62,11 +50,11 @@ internal static class RenderGraphValidator
                     continue;
 
                 // Shared resources (frame state, camera, primitive buffers, pass textures) are
-                // declared once and bound by name, so a pass doesn't need to list them in Inputs.
+                // declared once and bound by name, so a pass doesn't need to list them.
                 if (resources.Has(binding.Name))
                     continue;
 
-                throw new InvalidOperationException($"Pass {passName} shader '{shader}' binds '{binding.Name}', which is neither declared by the pass nor registered as a shared resource.");
+                throw new InvalidOperationException($"Pass {passName} shader '{moduleName}' binds '{binding.Name}', which is neither declared by the pass nor registered as a shared resource.");
             }
         }
     }
