@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Pathetic.Profiling.Gpu;
 using Pathetic.Renderer.Shaders.Generator.Diagnostics;
 using Pathetic.Renderer.Shaders.Generator.Models;
@@ -46,6 +47,11 @@ internal static class SlangShaderCompiler
 
     private static Session CreateSession(IReadOnlyList<string> searchPaths, bool profileCounters)
     {
+        // Slang loads its SPIR-V optimizer itself, outside .NET's native library resolution.
+        string nativeDirectory = Path.Combine(AppContext.BaseDirectory, "runtimes", RuntimeInformation.RuntimeIdentifier, "native");
+        GlobalSession.SetDownstreamCompilerPath(PassThrough.SpirvOpt,
+            Directory.Exists(nativeDirectory) ? nativeDirectory : AppContext.BaseDirectory);
+
         TargetDescription target = new()
         {
             Format = CompileTarget.Spirv,
